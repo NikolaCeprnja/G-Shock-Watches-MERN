@@ -1,8 +1,8 @@
 class ErrorHandler extends Error {
-	constructor(message, errorCode) {
-		super(message);
-		this.statusCode = errorCode;
-	}
+  constructor(message, errorCode) {
+    super(message)
+    this.statusCode = errorCode
+  }
 }
 
-module.exports = ErrorHandler;
+module.exports = ErrorHandler

@@ -2,11 +2,14 @@ const { validationResult } = require('express-validator')
 
 const User = require('../models/user-model')
 const ErrorHandler = require('../models/error-handler')
-const authenticate = require('../auth/auth')
+const { auth } = require('../auth/auth')
 
 // GET CONTROLLERS
 const getUsers = async (req, res, next) => {
   let users
+
+  if (!req.user.isAdmin)
+    return next(new ErrorHandler("You don't have permission to do that.", 403))
 
   try {
     users = await User.find()
@@ -57,7 +60,7 @@ const userSignup = async (req, res, next) => {
     )
   }
 
-  authenticate('signup', req, res, next)
+  auth('signup', req, res, next)
 }
 
 const userSignin = async (req, res, next) => {
@@ -70,7 +73,7 @@ const userSignin = async (req, res, next) => {
     )
   }
 
-  authenticate('signin', req, res, next)
+  auth('signin', req, res, next)
 }
 
 module.exports = {

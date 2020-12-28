@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken')
 
 const ErrorHandler = require('../models/error-handler')
 
-const authenticate = (strategy, req, res, next) =>
+const auth = (strategy, req, res, next) =>
   // Authenticate user with provided strategy
   passport.authenticate(
     strategy,
@@ -45,4 +45,17 @@ const authenticate = (strategy, req, res, next) =>
     }
   )(req, res, next)
 
-module.exports = authenticate
+const authJwt = (req, res, next) => {
+  passport.authenticate('jwt', { session: false }, (err, user, info) => {
+    if (err) return next(err)
+
+    if (!user) {
+      return next(new ErrorHandler(info.message, 401))
+    }
+
+    req.user = user
+    return next()
+  })(req, res, next)
+}
+
+module.exports = { auth, authJwt }

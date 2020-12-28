@@ -7,9 +7,10 @@ const {
   userSignup,
   userSignin,
 } = require('../controllers/users-controller')
+const { authJwt } = require('../auth/auth')
 
 // GET ROUTES
-router.get('/', getUsers)
+router.get('/', authJwt, getUsers)
 
 router.get('/:uid', getUserById)
 

@@ -116,19 +116,8 @@ passport.use(
       jwtFromRequest: cookieExtractor,
       secretOrKey: process.env.JWT_SECRET,
     },
-    async (jwtPayload, done) => {
-      try {
-        if (!jwtPayload) {
-          return done(null, false, {
-            message: 'Invalid token passed, authentication failed.',
-            statusCode: 401,
-          })
-        }
-
-        return done(null, jwtPayload)
-      } catch (err) {
-        return done(err, false)
-      }
+    (jwtPayload, done) => {
+      return done(null, jwtPayload)
     }
   )
 )

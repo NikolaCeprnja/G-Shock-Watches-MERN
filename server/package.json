@@ -1,6 +1,9 @@
 {
   "name": "g-shock-server",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=8.3.0"
+  },
   "private": true,
   "description": "Server/REST API for E-commerce G-Shock watches web app",
   "license": "GPL-3.0-only",
@@ -23,6 +26,7 @@
   },
   "author": "Nikola Čeprnja",
   "dependencies": {
+    "@mongoosejs/double": "^0.2.0",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",

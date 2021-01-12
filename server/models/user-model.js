@@ -33,4 +33,4 @@ userSchema.methods.isValidPassword = async function (password) {
 // plugin which adds pre-save validation for unique fields in userSchema
 userSchema.plugin(mongooseUniqueValidator)
 
-module.exports = mongoose.model('Users', userSchema)
+module.exports = mongoose.model('User', userSchema)

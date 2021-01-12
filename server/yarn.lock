@@ -93,6 +93,11 @@
     lodash "^4.17.19"
     to-fast-properties "^2.0.0"
 
+"@mongoosejs/double@^0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@mongoosejs/double/-/double-0.2.0.tgz#8a539e4a3775e9a69a388f8bef649e42276ccde3"
+  integrity sha512-Y72FlhiR/440Gur2AD+Ppknhas/egdsT44cV9B5TmQtMnUAkY68zBuA9YRNM1XZV4MM981AdCb/tH15BueTh1g==
+
 "@sindresorhus/is@^0.14.0":
   version "0.14.0"
   resolved "https://registry.yarnpkg.com/@sindresorhus/is/-/is-0.14.0.tgz#9fb3a3cf3132328151f353de4632e01e52102bea"

@@ -33,8 +33,10 @@ require('./auth/passport-strategies')
 
 // Routes config
 const userRoutes = require('./routes/users-routes')
+const productRoutes = require('./routes/products-routes')
 
 app.use('/api/users', userRoutes)
+app.use('/api/products', productRoutes)
 
 // 404 error page handler
 app.use((req, res) => {

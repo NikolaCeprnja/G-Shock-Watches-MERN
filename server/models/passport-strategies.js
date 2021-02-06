@@ -1,8 +1,9 @@
 const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
 const JWTStrategy = require('passport-jwt').Strategy
+const bcrypt = require('bcryptjs')
 
-const User = require('../models/user-model')
+const User = require('./user-model')
 
 // Local strategy for user signup
 passport.use(
@@ -13,7 +14,7 @@ passport.use(
       passwordField: 'password',
       passReqToCallback: true,
     },
-    async (req, userName, password, done) => {
+    async (req, userName, unhashedPassword, done) => {
       const { email, isAdmin } = req.body
       let existingUser
 
@@ -32,6 +33,8 @@ passport.use(
           statusCode: 409,
         })
       }
+
+      const password = await bcrypt.hash(unhashedPassword, 12)
 
       const user = new User({
         userName,

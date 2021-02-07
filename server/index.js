@@ -29,14 +29,16 @@ mongoose
   })
 
 // Passport config
-require('./auth/passport-strategies')
+require('./models/passport-strategies')
 
 // Routes config
 const userRoutes = require('./routes/users-routes')
 const productRoutes = require('./routes/products-routes')
+const reviewRoutes = require('./routes/review-routes')
 
 app.use('/api/users', userRoutes)
 app.use('/api/products', productRoutes)
+app.use('/api/reviews', reviewRoutes)
 
 // 404 error page handler
 app.use((req, res) => {
@@ -61,7 +63,7 @@ app.use((err, req, res, next) => {
 
 // 🚀 Start express server
 app.listen(app.get('port'), error => {
-  if (error) console.error(error)
+  if (error) return console.error(error)
 
   console.log(`Server is running on port: ${app.get('port')}.`)
 })

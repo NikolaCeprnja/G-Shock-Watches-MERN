@@ -1,3 +1,4 @@
+// PRODUCT TYPES
 const PRODUCT_TYPES = [
   'Extreme Conditions',
   'Sports',
@@ -45,9 +46,13 @@ const PRODUCT_FUNCTIONS = [
   'Multiband / Atomic Timekeeping',
 ]
 
+// REVIEW TYPES
+const REVIEW_KEYS = ['title', 'description', 'score']
+
 module.exports = {
   PRODUCT_TYPES,
   PRODUCT_COLLECTION_NAME,
   PRODUCT_MATERIALS,
   PRODUCT_FUNCTIONS,
+  REVIEW_KEYS,
 }

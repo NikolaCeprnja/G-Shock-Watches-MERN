@@ -22,6 +22,7 @@
     "func-names": "off",
     "object-shorthand": "off",
     "consistent-return": "off",
-    "default-case": "off"
+    "default-case": "off",
+    "no-underscore-dangle": "off"
   }
 }

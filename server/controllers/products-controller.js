@@ -1,5 +1,3 @@
-const { validationResult } = require('express-validator')
-
 const Product = require('../models/product-model')
 const ErrorHandler = require('../models/error-handler')
 
@@ -50,25 +48,15 @@ const getProductById = async (req, res, next) => {
 // POST CONTROLLERS
 const createProduct = async (req, res, next) => {
   const productData = req.body
-  const valErr = validationResult(req)
-
-  if (!valErr.isEmpty()) {
-    console.error(valErr)
-    return next(
-      new ErrorHandler('Invalid inputs passed, please check your data.', 422)
-    )
-  }
 
   let newProduct
   const product = new Product({
     ...productData,
-    created: Date.now(),
   })
 
   try {
     newProduct = await product.save()
   } catch (err) {
-    console.log(err)
     return next(
       new ErrorHandler('Something went wrong, please try again later.', 500)
     )
@@ -80,4 +68,37 @@ const createProduct = async (req, res, next) => {
   })
 }
 
-module.exports = { getProducts, getProductById, createProduct }
+// DELETE CONTROLLERS
+const deleteProduct = async (req, res, next) => {
+  const { pid } = req.params
+  let product
+
+  try {
+    product = await Product.findById(pid)
+  } catch (err) {
+    return next(
+      new ErrorHandler('Something went wrong, please try again later.', 500)
+    )
+  }
+
+  if (product) {
+    try {
+      await product.deleteOne()
+    } catch (err) {
+      return next(
+        new ErrorHandler('Something went wrong, please try again later.', 500)
+      )
+    }
+
+    return res.json({
+      message: 'Product is successfully deleted!',
+      deletedProduct: product.toObject({ getters: true }),
+    })
+  }
+
+  return res
+    .status(404)
+    .json({ message: 'Product with provided pid does not exists.' })
+}
+
+module.exports = { getProducts, getProductById, createProduct, deleteProduct }

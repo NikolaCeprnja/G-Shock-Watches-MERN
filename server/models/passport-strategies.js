@@ -1,6 +1,7 @@
 const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
 const JWTStrategy = require('passport-jwt').Strategy
+const GoogleStrategy = require('passport-google-oauth20').Strategy
 const bcrypt = require('bcryptjs')
 
 const User = require('./user-model')
@@ -20,7 +21,11 @@ passport.use(
 
       try {
         existingUser = await User.exists({
-          $or: [{ userName }, { email }],
+          $or: [
+            { userName },
+            { email },
+            { accounts: { $elemMatch: { displayName: userName } } },
+          ],
         })
       } catch (err) {
         return done(err)
@@ -119,8 +124,65 @@ passport.use(
       jwtFromRequest: cookieExtractor,
       secretOrKey: process.env.JWT_SECRET,
     },
-    (jwtPayload, done) => {
-      return done(null, jwtPayload)
+    async (jwtPayload, done) => {
+      try {
+        const user = await User.findById(jwtPayload.id)
+
+        if (!user) {
+          return done(null, false, {
+            message: 'Invalid token.',
+            statusCode: 401,
+          })
+        }
+
+        return done(null, user.toObject({ getters: true }))
+      } catch (err) {
+        return done(err, false)
+      }
+    }
+  )
+)
+
+// Google OAuth2.0 strategy
+passport.use(
+  'google',
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: 'http://localhost:5000/api/users/auth/google/callback',
+    },
+    async (accsessToken, refreshToken, profile, done) => {
+      const { id, provider, name, displayName, emails, photos } = profile
+      try {
+        const existingUser = await User.findOne({
+          accounts: { $elemMatch: { _id: id } },
+        })
+
+        if (!existingUser) {
+          const user = new User()
+
+          user.accounts.push({
+            _id: id,
+            provider,
+            name: {
+              firstName: name.givenName,
+              lastName: name.familyName,
+            },
+            displayName,
+            emails: [...emails],
+            photos: [...photos],
+          })
+
+          await user.save()
+
+          return done(null, user)
+        }
+
+        return done(null, existingUser)
+      } catch (err) {
+        return done(err)
+      }
     }
   )
 )

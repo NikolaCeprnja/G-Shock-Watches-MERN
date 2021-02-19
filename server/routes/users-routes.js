@@ -1,4 +1,5 @@
 const router = require('express').Router()
+const passport = require('passport')
 
 const {
   getUsers,
@@ -9,6 +10,7 @@ const {
   auth,
   authJwt,
   isAdmin,
+  checkReqParamValidity,
   checkUserPrivileges,
 } = require('../controllers/auth-controller')
 const { userValidation } = require('../controllers/req-validation-controller')
@@ -16,7 +18,45 @@ const { userValidation } = require('../controllers/req-validation-controller')
 // GET ROUTES
 router.get('/', authJwt, isAdmin, getUsers)
 
-router.get('/:uid', authJwt, checkUserPrivileges, getUserById)
+router.get('/admin', authJwt, isAdmin, (req, res, next) => {
+  return res.send({ admin: req.user })
+})
+
+router.get(
+  '/:uid/profile',
+  authJwt,
+  checkReqParamValidity('uid'),
+  checkUserPrivileges,
+  (req, res, next) => {
+    return res.send({ loggedinUser: req.user })
+  }
+)
+
+router.get(
+  '/:uid',
+  authJwt,
+  checkReqParamValidity('uid'),
+  checkUserPrivileges,
+  getUserById
+)
+
+router.get(
+  '/auth/google',
+  passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    prompt: 'select_account',
+  })
+)
+
+router.get('/auth/google/callback', auth('google'), (req, res) => {
+  res.cookie('token', req.token, { httpOnly: true })
+
+  if (req.user.isAdmin) {
+    return res.redirect('../../admin')
+  }
+
+  return res.redirect(`../../${req.user.id}/profile`)
+})
 
 // POST ROUTES
 router.post(
@@ -50,6 +90,12 @@ router.post(
 )
 
 // DELETE ROUTES
-router.delete('/:uid', authJwt, checkUserPrivileges, deleteUser)
+router.delete(
+  '/:uid',
+  authJwt,
+  checkReqParamValidity('uid'),
+  checkUserPrivileges,
+  deleteUser
+)
 
 module.exports = router

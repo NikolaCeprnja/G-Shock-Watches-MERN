@@ -3,18 +3,33 @@ const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
 const mongooseUniqueValidator = require('mongoose-unique-validator')
 
+const accountSchema = require('./account-model')
 const ErrorHandler = require('./error-handler')
 
 const { Schema } = mongoose
 
 const userSchema = new Schema(
   {
-    userName: { type: String, required: true, unique: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    userName: {
+      type: String,
+      required: () => !!this.email,
+      sparse: true,
+      unique: true,
+    },
+    email: {
+      type: String,
+      required: () => !!this.password,
+      sparse: true,
+      unique: true,
+    },
+    password: {
+      type: String,
+      required: () => !!this.email,
+    },
     isAdmin: { type: Boolean, default: false },
     purchasedProducts: [{ type: mongoose.Types.ObjectId, ref: 'Product' }],
     reviews: [{ type: mongoose.Types.ObjectId, ref: 'Review' }],
+    accounts: [accountSchema],
   },
   { timestamps: true }
 )
@@ -41,7 +56,6 @@ userSchema.pre(
       await session.commitTransaction()
       session.endSession()
     } catch (err) {
-      console.log(err)
       return next(
         new ErrorHandler('Something went wrong, please try again later.', 500)
       )

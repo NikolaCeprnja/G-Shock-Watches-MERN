@@ -2,7 +2,7 @@
   "name": "g-shock-server",
   "version": "1.0.0",
   "engines": {
-    "node": ">=8.3.0"
+    "node": ">=10.0.0"
   },
   "private": true,
   "description": "Server/REST API for E-commerce G-Shock watches web app",
@@ -37,6 +37,7 @@
     "mongoose": "^5.10.13",
     "mongoose-unique-validator": "^2.0.3",
     "passport": "^0.4.1",
+    "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.0",
     "passport-local": "^1.0.0"
   },

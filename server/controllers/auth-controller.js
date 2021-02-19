@@ -1,5 +1,6 @@
-const passport = require('passport')
 const jwt = require('jsonwebtoken')
+const passport = require('passport')
+const mongoose = require('mongoose')
 
 const User = require('../models/user-model')
 const Review = require('../models/review-model')
@@ -29,8 +30,6 @@ const auth = strategy => {
               jwt.sign(
                 {
                   id: req.user.id,
-                  email: req.user.email,
-                  isAdmin: req.user.isAdmin,
                 },
                 process.env.JWT_SECRET,
                 { expiresIn: process.env.JWT_EXPIRES_IN },
@@ -55,12 +54,26 @@ const authJwt = (req, res, next) => {
     if (err) return next(err)
 
     if (!user) {
-      return next(new ErrorHandler(info.message, 401))
+      return next(new ErrorHandler(info.message, info.statusCode))
     }
 
     req.user = user
     return next()
   })(req, res, next)
+}
+
+const checkReqParamValidity = param => {
+  return (req, res, next) => {
+    const reqParam = req.params[param]
+
+    if (!mongoose.isValidObjectId(reqParam)) {
+      return res
+        .status(400)
+        .json({ message: `Invalid param passed for ${param}.` })
+    }
+
+    return next()
+  }
 }
 
 const isAdmin = (req, res, next) => {
@@ -168,6 +181,7 @@ const checkReviewExistence = async (req, res, next) => {
 module.exports = {
   auth,
   authJwt,
+  checkReqParamValidity,
   isAdmin,
   checkUserPrivileges,
   checkPurchasedProducts,

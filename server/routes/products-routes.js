@@ -6,7 +6,11 @@ const {
   createProduct,
   deleteProduct,
 } = require('../controllers/products-controller')
-const { authJwt, isAdmin } = require('../controllers/auth-controller')
+const {
+  authJwt,
+  checkReqParamValidity,
+  isAdmin,
+} = require('../controllers/auth-controller')
 const {
   productValidation,
 } = require('../controllers/req-validation-controller')
@@ -14,7 +18,7 @@ const {
 // GET ROUTES
 router.get('/', getProducts)
 
-router.get('/:pid', getProductById)
+router.get('/:pid', checkReqParamValidity('pid'), getProductById)
 
 // POST ROUTES
 router.post(
@@ -26,6 +30,12 @@ router.post(
 )
 
 // DELETE ROUTES
-router.delete('/:pid', authJwt, isAdmin, deleteProduct)
+router.delete(
+  '/:pid',
+  authJwt,
+  checkReqParamValidity('pid'),
+  isAdmin,
+  deleteProduct
+)
 
 module.exports = router

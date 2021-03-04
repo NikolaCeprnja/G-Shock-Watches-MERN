@@ -136,9 +136,9 @@ const reviewValidation = method => {
     case 'updateReview': {
       return [
         body()
-          .custom(value => {
-            return Object.keys(value).every(key => REVIEW_KEYS.includes(key))
-          })
+          .custom(value =>
+            Object.keys(value).every(key => REVIEW_KEYS.includes(key))
+          )
           .withMessage(
             'Unexpected parameters passed, please check your data and try again.'
           ),
@@ -148,21 +148,15 @@ const reviewValidation = method => {
             body('title')
               .exists()
               .bail()
-              .custom((value, { req }) => {
-                return value !== req.review.title
-              }),
+              .custom((value, { req }) => value !== req.review.title),
             body('description')
               .exists()
               .bail()
-              .custom((value, { req }) => {
-                return value !== req.review.description
-              }),
+              .custom((value, { req }) => value !== req.review.description),
             body('score')
               .exists()
               .bail()
-              .custom((value, { req }) => {
-                return value !== req.review.score
-              }),
+              .custom((value, { req }) => value !== req.review.score),
           ],
           'At least one field needs to be different in order to update existing review.'
         ),

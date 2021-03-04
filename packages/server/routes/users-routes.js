@@ -18,18 +18,8 @@ const { userValidation } = require('../controllers/req-validation-controller')
 // GET ROUTES
 router.get('/', authJwt, isAdmin, getUsers)
 
-router.get('/admin', authJwt, isAdmin, (req, res, next) => {
-  return res.send({ admin: req.user })
-})
-
-router.get(
-  '/:uid/profile',
-  authJwt,
-  checkReqParamValidity('uid'),
-  checkUserPrivileges,
-  (req, res, next) => {
-    return res.send({ loggedinUser: req.user })
-  }
+router.get('/admin', authJwt, isAdmin, (req, res, next) =>
+  res.send({ admin: req.user })
 )
 
 router.get(
@@ -38,6 +28,14 @@ router.get(
   checkReqParamValidity('uid'),
   checkUserPrivileges,
   getUserById
+)
+
+router.get(
+  '/:uid/profile',
+  authJwt,
+  checkReqParamValidity('uid'),
+  checkUserPrivileges,
+  (req, res, next) => res.send({ loggedinUser: req.user })
 )
 
 router.get(
@@ -63,30 +61,28 @@ router.post(
   '/signup',
   userValidation('userSignup'),
   auth('signup'),
-  (req, res) => {
-    return res
+  (req, res) =>
+    res
       .status(201)
       .cookie('token', req.token, { httpOnly: true })
       .json({
         signedUpUser: req.user,
         message: `Hello ${req.user.userName}, you are successfully logged in!`,
       })
-  }
 )
 
 router.post(
   '/signin',
   userValidation('userSignin'),
   auth('signin'),
-  (req, res) => {
-    return res
+  (req, res) =>
+    res
       .status(200)
       .cookie('token', req.token, { httpOnly: true })
       .json({
         loggedInUser: req.user,
         message: `Hello ${req.user.userName}, you are successfully logged in!`,
       })
-  }
 )
 
 // DELETE ROUTES

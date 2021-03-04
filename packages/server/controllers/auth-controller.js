@@ -1,52 +1,50 @@
 const jwt = require('jsonwebtoken')
 const passport = require('passport')
-const mongoose = require('mongoose')
+const { isValidObjectId } = require('mongoose')
 
 const User = require('../models/user-model')
 const Review = require('../models/review-model')
 const ErrorHandler = require('../models/error-handler')
 
-const auth = strategy => {
-  return (req, res, next) => {
-    // Authenticate user with provided strategy
-    passport.authenticate(
-      strategy,
-      { session: false },
-      async (error, user, info) => {
-        try {
-          if (error) return next(error)
-          if (!user) {
-            return next(new ErrorHandler(info.message, info.statusCode))
-          }
-
-          // Login currently authenticated user
-          req.login(
-            user.toObject({ getters: true }),
-            { session: false },
-            async err => {
-              if (err) return next(err)
-
-              // Generate jwt for currently logged in user
-              jwt.sign(
-                {
-                  id: req.user.id,
-                },
-                process.env.JWT_SECRET,
-                { expiresIn: process.env.JWT_EXPIRES_IN },
-                (_err, token) => {
-                  if (_err) return next(_err)
-                  req.token = token
-                  return next()
-                }
-              )
-            }
-          )
-        } catch (err) {
-          return next(err)
+const auth = strategy => (req, res, next) => {
+  // Authenticate user with provided strategy
+  passport.authenticate(
+    strategy,
+    { session: false },
+    async (error, user, info) => {
+      try {
+        if (error) return next(error)
+        if (!user) {
+          return next(new ErrorHandler(info.message, info.statusCode))
         }
+
+        // Login currently authenticated user
+        req.login(
+          user.toObject({ getters: true }),
+          { session: false },
+          async err => {
+            if (err) return next(err)
+
+            // Generate jwt for currently logged in user
+            jwt.sign(
+              {
+                id: req.user.id,
+              },
+              process.env.JWT_SECRET,
+              { expiresIn: process.env.JWT_EXPIRES_IN },
+              (_err, token) => {
+                if (_err) return next(_err)
+                req.token = token
+                return next()
+              }
+            )
+          }
+        )
+      } catch (err) {
+        return next(err)
       }
-    )(req, res, next)
-  }
+    }
+  )(req, res, next)
 }
 
 const authJwt = (req, res, next) => {
@@ -62,18 +60,16 @@ const authJwt = (req, res, next) => {
   })(req, res, next)
 }
 
-const checkReqParamValidity = param => {
-  return (req, res, next) => {
-    const reqParam = req.params[param]
+const checkReqParamValidity = param => (req, res, next) => {
+  const reqParam = req.params[param]
 
-    if (!mongoose.isValidObjectId(reqParam)) {
-      return res
-        .status(400)
-        .json({ message: `Invalid param passed for ${param}.` })
-    }
-
-    return next()
+  if (!isValidObjectId(reqParam)) {
+    return res
+      .status(400)
+      .json({ message: `Invalid param passed for ${param}.` })
   }
+
+  return next()
 }
 
 const isAdmin = (req, res, next) => {

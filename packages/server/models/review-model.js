@@ -16,7 +16,7 @@ const reviewSchema = new Schema(
   { timestamps: true }
 )
 
-// pre-deleteOne method that will delete references for user and product review before deleting the review itself
+// Delete references for user and product review before deleting the review itself
 reviewSchema.pre(
   'deleteOne',
   { document: true, query: false },

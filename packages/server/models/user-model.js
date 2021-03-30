@@ -1,6 +1,7 @@
 /* eslint-disable global-require */
 const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
+const crypto = require('crypto')
 const mongooseUniqueValidator = require('mongoose-unique-validator')
 
 const accountSchema = require('./account-model')
@@ -30,11 +31,13 @@ const userSchema = new Schema(
     purchasedProducts: [{ type: mongoose.Types.ObjectId, ref: 'Product' }],
     reviews: [{ type: mongoose.Types.ObjectId, ref: 'Review' }],
     accounts: [accountSchema],
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
   },
   { timestamps: true }
 )
 
-// pre-deleteOne method that will delete all references for user and product reviews before deleting a user account
+// Delete all references for user and product reviews before deleting the user account
 userSchema.pre(
   'deleteOne',
   { document: true, query: false },
@@ -63,7 +66,7 @@ userSchema.pre(
   }
 )
 
-// custom method for validating hashed password
+// Validate the hashed password
 userSchema.methods.isValidPassword = async function (password) {
   const user = this
   const compare = await bcrypt.compare(password, user.password)
@@ -71,7 +74,22 @@ userSchema.methods.isValidPassword = async function (password) {
   return compare
 }
 
-// plugin which adds pre-save validation for unique fields in userSchema
+// Generates a password reset token and its expiration time
+userSchema.methods.getResetPasswordToken = function () {
+  const user = this
+  const resetToken = crypto.randomBytes(20).toString('hex')
+
+  user.resetPasswordToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex')
+
+  user.resetPasswordExpire = Date.now() + 10 * (60 * 1000)
+
+  return resetToken
+}
+
+// Plugin which adds pre-save validation for unique fields in userSchema
 userSchema.plugin(mongooseUniqueValidator)
 
 module.exports = mongoose.model('User', userSchema)

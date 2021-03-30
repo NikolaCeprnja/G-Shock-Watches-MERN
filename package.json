@@ -12,7 +12,7 @@
     "dev": "concurrently --kill-others-on-fail \"NODE_ENV='development' yarn server\" \"yarn client\""
   },
   "lint-staged": {
-    "./packages/client/{*,**/*,**/**/*}.js": [
+    "./packages/client/{*,**/*,**/**/*,**/**/**/*}.{js,jsx}": [
       "yarn workspace @g-shock-watches/client run lint:fix",
       "prettier --write"
     ],

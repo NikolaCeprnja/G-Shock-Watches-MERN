@@ -6,14 +6,13 @@ const {
   createProduct,
   deleteProduct,
 } = require('../controllers/products-controller')
-const {
-  authJwt,
-  checkReqParamValidity,
-  isAdmin,
-} = require('../controllers/auth-controller')
+const { authJwt } = require('../controllers/auth-controller')
 const {
   productValidation,
 } = require('../controllers/req-validation-controller')
+
+const { isAdmin } = require('../middlewares/auth-middleware')
+const { checkReqParamValidity } = require('../middlewares/req-param-middleware')
 
 // GET ROUTES
 router.get('/', getProducts)

@@ -9,18 +9,20 @@ const {
 const {
   auth,
   authJwt,
-  isAdmin,
-  checkReqParamValidity,
-  checkUserPrivileges,
+  forgotPassword,
+  resetPassword,
 } = require('../controllers/auth-controller')
 const { userValidation } = require('../controllers/req-validation-controller')
 
+const {
+  isAdmin,
+  checkUserPrivileges,
+  checkResetPassToken,
+} = require('../middlewares/auth-middleware')
+const { checkReqParamValidity } = require('../middlewares/req-param-middleware')
+
 // GET ROUTES
 router.get('/', authJwt, isAdmin, getUsers)
-
-router.get('/admin', authJwt, isAdmin, (req, res, next) =>
-  res.send({ admin: req.user })
-)
 
 router.get(
   '/:uid',
@@ -28,14 +30,6 @@ router.get(
   checkReqParamValidity('uid'),
   checkUserPrivileges,
   getUserById
-)
-
-router.get(
-  '/:uid/profile',
-  authJwt,
-  checkReqParamValidity('uid'),
-  checkUserPrivileges,
-  (req, res, next) => res.send({ loggedinUser: req.user })
 )
 
 router.get(
@@ -50,16 +44,16 @@ router.get('/auth/google/callback', auth('google'), (req, res) => {
   res.cookie('token', req.token, { httpOnly: true })
 
   if (req.user.isAdmin) {
-    return res.redirect('../../admin')
+    return res.redirect('http://localhost:3000/users/admin')
   }
 
-  return res.redirect(`../../${req.user.id}/profile`)
+  return res.redirect(`http://localhost:3000/users/${req.user.id}/profile`)
 })
 
 // POST ROUTES
 router.post(
-  '/signup',
-  userValidation('userSignup'),
+  '/auth/signup',
+  userValidation('signup'),
   auth('signup'),
   (req, res) =>
     res
@@ -72,8 +66,8 @@ router.post(
 )
 
 router.post(
-  '/signin',
-  userValidation('userSignin'),
+  '/auth/signin',
+  userValidation('signin'),
   auth('signin'),
   (req, res) =>
     res
@@ -83,6 +77,20 @@ router.post(
         loggedInUser: req.user,
         message: `Hello ${req.user.userName}, you are successfully logged in!`,
       })
+)
+
+router.post(
+  '/auth/forgotpassword',
+  userValidation('forgotPassword'),
+  checkResetPassToken,
+  forgotPassword
+)
+
+// PUT ROUTES
+router.put(
+  '/auth/resetpassword/:resetPasswordToken',
+  userValidation('resetPassword'),
+  resetPassword
 )
 
 // DELETE ROUTES

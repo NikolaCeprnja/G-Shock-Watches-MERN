@@ -1,10 +1,13 @@
 const jwt = require('jsonwebtoken')
+const config = require('config')
+const bcrypt = require('bcryptjs')
+const crypto = require('crypto')
 const passport = require('passport')
-const { isValidObjectId } = require('mongoose')
 
 const User = require('../models/user-model')
-const Review = require('../models/review-model')
 const ErrorHandler = require('../models/error-handler')
+
+const sendEmail = require('../utils/sendEmail')
 
 const auth = strategy => (req, res, next) => {
   // Authenticate user with provided strategy
@@ -15,7 +18,8 @@ const auth = strategy => (req, res, next) => {
       try {
         if (error) return next(error)
         if (!user) {
-          return next(new ErrorHandler(info.message, info.statusCode))
+          const { message, statusCode, errors } = info
+          return next(new ErrorHandler(message, statusCode, errors))
         }
 
         // Login currently authenticated user
@@ -30,8 +34,8 @@ const auth = strategy => (req, res, next) => {
               {
                 id: req.user.id,
               },
-              process.env.JWT_SECRET,
-              { expiresIn: process.env.JWT_EXPIRES_IN },
+              config.get('JWT.SECRET'),
+              { expiresIn: config.get('JWT.EXPIRES_IN') },
               (_err, token) => {
                 if (_err) return next(_err)
                 req.token = token
@@ -60,127 +64,113 @@ const authJwt = (req, res, next) => {
   })(req, res, next)
 }
 
-const checkReqParamValidity = param => (req, res, next) => {
-  const reqParam = req.params[param]
-
-  if (!isValidObjectId(reqParam)) {
-    return res
-      .status(400)
-      .json({ message: `Invalid param passed for ${param}.` })
-  }
-
-  return next()
-}
-
-const isAdmin = (req, res, next) => {
-  if (req.user.isAdmin) {
-    return next()
-  }
-
-  return res
-    .status(403)
-    .json({ message: "You don't have permission to do that." })
-}
-
-const checkUserPrivileges = (req, res, next) => {
-  const { uid } = req.params
-
-  if (req.user.isAdmin || req.user.id === uid) {
-    return next()
-  }
-
-  return res
-    .status(403)
-    .json({ message: "You don't have permission to do that." })
-}
-
-const checkPurchasedProducts = async (req, res, next) => {
-  const { pid } = req.params
-  let user
-
-  if (req.user.isAdmin) {
-    return next()
-  }
+const forgotPassword = async (req, res, next) => {
+  const { userNameOrEmail } = req.body
 
   try {
-    user = await User.findById(req.user.id)
+    const existingUser = await User.findOne({
+      $or: [{ userName: userNameOrEmail }, { email: userNameOrEmail }],
+    })
+
+    if (!existingUser) {
+      return next({
+        errors: {
+          userNameOrEmail: {
+            message:
+              'User with provided email / username does not exists. Check your data and try again.',
+            value: userNameOrEmail,
+          },
+        },
+        statusCode: 404,
+      })
+    }
+
+    const resetPasswordToken = existingUser.getResetPasswordToken()
+
+    await existingUser.save()
+
+    const passwordResetUrl = `${config.get(
+      'PASSWORD_RESET.URL'
+    )}/${resetPasswordToken}`
+
+    const message = `<h1>You have requested a password reset</h1>
+      <p>Please go to this link to reset your password</p>
+      <a href=${passwordResetUrl} clicktracking=off>${passwordResetUrl}<a/>
+    `
+    try {
+      await sendEmail({
+        to: existingUser.email,
+        subject: 'Password Reset Request',
+        html: message,
+      })
+
+      res.status(200).json({
+        message:
+          'Request for password reset is successfully sent. Go check your email and follow the further instructions.',
+      })
+    } catch (err) {
+      existingUser.resetPasswordToken = undefined
+      existingUser.resetPasswordExpire = undefined
+
+      await existingUser.save()
+
+      return next(
+        new ErrorHandler(
+          'Something went wrong while sending a request for your password reset, please try again later.',
+          500
+        )
+      )
+    }
   } catch (err) {
     return next(
       new ErrorHandler('Something went wrong, please try again later', 500)
     )
   }
-
-  if (user.purchasedProducts.length) {
-    if (user.purchasedProducts.includes(pid)) {
-      return next()
-    }
-
-    return res
-      .status(403)
-      .json({ message: "You don't have permission to do that." })
-  }
-
-  return res.status(404).json({
-    message: 'User with provided uid does not have any purchased products jet.',
-  })
 }
 
-const checkReviewOvnership = async (req, res, next) => {
-  const { rid } = req.params
-  let review
+const resetPassword = async (req, res, next) => {
+  const { newPassword } = req.body
+
+  const resetPasswordToken = crypto
+    .createHash('sha256')
+    .update(req.params.resetPasswordToken)
+    .digest('hex')
 
   try {
-    review = await Review.findById(rid)
-  } catch (err) {
-    return next(
-      new ErrorHandler('Somthing went wrong, please try again later.', 500)
-    )
-  }
+    const existingUser = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    })
 
-  if (review) {
-    if (req.user.isAdmin || req.user.id === review.creator.toString()) {
-      req.review = review
-      return next()
+    if (!existingUser) {
+      return next(
+        new ErrorHandler(
+          'Invalid password reset token, please send a new email request and then try again.',
+          400
+        )
+      )
     }
 
-    return res
-      .status(403)
-      .json({ message: "You don't have permission to do that." })
-  }
+    const password = await bcrypt.hash(newPassword, 12)
 
-  return res
-    .status(404)
-    .json({ message: 'Review with provided rid does not exists.' })
-}
+    existingUser.password = password
+    existingUser.resetPasswordToken = undefined
+    existingUser.resetPasswordExpire = undefined
 
-const checkReviewExistence = async (req, res, next) => {
-  const { pid } = req.params
-  let reviewExists
+    await existingUser.save()
 
-  try {
-    reviewExists = await Review.exists({ creator: req.user.id, product: pid })
+    return res.status(200).json({
+      message:
+        'Your password is successfully reseted! You can close this window now and go to sign in.',
+    })
   } catch (err) {
-    return next(
-      new ErrorHandler('Something went wrong, please try again later', 500)
-    )
+    return next(err)
   }
-
-  if (req.user.isAdmin || !reviewExists) {
-    return next()
-  }
-
-  return res
-    .status(422)
-    .json({ message: 'Review for product with provided pid already exists.' })
 }
 
 module.exports = {
   auth,
   authJwt,
-  checkReqParamValidity,
-  isAdmin,
-  checkUserPrivileges,
-  checkPurchasedProducts,
-  checkReviewOvnership,
-  checkReviewExistence,
+  forgotPassword,
+  resetPassword,
 }

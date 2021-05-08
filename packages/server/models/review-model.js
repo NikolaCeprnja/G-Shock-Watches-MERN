@@ -13,8 +13,10 @@ const reviewSchema = new Schema(
     creator: { type: mongoose.Types.ObjectId, required: true, ref: 'User' },
     product: { type: mongoose.Types.ObjectId, required: true, ref: 'Product' },
   },
-  { timestamps: true }
+  { timestamps: true, toObject: { getters: true } }
 )
+
+// TODO: add transform function for toObject to remove _id and other stuff if needed
 
 // Delete references for user and product review before deleting the review itself
 reviewSchema.pre(

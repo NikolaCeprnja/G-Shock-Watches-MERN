@@ -22,7 +22,7 @@ const productSchema = new Schema(
     specifications: [{ type: String, required: true }],
     price: { type: Double, required: true },
   },
-  { timestamps: true }
+  { timestamps: true, toObject: { getters: true } }
 )
 
 productSchema.pre(

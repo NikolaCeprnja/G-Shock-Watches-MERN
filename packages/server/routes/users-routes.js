@@ -40,22 +40,44 @@ router.get(
   getUserById
 )
 
-router.get(
-  '/auth/google',
+router.get('/auth/signout', (req, res) => {
+  res.clearCookie('token', { sameSite: 'strict', httpOnly: true })
+  res.json({ message: 'You are successfully signed out.' })
+})
+
+router.get('/auth/google', (req, res, next) => {
+  const redirectTo = req.query.redirect_to
+  const state = redirectTo
+    ? Buffer.from(JSON.stringify({ redirectTo })).toString('base64')
+    : undefined
+
   passport.authenticate('google', {
     scope: ['profile', 'email'],
     prompt: 'select_account',
-  })
-)
+    state,
+  })(req, res, next)
+})
 
 router.get('/auth/google/callback', auth('google'), (req, res) => {
-  res.cookie('token', req.token, { httpOnly: true })
+  res
+    .status(200)
+    .cookie('token', req.token, { sameSite: 'strict', httpOnly: true })
 
-  if (req.user.isAdmin) {
-    return res.redirect('http://localhost:3000/users/admin')
+  try {
+    const { state } = req.query
+    const { redirectTo } = JSON.parse(Buffer.from(state, 'base64').toString())
+    if (typeof redirectTo === 'string' && redirectTo.startsWith('/')) {
+      res.redirect(`http://localhost:3000${redirectTo}`)
+    }
+  } catch {
+    if (req.user.isAdmin) {
+      return res.redirect('http://localhost:3000/admin/dashboard')
+    }
+
+    return res.redirect(
+      `http://localhost:3000/users/${req.user.id}/profile/dashboard`
+    )
   }
-
-  return res.redirect(`http://localhost:3000/users/${req.user.id}/profile`)
 })
 
 // POST ROUTES

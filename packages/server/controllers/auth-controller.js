@@ -23,27 +23,24 @@ const auth = strategy => (req, res, next) => {
         }
 
         // Login currently authenticated user
-        req.login(
-          user.toObject({ getters: true }),
-          { session: false },
-          async err => {
-            if (err) return next(err)
+        req.login(user, { session: false }, async err => {
+          if (err) return next(err)
 
-            // Generate jwt for currently logged in user
-            jwt.sign(
-              {
-                id: req.user.id,
-              },
-              config.get('JWT.SECRET'),
-              { expiresIn: config.get('JWT.EXPIRES_IN') },
-              (_err, token) => {
-                if (_err) return next(_err)
-                req.token = token
-                return next()
-              }
-            )
-          }
-        )
+          // Generate jwt for currently logged in user
+          jwt.sign(
+            {
+              id: req.user.id,
+              auth: info ? { ...info } : undefined,
+            },
+            config.get('JWT.SECRET'),
+            { expiresIn: config.get('JWT.EXPIRES_IN') },
+            (_err, token) => {
+              if (_err) return next(_err)
+              req.token = token
+              return next()
+            }
+          )
+        })
       } catch (err) {
         return next(err)
       }

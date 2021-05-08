@@ -24,6 +24,14 @@ const { checkReqParamValidity } = require('../middlewares/req-param-middleware')
 // GET ROUTES
 router.get('/', authJwt, isAdmin, getUsers)
 
+router.get('/auth', authJwt, (req, res) => {
+  if (req.isAuthenticated()) {
+    return res.status(200).json({ loggedInUser: req.user })
+  }
+
+  return res.status(401).json({ message: 'Unauthenticated.' })
+})
+
 router.get(
   '/:uid',
   authJwt,

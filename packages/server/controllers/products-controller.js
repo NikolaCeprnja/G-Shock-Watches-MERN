@@ -1,4 +1,7 @@
+const mongoose = require('mongoose')
+
 const Product = require('../models/product-model')
+const Collection = require('../models/collection-model')
 const ErrorHandler = require('../models/error-handler')
 
 // GET CONTROLLERS
@@ -35,9 +38,7 @@ const getProductById = async (req, res, next) => {
   }
 
   if (product) {
-    return res
-      .status(200)
-      .json({ product: product.toObject({ getters: true }) })
+    return res.status(200).json({ product: product.toObject() })
   }
 
   return res
@@ -48,6 +49,7 @@ const getProductById = async (req, res, next) => {
 // POST CONTROLLERS
 const createProduct = async (req, res, next) => {
   const productData = req.body
+  const { collectionName } = productData
 
   let newProduct
   const product = new Product({
@@ -55,7 +57,16 @@ const createProduct = async (req, res, next) => {
   })
 
   try {
-    newProduct = await product.save()
+    const session = await mongoose.startSession()
+    session.startTransaction()
+    newProduct = await product.save({ session })
+    const collection = await Collection.findOne({
+      name: collectionName,
+    }).session(session)
+    collection.products.push(product)
+    await collection.save()
+    await session.commitTransaction()
+    session.endSession()
   } catch (err) {
     return next(
       new ErrorHandler('Something went wrong, please try again later.', 500)
@@ -92,7 +103,7 @@ const deleteProduct = async (req, res, next) => {
 
     return res.status(200).json({
       message: 'Product is successfully deleted!',
-      deletedProduct: product.toObject({ getters: true }),
+      deletedProduct: product.toObject(),
     })
   }
 

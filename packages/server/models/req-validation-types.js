@@ -18,7 +18,7 @@ const PRODUCT_COLLECTION_NAME = [
   'G-MS',
   'G-SHOCK Women',
   'G-STEEL',
-  'Maste Of G',
+  'Master Of G',
   'MR-G',
   'MT-G',
 ]

@@ -22,7 +22,7 @@ const productSchema = new Schema(
     specifications: [{ type: String, required: true }],
     price: { type: Double, required: true },
   },
-  { timestamps: true }
+  { timestamps: true, toObject: { getters: true } }
 )
 
 productSchema.pre(
@@ -31,6 +31,7 @@ productSchema.pre(
   async function (next) {
     const User = require('./user-model')
     const Review = require('./review-model')
+    const Collection = require('./collection-model')
     const product = this
 
     try {
@@ -47,6 +48,10 @@ productSchema.pre(
       ).session(session)
       await Review.deleteMany({ _id: { $in: product.reviews } }).session(
         session
+      )
+      await Collection.updateOne(
+        { name: product.collectionName },
+        { $pull: { products: product._id } }
       )
       await session.commitTransaction()
       session.endSession()

@@ -23,6 +23,12 @@
     "object-shorthand": "off",
     "consistent-return": "off",
     "default-case": "off",
-    "no-underscore-dangle": "off"
+    "no-underscore-dangle": "off",
+    "no-param-reassign": [
+      "error",
+      {
+        "props": false
+      }
+    ]
   }
 }

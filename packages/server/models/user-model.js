@@ -28,14 +28,48 @@ const userSchema = new Schema(
       required: () => !!this.email,
     },
     isAdmin: { type: Boolean, default: false },
+    avatarUrl: String,
     purchasedProducts: [{ type: mongoose.Types.ObjectId, ref: 'Product' }],
     reviews: [{ type: mongoose.Types.ObjectId, ref: 'Review' }],
     accounts: [accountSchema],
     resetPasswordToken: String,
     resetPasswordExpire: Date,
   },
-  { timestamps: true }
+  { timestamps: true, toObject: { getters: true } }
 )
+
+userSchema.options.toObject.transform = function (doc, ret, options) {
+  delete ret._id
+  delete ret.password
+
+  if (options.localStrategy) {
+    const { id, userName, email, isAdmin, avatarUrl } = ret
+    return {
+      id,
+      isAdmin,
+      userName,
+      email,
+      avatarUrl,
+    }
+  }
+
+  if (options.googleStrategy) {
+    const { id, isAdmin, accounts } = ret
+    const { displayName, emails, photos } = accounts[0]
+    const { value: email } = emails[0]
+    const { value: photo } = photos[0]
+
+    return {
+      id,
+      isAdmin,
+      userName: displayName,
+      email,
+      photo,
+    }
+  }
+
+  return ret
+}
 
 // Delete all references for user and product reviews before deleting the user account
 userSchema.pre(

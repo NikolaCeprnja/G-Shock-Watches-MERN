@@ -14,7 +14,7 @@ const accountSchema = new Schema(
     ],
     photos: [{ value: { type: String, required: true } }],
   },
-  { _id: false }
+  { _id: false, toObject: { getters: true } }
 )
 
 module.exports = accountSchema

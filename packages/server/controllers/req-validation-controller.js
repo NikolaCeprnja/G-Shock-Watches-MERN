@@ -25,7 +25,7 @@ const reqValidationResult = (req, res, next) => {
     const error = err.mapped()
     console.log(error)
 
-    return res.status(422).json({ ...error })
+    return res.status(422).json({ errors: { ...error } })
   }
 }
 
@@ -34,7 +34,7 @@ const reqValidationResult = (req, res, next) => {
 // USER VALIDATION
 const userValidation = method => {
   switch (method) {
-    case 'userSignup': {
+    case 'signup': {
       return [
         body('userName')
           .trim()
@@ -43,12 +43,18 @@ const userValidation = method => {
         body('email')
           .trim()
           .notEmpty()
-          .normalizeEmail()
           .isEmail()
           .withMessage('Invalid email address.'),
         body('password')
           .isLength({ min: 6 })
           .withMessage('Passowrd needs to be at least 6 characters long.'),
+        body('confirmPassword')
+          .isLength({ min: 6 })
+          .withMessage('Passowrd needs to be at least 6 characters long.')
+          .custom((value, { req }) => value === req.body.password)
+          .withMessage(
+            "Passwords don't match, please check your data and try again."
+          ),
         body('isAdmin').optional().isBoolean(),
         body('purchasedProducts').optional().isArray({ min: 1 }),
         body('purchasedProducts.*').isMongoId(),
@@ -57,15 +63,11 @@ const userValidation = method => {
         reqValidationResult,
       ]
     }
-    case 'userSignin': {
+    case 'signin': {
       return [
         oneOf(
           [
-            body('userNameOrEmail')
-              .trim()
-              .notEmpty()
-              .normalizeEmail()
-              .isEmail(),
+            body('userNameOrEmail').trim().notEmpty().isEmail(),
             body('userNameOrEmail').trim().isLength({ min: 6 }),
           ],
           'Invalid email or username passed, please check your data and try again.'
@@ -73,6 +75,33 @@ const userValidation = method => {
         body('password')
           .isLength({ min: 6 })
           .withMessage('Passowrd needs to be at least 6 characters long.'),
+        reqValidationResult,
+      ]
+    }
+    case 'forgotPassword': {
+      return [
+        oneOf(
+          [
+            body('userNameOrEmail').trim().notEmpty().isEmail(),
+            body('userNameOrEmail').trim().isLength({ min: 6 }),
+          ],
+          'Invalid email or username passed, please check your data and try again.'
+        ),
+        reqValidationResult,
+      ]
+    }
+    case 'resetPassword': {
+      return [
+        body('newPassword')
+          .isLength({ min: 6 })
+          .withMessage('Passowrd needs to be at least 6 characters long.'),
+        body('confirmNewPassword')
+          .isLength({ min: 6 })
+          .withMessage('Passowrd needs to be at least 6 characters long.')
+          .custom((value, { req }) => value === req.body.newPassword)
+          .withMessage(
+            "Passwords don't match, please check your data and try again."
+          ),
         reqValidationResult,
       ]
     }

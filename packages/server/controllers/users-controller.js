@@ -68,7 +68,7 @@ const deleteUser = async (req, res, next) => {
       res.clearCookie('token', { httpOnly: true })
     }
 
-    return res.json({
+    return res.status(200).json({
       message: 'User is successfully deleted!',
       deletedUser: user.toObject({ getters: true }),
     })

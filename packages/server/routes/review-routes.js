@@ -7,15 +7,16 @@ const {
   updateReview,
   deleteReview,
 } = require('../controllers/reviews-controller')
+const { authJwt } = require('../controllers/auth-controller')
+const { reviewValidation } = require('../controllers/req-validation-controller')
+
+const { checkUserPrivileges } = require('../middlewares/auth-middleware')
+const { checkReqParamValidity } = require('../middlewares/req-param-middleware')
+const { checkPurchasedProducts } = require('../middlewares/users-middleware')
 const {
-  authJwt,
-  checkReqParamValidity,
-  checkUserPrivileges,
-  checkPurchasedProducts,
   checkReviewOvnership,
   checkReviewExistence,
-} = require('../controllers/auth-controller')
-const { reviewValidation } = require('../controllers/req-validation-controller')
+} = require('../middlewares/reviews-middleware')
 
 // GET ROUTES
 router.get(

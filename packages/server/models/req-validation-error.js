@@ -1,5 +1,5 @@
 const errorFormater = ({ msg, value, nestedErrors }) => ({
-  msg,
+  message: msg,
   value,
   nestedErrors,
 })

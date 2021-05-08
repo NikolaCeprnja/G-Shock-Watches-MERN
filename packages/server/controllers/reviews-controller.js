@@ -28,7 +28,7 @@ const getReviewsByUserId = async (req, res, next) => {
     return next(new ErrorHandler('User has no reviews yet.', 404))
   }
 
-  return res.json({
+  return res.status(200).json({
     message: `List of all ${userReviews.userName} reviews`,
     reviews: userReviews.reviews,
   })
@@ -56,7 +56,7 @@ const getReviewsByProductId = async (req, res, next) => {
     return next(new ErrorHandler('Product has no reviews yet.', 404))
   }
 
-  return res.json({
+  return res.status(200).json({
     message: `List of all reviews for ${productReviews.name}-${productReviews.model}`,
     reviews: productReviews.reviews,
   })
@@ -118,7 +118,7 @@ const updateReview = async (req, res, next) => {
       )
     }
 
-    return res.json({
+    return res.status(200).json({
       message: 'Review is successfully updated.',
       updatedReview: reviewToUpdate,
     })
@@ -151,7 +151,7 @@ const deleteReview = async (req, res, next) => {
       )
     }
 
-    return res.json({
+    return res.status(200).json({
       message: 'Review is successfully deleted!',
       deletedReview: review.toObject({ getters: true }),
     })

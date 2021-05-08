@@ -1,4 +1,5 @@
 const passport = require('passport')
+const config = require('config')
 const LocalStrategy = require('passport-local').Strategy
 const JWTStrategy = require('passport-jwt').Strategy
 const GoogleStrategy = require('passport-google-oauth20').Strategy
@@ -17,10 +18,10 @@ passport.use(
     },
     async (req, userName, unhashedPassword, done) => {
       const { email, isAdmin } = req.body
-      let existingUser
+      let existingUsers
 
       try {
-        existingUser = await User.exists({
+        existingUsers = await User.find({
           $or: [
             { userName },
             { email },
@@ -31,12 +32,37 @@ passport.use(
         return done(err)
       }
 
-      if (existingUser) {
-        return done(null, false, {
-          message:
-            'User with provided email and / or username already exists, please try again with different values.',
-          statusCode: 409,
+      // FIXME: modify all error messages to be in the same format like errorFormatter
+      if (existingUsers) {
+        const errors = {}
+
+        existingUsers.forEach(existingUser => {
+          if (
+            existingUser.userName === userName ||
+            existingUser.accounts.some(acc => acc.displayName === userName)
+          ) {
+            errors.userName = {
+              message: 'Username already taken, please try another one.',
+              value: userName,
+            }
+          }
+
+          if (existingUser.email === email) {
+            errors.email = {
+              message:
+                'Email already taken, please try another one, or go to signin now.',
+              value: email,
+            }
+          }
         })
+
+        if (Object.keys(errors).length > 0) {
+          return done(null, false, {
+            message: 'Conflict while creating user account.',
+            statusCode: 409,
+            errors: { ...errors },
+          })
+        }
       }
 
       const password = await bcrypt.hash(unhashedPassword, 12)
@@ -80,8 +106,13 @@ passport.use(
 
       if (!user) {
         return done(null, false, {
-          message:
-            'User with provided email / username does not exists, please check your data and try again.',
+          errors: {
+            userNameOrEmail: {
+              message:
+                'User with provided email / username does not exists. Check your data and try again, or go to register now.',
+              value: userNameOrEmail,
+            },
+          },
           statusCode: 404,
         })
       }
@@ -96,7 +127,12 @@ passport.use(
 
       if (!passValidity) {
         return done(null, false, {
-          message: 'Incorrect password, please try again.',
+          errors: {
+            password: {
+              message:
+                'Wrong password. Try again or click Forgot password to reset it.',
+            },
+          },
           statusCode: 401,
         })
       }
@@ -122,12 +158,13 @@ passport.use(
   new JWTStrategy(
     {
       jwtFromRequest: cookieExtractor,
-      secretOrKey: process.env.JWT_SECRET,
+      secretOrKey: config.get('JWT.SECRET'),
     },
     async (jwtPayload, done) => {
       try {
         const user = await User.findById(jwtPayload.id)
 
+        // TODO: on the client side add axios interceptor to logout the user if jwt is invalid
         if (!user) {
           return done(null, false, {
             message: 'Invalid token.',
@@ -148,9 +185,9 @@ passport.use(
   'google',
   new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: 'http://localhost:5000/api/users/auth/google/callback',
+      clientID: config.get('GOOGLE_OAUTH2.CLIENT_ID'),
+      clientSecret: config.get('GOOGLE_OAUTH2.CLIENT_SECRET'),
+      callbackURL: '/api/users/auth/google/callback',
     },
     async (accsessToken, refreshToken, profile, done) => {
       const { id, provider, name, displayName, emails, photos } = profile

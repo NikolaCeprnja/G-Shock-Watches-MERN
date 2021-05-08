@@ -1,32 +1,23 @@
 const express = require('express')
 const cors = require('cors')
-const env = require('dotenv')
-const mongoose = require('mongoose')
+const config = require('config')
 const cookieParser = require('cookie-parser')
 
 // Express config
 const app = express()
+const port = config.get('SERVER.PORT')
+const host = config.get('SERVER.HOST')
 
-if (app.get('env') !== 'production') env.config()
-else app.disable('x-powered-by')
-
-app.set('port', process.env.PORT || 5000)
+if (app.get('env') === 'production') app.disable('x-powered-by')
 
 app.use(cors())
 app.use(cookieParser())
 app.use(express.json())
 
 // Mongoose config
-mongoose
-  .connect(process.env.DB_URI, {
-    useNewUrlParser: true,
-    useCreateIndex: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log('Successfully connected to the mongodb atlas.'))
-  .catch(error => {
-    console.error(error)
-  })
+const connectDB = require('./config/db')
+
+connectDB()
 
 // Passport config
 require('./models/passport-strategies')
@@ -40,30 +31,21 @@ app.use('/api/users', userRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/reviews', reviewRoutes)
 
+// Errors handler config
+const {
+  errorPageHandler,
+  defaultErrorHandler,
+} = require('./middlewares/error-middleware')
+
 // 404 error page handler
-app.use((req, res) => {
-  res.status(404).json({ message: 'Error, this page does not exists.' })
-})
+app.use(errorPageHandler)
 
 // Default error handler
-app.use((err, req, res, next) => {
-  console.error(err)
-
-  if (res.headersSent) {
-    return next(err)
-  }
-
-  return res.status(err.statusCode || 500).json({
-    message:
-      err.message ||
-      'Server error, something went wrong, please try again later.',
-    error: process.env.NODE_ENV === 'development' ? err : undefined,
-  })
-})
+app.use(defaultErrorHandler)
 
 // 🚀 Start express server
-app.listen(app.get('port'), error => {
+app.listen(port, host, error => {
   if (error) return console.error(error)
 
-  console.log(`Server is running on port: ${app.get('port')}.`)
+  console.log(`Server is running on port: ${port}.`)
 })

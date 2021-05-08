@@ -153,7 +153,7 @@ const deleteReview = async (req, res, next) => {
 
     return res.status(200).json({
       message: 'Review is successfully deleted!',
-      deletedReview: review.toObject({ getters: true }),
+      deletedReview: review.toObject(),
     })
   }
 

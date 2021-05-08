@@ -38,9 +38,7 @@ const getProductById = async (req, res, next) => {
   }
 
   if (product) {
-    return res
-      .status(200)
-      .json({ product: product.toObject({ getters: true }) })
+    return res.status(200).json({ product: product.toObject() })
   }
 
   return res
@@ -105,7 +103,7 @@ const deleteProduct = async (req, res, next) => {
 
     return res.status(200).json({
       message: 'Product is successfully deleted!',
-      deletedProduct: product.toObject({ getters: true }),
+      deletedProduct: product.toObject(),
     })
   }
 

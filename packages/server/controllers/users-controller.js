@@ -33,7 +33,7 @@ const getUserById = async (req, res, next) => {
   }
 
   if (user) {
-    return res.status(200).json({ user: user.toObject({ getters: true }) })
+    return res.status(200).json({ user: user.toObject({ authUser: true }) })
   }
 
   return res
@@ -70,7 +70,7 @@ const deleteUser = async (req, res, next) => {
 
     return res.status(200).json({
       message: 'User is successfully deleted!',
-      deletedUser: user.toObject({ getters: true }),
+      deletedUser: user.toObject(),
     })
   }
 

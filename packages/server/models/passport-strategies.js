@@ -139,10 +139,14 @@ passport.use(
       let user
 
       try {
-        user = await User.findOne({
-          $or: [{ userName: userNameOrEmail }, { email: userNameOrEmail }],
-        })
+        user = await User.findOne(
+          {
+            $or: [{ userName: userNameOrEmail }, { email: userNameOrEmail }],
+          },
+          'userName email password isAdmin, avatarUrl'
+        )
       } catch (err) {
+        // TODO: change returned error with custom message
         return done(err)
       }
 
@@ -172,14 +176,14 @@ passport.use(
           errors: {
             password: {
               message:
-                'Wrong password. Try again or click Forgot password to reset it.',
+                'Wrong password. Try again or click forgot password to reset it.',
             },
           },
           statusCode: 401,
         })
       }
 
-      return done(null, user)
+      return done(null, user.toObject(), { localStrategy: true })
     }
   )
 )
@@ -214,7 +218,9 @@ passport.use(
           })
         }
 
-        return done(null, user.toObject({ getters: true }))
+        const options = jwtPayload.auth ? { ...jwtPayload.auth } : undefined
+
+        return done(null, user.toObject(options))
       } catch (err) {
         return done(err, false)
       }
@@ -255,10 +261,12 @@ passport.use(
 
           await user.save()
 
-          return done(null, user)
+          return done(null, user, {
+            googleStrategy: true,
+          })
         }
 
-        return done(null, existingUser)
+        return done(null, existingUser, { googleStrategy: true })
       } catch (err) {
         return done(err)
       }

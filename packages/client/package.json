@@ -18,6 +18,7 @@
     "@testing-library/user-event": "^7.1.2",
     "antd": "^4.12.3",
     "axios": "^0.21.1",
+    "craco-alias": "^2.2.0",
     "craco-antd": "^1.19.0",
     "formik": "^2.2.6",
     "prop-types": "^15.7.2",

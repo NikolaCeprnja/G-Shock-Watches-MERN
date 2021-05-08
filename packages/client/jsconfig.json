@@ -1,0 +1,34 @@
+{
+    "compilerOptions": {
+        "module": "esnext",
+        "moduleResolution": "node",
+        "baseUrl": "./src",
+        "jsx": "react",
+        "paths": {
+            "@api/*": [
+                "./api/*"
+            ],
+            "@assets/*": [
+                "./assets/*"
+            ],
+            "@components/*": [
+                "./components/*"
+            ],
+            "@containers/*": [
+                "./containers/*"
+            ],
+            "@pages/*": [
+                "./pages/*"
+            ],
+            "@redux/*": [
+                "./redux/*"
+            ]
+        }
+    },
+    "include": [
+        "./src"
+    ],
+    "exclude": [
+        "./node_modules"
+    ]
+}

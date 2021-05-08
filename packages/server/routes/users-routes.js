@@ -1,5 +1,8 @@
 const router = require('express').Router()
 const passport = require('passport')
+const multer = require('multer')
+
+const upload = multer()
 
 const {
   getUsers,
@@ -83,12 +86,13 @@ router.get('/auth/google/callback', auth('google'), (req, res) => {
 // POST ROUTES
 router.post(
   '/auth/signup',
+  upload.single('avatar'),
   userValidation('signup'),
   auth('signup'),
   (req, res) =>
     res
       .status(201)
-      .cookie('token', req.token, { httpOnly: true })
+      .cookie('token', req.token, { sameSite: 'strict', httpOnly: true })
       .json({
         signedUpUser: req.user,
         message: `Hello ${req.user.userName}, you are successfully logged in!`,
@@ -102,7 +106,7 @@ router.post(
   (req, res) =>
     res
       .status(200)
-      .cookie('token', req.token, { httpOnly: true })
+      .cookie('token', req.token, { sameSite: 'strict', httpOnly: true })
       .json({
         loggedInUser: req.user,
         message: `Hello ${req.user.userName}, you are successfully logged in!`,

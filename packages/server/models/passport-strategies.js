@@ -1,3 +1,6 @@
+const fs = require('fs')
+const { promisify } = require('util')
+const pipeline = promisify(require('stream').pipeline)
 const passport = require('passport')
 const config = require('config')
 const LocalStrategy = require('passport-local').Strategy
@@ -17,25 +20,31 @@ passport.use(
       passReqToCallback: true,
     },
     async (req, userName, unhashedPassword, done) => {
-      const { email, isAdmin } = req.body
+      const {
+        file,
+        body: { email, isAdmin },
+      } = req
+
       let existingUsers
 
       try {
-        existingUsers = await User.find({
-          $or: [
-            { userName },
-            { email },
-            { accounts: { $elemMatch: { displayName: userName } } },
-          ],
-        })
+        existingUsers = await User.find(
+          {
+            $or: [
+              { userName },
+              { email },
+              { accounts: { $elemMatch: { displayName: userName } } },
+            ],
+          },
+          'userName email accounts'
+        )
       } catch (err) {
         return done(err)
       }
 
+      const errors = {}
       // FIXME: modify all error messages to be in the same format like errorFormatter
       if (existingUsers) {
-        const errors = {}
-
         existingUsers.forEach(existingUser => {
           if (
             existingUser.userName === userName ||
@@ -49,20 +58,37 @@ passport.use(
 
           if (existingUser.email === email) {
             errors.email = {
-              message:
-                'Email already taken, please try another one, or go to signin now.',
+              message: 'Email already taken, please try another one.',
               value: email,
             }
           }
         })
+      }
 
-        if (Object.keys(errors).length > 0) {
-          return done(null, false, {
-            message: 'Conflict while creating user account.',
-            statusCode: 409,
-            errors: { ...errors },
-          })
+      if (file) {
+        if (
+          file.detectedMimeType !== 'image/png' &&
+          file.detectedMimeType !== 'image/jpeg'
+        ) {
+          errors.avatar = {
+            message:
+              'Unsuported file selected.\nOnly .PNG or .JPEG (JPG) files are allowed.',
+            value: file,
+          }
+        } else if (file.size > 1000000) {
+          errors.avatar = {
+            message: 'Chosen file needs to be less then 1MB.',
+            value: file,
+          }
         }
+      }
+
+      if (Object.keys(errors).length > 0) {
+        return done(null, false, {
+          message: 'Conflict while creating user account.',
+          statusCode: 409,
+          errors: { ...errors },
+        })
       }
 
       const password = await bcrypt.hash(unhashedPassword, 12)
@@ -74,13 +100,29 @@ passport.use(
         isAdmin,
       })
 
+      if (file) {
+        const fileName = `${user.id}-${file.fieldName}${file.detectedFileExtension}`
+
+        const path = `${__dirname}/../public/images/avatars/${fileName}`
+
+        try {
+          await pipeline(file.stream, fs.createWriteStream(path))
+        } catch (err) {
+          return done(err)
+        }
+
+        user.avatarUrl = `/images/avatars/${fileName}`
+      }
+
       try {
         await user.save()
       } catch (err) {
         return done(err)
       }
 
-      return done(null, user)
+      return done(null, user.toObject({ localStrategy: true }), {
+        localStrategy: true,
+      })
     }
   )
 )

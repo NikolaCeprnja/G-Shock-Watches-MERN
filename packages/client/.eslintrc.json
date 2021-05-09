@@ -17,6 +17,7 @@
     },
     "plugins": [
         "react",
+        "react-hooks",
         "prettier"
     ],
     "rules": {
@@ -33,6 +34,10 @@
                 ]
             }
         ],
-        "react/state-in-constructor": "off"
+        "react/state-in-constructor": "off",
+        "react/jsx-props-no-spreading": "off",
+        "import/no-unresolved": "off",
+        "react-hooks/rules-of-hooks": "error",
+        "react-hooks/exhaustive-deps": "warn"
     }
 }

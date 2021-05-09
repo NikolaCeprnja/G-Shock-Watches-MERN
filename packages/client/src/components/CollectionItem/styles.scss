@@ -1,0 +1,15 @@
+.collection-item {
+  width: 200px;
+  box-sizing: border-box;
+
+  .collection-img {
+    width: 100%;
+  }
+
+  .collection-name {
+    color: #fff;
+    padding-top: 10px;
+    text-align: center;
+    text-transform: uppercase;
+  }
+}

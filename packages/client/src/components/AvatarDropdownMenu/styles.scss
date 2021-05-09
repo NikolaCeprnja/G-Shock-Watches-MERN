@@ -1,0 +1,39 @@
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-width: 200px;
+  padding: 20px 20px;
+
+  .user-photo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    background-color: #ccc;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+
+    & > span.anticon.anticon-user {
+      font-size: 34px;
+      margin-right: 0;
+    }
+  }
+
+  .user-name {
+    margin-top: 10px;
+    font-weight: bold;
+  }
+
+  .user-email {
+    color: rgb(168, 167, 167);
+  }
+}
+
+.dropdown-menu-title-active .ant-dropdown-menu-submenu-title {
+  color: #1890ff;
+  background-color: #e6f7ff;
+}

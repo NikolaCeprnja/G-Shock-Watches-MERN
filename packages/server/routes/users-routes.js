@@ -114,7 +114,7 @@ router.post(
 )
 
 router.post(
-  '/auth/forgotpassword',
+  '/auth/forgot-password',
   userValidation('forgotPassword'),
   checkResetPassToken,
   forgotPassword
@@ -122,7 +122,7 @@ router.post(
 
 // PUT ROUTES
 router.put(
-  '/auth/resetpassword/:resetPasswordToken',
+  '/auth/reset-password/:resetPasswordToken',
   userValidation('resetPassword'),
   resetPassword
 )

@@ -50,15 +50,18 @@ const AvatarDropdownMenu = ({
 
   return (
     <Dropdown
-      trigger={['click']}
       visible={isVisible}
       onVisibleChange={handleVisibleChange}
+      overlayStyle={{
+        position: 'fixed',
+      }}
       overlay={
         <Menu selectable selectedKeys={[selectedKey]} onClick={handleMenuClick}>
           <Item key='userName' className='user-info' disabled>
             {photo || avatarUrl ? (
               <Image
                 width={80}
+                height={80}
                 src={photo || avatarUrl}
                 style={{ borderRadius: '50%' }}
               />
@@ -72,6 +75,7 @@ const AvatarDropdownMenu = ({
           </Item>
           <Divider />
           <SubMenu
+            popupClassName='user-actions-submenu'
             className={
               selectedKey === `/users/${id}/profile/dashboard` &&
               'dropdown-menu-title-active'

@@ -3,8 +3,12 @@ import { useSelector } from 'react-redux'
 import { useHistory, useLocation } from 'react-router-dom'
 import { Layout, Menu, Skeleton } from 'antd'
 
-import AvatarDropdownMenu from '@components/AvatarDropdownMenu/index'
+import CartDropdownMenu from '@containers/CartDropdownMenu/index'
 import CollectionDropdownMenu from '@containers/CollectionDropdownMenu/index'
+
+import AvatarDropdownMenu from '@components/AvatarDropdownMenu/index'
+
+import { selectUser } from '@redux/user/userSlice'
 
 import { ReactComponent as Logo } from '@assets/GShock_logo.svg'
 
@@ -16,7 +20,7 @@ const { Item } = Menu
 const Navbar = () => {
   const history = useHistory()
   const { pathname } = useLocation()
-  const loggedInUser = useSelector(state => state.user)
+  const loggedInUser = useSelector(selectUser)
   const [selectedKeys, setSelectedKeys] = useState([])
 
   useEffect(() => {
@@ -28,7 +32,7 @@ const Navbar = () => {
   }, [pathname])
 
   return (
-    <Header>
+    <Header style={{ position: 'fixed', zIndex: '1050', width: '100%' }}>
       <Menu
         theme='dark'
         mode='horizontal'
@@ -48,12 +52,16 @@ const Navbar = () => {
         </Item>
         <Item key='/watches'>Watches</Item>
         <Item key='/watches/limited-edition'>Limited Edition</Item>
+        <Item
+          disabled
+          className='shopping-cart'
+          style={{ color: '#fff', opacity: 1 }}>
+          <CartDropdownMenu />
+        </Item>
         {!loggedInUser.info &&
           !loggedInUser.loading &&
           loggedInUser.auth === 'unauthenticated' && (
-            <Item key='/auth/signin' className='user-signin'>
-              Sign In
-            </Item>
+            <Item key='/auth/signin'>Sign In</Item>
           )}
         {!loggedInUser.info &&
           (loggedInUser.loading || loggedInUser.auth === 'authenticating') && (

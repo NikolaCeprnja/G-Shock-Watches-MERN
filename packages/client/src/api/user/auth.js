@@ -1,45 +1,42 @@
 import * as Axios from 'axios'
 
 const axios = Axios.create({
-  baseURL: '/api',
+  baseURL: '/api/users/auth',
   headers: { 'Content-Type': 'application/json' },
 })
 
 const authUser = async () => {
-  const response = await axios('/users/auth')
+  const response = await axios()
 
   return response
 }
 
 const signin = async data => {
-  const response = await axios.post('/users/auth/signin', data)
+  const response = await axios.post('/signin', data)
 
   return response
 }
 
 const signup = async data => {
-  const response = await axios.post('/users/auth/signup', data)
+  const response = await axios.post('/signup', data)
 
   return response
 }
 
 const signout = async () => {
-  const response = await axios('/users/auth/signout')
+  const response = await axios('/signout')
 
   return response
 }
 
 export const forgotPassword = async data => {
-  const response = await axios.post('/users/auth/forgotpassword', data)
+  const response = await axios.post('/forgot-password', data)
 
   return response
 }
 
 export const resetPassword = async (data, resetToken) => {
-  const response = await axios.put(
-    `/users/auth/resetpassword/${resetToken}`,
-    data
-  )
+  const response = await axios.put(`/reset-password/${resetToken}`, data)
 
   return response
 }

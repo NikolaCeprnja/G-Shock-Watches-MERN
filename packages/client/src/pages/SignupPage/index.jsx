@@ -11,13 +11,14 @@ import * as Yup from 'yup'
 import InputField from '@components/InputField/index'
 import AvatarUpload from '@components/AvatarUpload/index'
 
-import { signup } from '@redux/user/userSlice'
+import { selectUser, signup } from '@redux/user/userSlice'
+import { create as createNotification } from '@redux/notification/notificationSlice'
 
 import './styles.scss'
 
 const SignupPage = () => {
   const dispatch = useDispatch()
-  const loggedInUser = useSelector(state => state.user)
+  const loggedInUser = useSelector(selectUser)
 
   const InfoMessage = () => {
     infoMessage.loading({
@@ -40,7 +41,7 @@ const SignupPage = () => {
     return () => {
       infoMessage.destroy('info')
     }
-  }, [loggedInUser])
+  }, [loggedInUser, dispatch])
 
   return (
     <div className='Signup'>
@@ -88,10 +89,16 @@ const SignupPage = () => {
 
               const response = await dispatch(signup(data))
               console.log(response)
-              const { status, message } = unwrapResult(response)
+              const { message } = unwrapResult(response)
 
-              // TODO: add new component for displaying notifications after successful signup
-              setServerResponse({ status, message })
+              dispatch(
+                createNotification({
+                  id: 'signedup',
+                  type: 'success',
+                  title: 'Your account is successfully created!',
+                  description: message,
+                })
+              )
             } catch (error) {
               console.log(error)
               const { errors, message } = error.data

@@ -1,4 +1,8 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import {
+  createSlice,
+  createAsyncThunk,
+  createDraftSafeSelector,
+} from '@reduxjs/toolkit'
 
 import collections from '@api/collection/index'
 
@@ -52,5 +56,13 @@ export const collectionSlice = createSlice({
     },
   },
 })
+
+const selectCollections = state => state.collections
+
+export const selectCollectionByGender = gender =>
+  createDraftSafeSelector(
+    [selectCollections],
+    allCollections => allCollections[gender]
+  )
 
 export default collectionSlice.reducer

@@ -1,75 +1,101 @@
-import React, { useEffect } from 'react'
-import { useDispatch } from 'react-redux'
+import React, { useEffect, Suspense, lazy } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import { Switch, Route } from 'react-router-dom'
-import { BackTop } from 'antd'
+import { Spin, BackTop } from 'antd'
 
-import SigninPage from '@pages/SigninPage/index'
-import SignupPage from '@pages/SignupPage/index'
-import ForgotPasswordPage from '@pages/ForgotPasswordPage/index'
-import ResetPasswordPage from '@pages/ResetPasswordPage/index'
+import AuthLayout from '@layouts/AuthLayout/index'
+import MainLayout from '@layouts/MainLayout/index'
 
-import Navbar from '@components/Navbar/index'
+import Notification from '@components/Notification/index'
+
 import ProtectedRoute from '@components/ProtectedRoute/index'
 
 import { authUser } from '@redux/user/userSlice'
+import { selectNotifications } from '@redux/notification/notificationSlice'
 
 import './App.less'
 
+const HomePage = lazy(() => import('@pages/HomePage'))
+const SigninPage = lazy(() => import('@pages/SigninPage/index'))
+const SignupPage = lazy(() => import('@pages/SignupPage/index'))
+const ForgotPasswordPage = lazy(() => import('@pages/ForgotPasswordPage/index'))
+const ResetPasswordPage = lazy(() => import('@pages/ResetPasswordPage/index'))
+/* const ReviewsPage = lazy(() => import('@pages/ReviewsPage/index'))
+const WatchesPage = lazy(() => import('@pages/WatchesPage/index')) */
+
 function App() {
   const dispatch = useDispatch()
+  const notifications = useSelector(selectNotifications)
 
   useEffect(() => {
-    const getAuthUser = async () => {
-      try {
-        const response = await dispatch(authUser())
-        console.log(response)
-      } catch (err) {
-        console.log(err)
-      }
-    }
+    const getAuthUser = () => dispatch(authUser())
 
     getAuthUser()
   }, [dispatch])
 
   return (
     <>
-      <div className='App-header'>
-        <Navbar />
-      </div>
-      <div className='App'>
+      <Suspense fallback={<Spin size='large' />}>
         <Switch>
-          <Route exact path='/'>
-            <div>
-              <h1>G-Shock-Watches</h1>
-            </div>
-          </Route>
+          <Route
+            exact
+            path='/'
+            render={() => (
+              <MainLayout>
+                <HomePage />
+              </MainLayout>
+            )}
+          />
           <ProtectedRoute
             exact
             path='/auth/signin'
             to='/'
             component={SigninPage}
+            layout={AuthLayout}
           />
           <ProtectedRoute
             exact
             path='/auth/signup'
             to='/'
             component={SignupPage}
+            layout={AuthLayout}
           />
           <ProtectedRoute
             exact
-            path='/auth/forgotpassword'
+            path='/auth/forgot-password'
             to='/'
             component={ForgotPasswordPage}
+            layout={AuthLayout}
           />
           <ProtectedRoute
             exact
-            path='/auth/resetpassword/:resetToken'
+            path='/auth/reset-password/:resetToken'
             to='/'
             component={ResetPasswordPage}
+            layout={AuthLayout}
           />
+          {/* <ProtectedRoute
+            exact
+            path='/users/:uid/reviews'
+            isPrivate
+            component={ReviewsPage}
+            layout={MainLayout}
+          />
+          <Route
+            exact
+            path='/watches/:type'
+            render={() => (
+              <MainLayout>
+                <WatchesPage />
+              </MainLayout>
+            )}
+          /> */}
         </Switch>
+        {notifications.data?.map(notification => (
+          <Notification key={notification.id} {...notification} />
+        ))}
         <BackTop />
-      </div>
+      </Suspense>
     </>
   )
 }

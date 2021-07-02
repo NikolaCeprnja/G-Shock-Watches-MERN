@@ -3,8 +3,16 @@ import { useSelector } from 'react-redux'
 import { Route, Redirect } from 'react-router-dom'
 import PropTypes from 'prop-types'
 
-const ProtectedRoute = ({ to, isPrivate, component: Component, ...rest }) => {
-  const loggedInUser = useSelector(state => state.user)
+import { selectUser } from '@redux/user/userSlice'
+
+const ProtectedRoute = ({
+  to,
+  isPrivate,
+  component: Component,
+  layout: Layout,
+  ...rest
+}) => {
+  const loggedInUser = useSelector(selectUser)
   const [isBusy, setIsBusy] = useState(true)
 
   useEffect(() => {
@@ -23,14 +31,18 @@ const ProtectedRoute = ({ to, isPrivate, component: Component, ...rest }) => {
         const { location } = routeProps
 
         if (isBusy || loggedInUser.auth === 'authenticating') {
-          return null
+          return !isPrivate ? null : <Layout>{null}</Layout>
         }
 
         if (
           (loggedInUser.info && isPrivate) ||
           (!loggedInUser.info && !isPrivate)
         ) {
-          return <Component {...routeProps} />
+          return (
+            <Layout>
+              <Component {...routeProps} />
+            </Layout>
+          )
         }
 
         if (loggedInUser.info) {
@@ -55,7 +67,8 @@ ProtectedRoute.defaultProps = {
 ProtectedRoute.propTypes = {
   to: PropTypes.string,
   isPrivate: PropTypes.bool,
-  component: PropTypes.func.isRequired,
+  component: PropTypes.instanceOf(Object).isRequired,
+  layout: PropTypes.func.isRequired,
 }
 
 export default ProtectedRoute

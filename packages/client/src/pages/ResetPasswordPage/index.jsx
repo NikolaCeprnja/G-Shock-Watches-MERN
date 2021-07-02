@@ -38,14 +38,7 @@ const ResetPasswordPage = () => {
             style={{ width: 400, marginBottom: '1.5rem', textAlign: 'left' }}
           />
         )}
-        <Card
-          // title='Reset password'
-          style={{
-            width: 400,
-            backgroundColor: 'rgba(0,0,0,0.2)',
-            borderRadius: '15px',
-          }}>
-          <h1 className='title'>Reset Password</h1>
+        <Card title='Reset Password'>
           <Formik
             initialValues={{ newPassword: '', confirmNewPassword: '' }}
             onSubmit={async (values, { setFieldError, resetForm }) => {

@@ -5,7 +5,10 @@
   justify-content: center;
   width: fit-content;
   min-width: 200px;
-  padding: 20px 20px;
+
+  .ant-image {
+    margin: 0.5rem 0;
+  }
 
   .user-photo {
     display: flex;
@@ -24,7 +27,6 @@
   }
 
   .user-name {
-    margin-top: 10px;
     font-weight: bold;
   }
 

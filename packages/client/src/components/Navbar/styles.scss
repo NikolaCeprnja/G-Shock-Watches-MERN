@@ -9,7 +9,8 @@ header.ant-layout-header {
       height: 100%;
     }
 
-    .collection-dropdown-item {
+    .collection-dropdown-item,
+    .shopping-cart {
       padding: 0;
       width: fit-content;
 
@@ -18,24 +19,24 @@ header.ant-layout-header {
       }
     }
 
-    li.user-signin {
+    li.shopping-cart {
       margin-left: auto;
+      cursor: pointer;
     }
 
     div.main-avatar-skeleton {
       display: flex;
-      margin-left: auto;
 
       span.main-avatar-skeleton {
         align-self: center;
-        margin: 0 20px 0 auto;
+        margin: 0 20px;
       }
     }
 
     span.main-avatar {
       cursor: pointer;
       align-self: center;
-      margin: 0 20px 0 auto;
+      margin: 0 20px;
     }
   }
 }
@@ -55,6 +56,7 @@ li.user-info {
 }
 
 div.ant-dropdown.collection-dropdown-menu {
+  position: fixed;
   top: 63px !important;
   left: 0 !important;
   right: 0;
@@ -62,7 +64,69 @@ div.ant-dropdown.collection-dropdown-menu {
   & > ul {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     justify-content: center;
     align-items: center;
+
+    .collection-item-skeleton h3 {
+      margin: 1rem auto;
+    }
+
+    & > :last-child {
+      display: flex;
+      flex: 0 1 100%;
+      justify-content: center;
+      margin: 15px 0;
+    }
+  }
+}
+
+.cart-dropdown-menu {
+  .cart-items-group {
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    width: 251px;
+    height: 234px;
+    max-height: 234px;
+    overflow: hidden auto;
+
+    & > div {
+      display: none;
+    }
+
+    ul {
+      margin: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+
+      .cart-empty-msg {
+        margin: auto 0;
+      }
+    }
+  }
+
+  .cart-actions {
+    color: #000;
+    opacity: 1;
+    border-top: #f0f0f0 1px solid;
+    padding: 10px 15px;
+
+    &:hover {
+      color: #000;
+      background-color: #fff;
+    }
+
+    .cart-subtotal {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    button {
+      margin: 1rem 0;
+    }
   }
 }

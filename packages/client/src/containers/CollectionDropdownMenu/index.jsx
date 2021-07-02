@@ -2,19 +2,21 @@ import React, { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { useHistory, useLocation, useRouteMatch } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { Dropdown, Menu, Skeleton } from 'antd'
+import { Dropdown, Menu, Skeleton, Button } from 'antd'
 
 import CollectionItem from '@components/CollectionItem/index'
 
-import { getCollectionsByGender } from '@redux/collection/collectionSlice'
+import {
+  selectCollectionByGender,
+  getCollectionsByGender,
+} from '@redux/collection/collectionSlice'
 
 const CollectionDropdownMenu = ({ gender, skeletons }) => {
   const history = useHistory()
   const { pathname, search } = useLocation()
   const match = useRouteMatch('/watches/:type')
   const dispatch = useDispatch()
-  const collections = useSelector(state => state.collections[gender])
-  const { loading, data } = collections
+  const { loading, data } = useSelector(selectCollectionByGender(gender))
   const [isVisible, setIsVisible] = useState(false)
   const [selectedKeys, setSelectedKeys] = useState([])
 
@@ -23,29 +25,23 @@ const CollectionDropdownMenu = ({ gender, skeletons }) => {
 
     if (query.has('collection') && match.params?.type === gender) {
       return setSelectedKeys(
-        `/watches/${gender}?collection=${query.get('collection')}`
+        `/watches/${gender}?collection=${query.get('collection').toLowerCase()}`
       )
     }
 
     return setSelectedKeys()
   }, [pathname, search, match, gender])
 
-  const handleVisibleChange = async visible => {
+  const handleVisibleChange = visible => {
     setIsVisible(visible)
 
-    if (visible && !data) {
-      try {
-        const response = await dispatch(getCollectionsByGender(gender))
-        console.log(response)
-      } catch (err) {
-        console.log(err)
-      }
+    if (visible && !data && !loading) {
+      dispatch(getCollectionsByGender(gender))
     }
   }
 
   return (
     <Dropdown
-      placement='bottomLeft'
       overlayClassName='collection-dropdown-menu'
       visible={isVisible}
       onVisibleChange={handleVisibleChange}
@@ -55,10 +51,10 @@ const CollectionDropdownMenu = ({ gender, skeletons }) => {
           theme='dark'
           selectable
           selectedKeys={selectedKeys}
-          onClick={async e => {
+          onClick={e => {
             e.domEvent.stopPropagation()
             setIsVisible(false)
-            await history.push(e.key)
+            history.push(e.key)
           }}>
           {loading
             ? [...Array(skeletons)].map((e, i) => (
@@ -69,27 +65,39 @@ const CollectionDropdownMenu = ({ gender, skeletons }) => {
                     display: 'flex',
                     flexDirection: 'column',
                     flexWrap: 'nowrap',
-                    justifyContent: 'center',
                     alignItems: 'center',
+                    justifyContent: 'center',
                     padding: '10px',
                   }}>
-                  <Skeleton.Image style={{ width: '150px' }} />
-                  <Skeleton paragraph={{ rows: 0 }} />
+                  <Skeleton.Image style={{ width: '160px', height: '160px' }} />
+                  <Skeleton
+                    active
+                    className='collection-item-skeleton'
+                    paragraph={{ rows: 0 }}
+                  />
                 </div>
               ))
             : data?.length > 0 &&
-              data.map(({ name, ...rest }) => {
-                return (
-                  <CollectionItem
-                    key={`/watches/${gender}?collection=${name}`}
-                    name={name}
-                    {...rest}
-                  />
-                )
-              })}
+              data.map(({ name, ...rest }) => (
+                <CollectionItem
+                  key={`/watches/${gender}?collection=${name.toLowerCase()}`}
+                  name={name}
+                  {...rest}
+                />
+              ))}
           {!loading && !data?.length && (
             <div>There is no collections for {gender}</div>
           )}
+          <li>
+            <Button
+              size='large'
+              style={{
+                textTransform: 'capitalize',
+              }}
+              onClick={() =>
+                setIsVisible(false)
+              }>{`Shop ${gender}'s watches`}</Button>
+          </li>
         </Menu>
       }>
       <div style={{ textTransform: 'capitalize' }}>{gender}</div>

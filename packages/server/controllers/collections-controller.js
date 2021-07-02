@@ -9,7 +9,9 @@ const getCollectionsByGender = async (req, res, next) => {
   try {
     collections = await Collection.find({ gender })
   } catch (err) {
-    return next(err)
+    return next(
+      new ErrorHandler('Something went wrong, please try again later.', 500)
+    )
   }
 
   collections = collections.map(collection => collection.toObject())

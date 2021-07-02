@@ -17,12 +17,15 @@
             "@containers/*": [
                 "./containers/*"
             ],
+            "@layouts/*": [
+                "./layouts/*"
+            ],
             "@pages/*": [
                 "./pages/*"
             ],
             "@redux/*": [
                 "./redux/*"
-            ]
+            ],
         }
     },
     "include": [

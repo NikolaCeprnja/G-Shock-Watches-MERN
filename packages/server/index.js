@@ -27,12 +27,14 @@ require('./models/passport-strategies')
 // Routes config
 const userRoutes = require('./routes/users-routes')
 const reviewRoutes = require('./routes/review-routes')
-const collectionsRouter = require('./routes/collections-routes')
+const collectionRoutes = require('./routes/collections-routes')
+const offerRoutes = require('./routes/offers-routes')
 const productRoutes = require('./routes/products-routes')
 
 app.use('/api/users', userRoutes)
 app.use('/api/reviews', reviewRoutes)
-app.use('/api/collections', collectionsRouter)
+app.use('/api/collections', collectionRoutes)
+app.use('/api/offers', offerRoutes)
 app.use('/api/products', productRoutes)
 
 // Errors handler config

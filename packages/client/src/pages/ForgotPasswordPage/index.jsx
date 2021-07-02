@@ -39,14 +39,7 @@ const ForgotPasswordPage = () => {
             style={{ width: 400, marginBottom: '1.5rem', textAlign: 'left' }}
           />
         )}
-        <Card
-          // title='Forgot password'
-          style={{
-            width: 400,
-            backgroundColor: 'rgba(0,0,0,0.2)',
-            borderRadius: '15px',
-          }}>
-          <h1 className='title'>Forgot Password</h1>
+        <Card title='Forgot Password'>
           <Formik
             initialValues={{ userNameOrEmail: '' }}
             onSubmit={async (values, { setFieldError, resetForm }) => {

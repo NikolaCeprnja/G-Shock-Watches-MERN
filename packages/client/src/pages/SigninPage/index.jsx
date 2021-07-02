@@ -12,13 +12,14 @@ import * as Yup from 'yup'
 import InputField from '@components/InputField/index'
 import { ReactComponent as GoogleIcon } from '@assets/Google_logo.svg'
 
-import { signin } from '@redux/user/userSlice'
+import { selectUser, signin } from '@redux/user/userSlice'
+import { create as createNotification } from '@redux/notification/notificationSlice'
 
 import './styles.scss'
 
 const SigninPage = ({ location }) => {
   const dispatch = useDispatch()
-  const loggedInUser = useSelector(state => state.user)
+  const loggedInUser = useSelector(selectUser)
   const [validateOnBlur, setValidateOnBlur] = useState(true)
   const [serverResponse, setServerResponse] = useState({})
   const [errMsg, setErrMsg] = useState('')
@@ -53,14 +54,7 @@ const SigninPage = ({ location }) => {
           style={{ width: 400, marginBottom: '1.5rem', textAlign: 'left' }}
         />
       )}
-      <Card
-        // title='Signin'
-        style={{
-          width: 400,
-          backgroundColor: 'rgba(0,0,0,0.2)',
-          borderRadius: '15px',
-        }}>
-        <h1 className='title'>Sign In</h1>
+      <Card title='Sign In'>
         <Formik
           initialValues={{ userNameOrEmail: '', password: '' }}
           onSubmit={async (values, { setFieldError }) => {
@@ -69,12 +63,15 @@ const SigninPage = ({ location }) => {
             try {
               const response = await dispatch(signin(values))
 
-              // eslint-disable-next-line no-unused-vars
-              const { status, message } = unwrapResult(response)
-              // setServerResponse({
-              //   status,
-              //   message,
-              // })
+              const { message } = unwrapResult(response)
+              dispatch(
+                createNotification({
+                  id: 'signedin',
+                  type: 'success',
+                  title: 'You are successfully logged in!',
+                  description: message,
+                })
+              )
             } catch (error) {
               console.log(error)
               const {
@@ -132,7 +129,7 @@ const SigninPage = ({ location }) => {
                 component={InputField}
               />
               <Form.Item name='forgotPassword'>
-                <Link to='/auth/forgotpassword' style={{ float: 'right' }}>
+                <Link to='/auth/forgot-password' style={{ float: 'right' }}>
                   Forgot password?
                 </Link>
               </Form.Item>

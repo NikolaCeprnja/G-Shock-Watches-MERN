@@ -5,9 +5,19 @@
   justify-content: center;
   align-items: center;
 
-  .title {
-    text-align: center;
-    margin-bottom: 1.5rem;
+  & div.ant-card.ant-card-bordered {
+    width: 400px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+
+    div.ant-card-head {
+      text-align: center;
+
+      & div.ant-card-head-title {
+        padding: 1.5rem 0;
+        font-size: 1.7rem;
+      }
+    }
   }
 
   .signin-caption {

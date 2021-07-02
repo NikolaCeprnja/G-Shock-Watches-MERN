@@ -1,0 +1,126 @@
+.product-item {
+  width: 25%;
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
+
+  .ribbon {
+    position: absolute;
+    top: 2%;
+    right: 30%;
+    z-index: 1;
+    padding: 0 1rem;
+    font-size: 14px;
+    list-style: none;
+    font-variant: tabular-nums;
+    font-feature-settings: 'tnum', 'tnum';
+    height: 22px;
+    padding: 0 8px;
+    color: #ac1c23;
+    background-color: #f5222d;
+    line-height: 22px;
+    white-space: nowrap;
+    border-radius: 2px;
+
+    .ribbon-text {
+      color: #fff !important;
+    }
+
+    .ribbon-corner {
+      position: absolute;
+      right: 0;
+      top: 100%;
+      width: 8px;
+      height: 8px;
+      color: currentColor;
+      border: 4px solid;
+      border-color: currentColor transparent transparent currentColor;
+      transform: scaleY(0.75);
+      transform-origin: top;
+
+      &::after {
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        content: '';
+      }
+    }
+  }
+
+  a {
+    text-align: center;
+
+    &:hover .img-wrapper {
+      transform: scale(1.1);
+      transition: all 0.2s ease-in;
+    }
+  }
+
+  .img-wrapper {
+    height: 180px;
+    width: 100%;
+    transition: all 0.2s ease-in;
+
+    .product-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(5px 5px 8px rgba(0, 0, 0, 0.35));
+    }
+  }
+
+  .product-rate {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.5rem;
+    white-space: nowrap;
+
+    ul li {
+      cursor: pointer;
+    }
+
+    .product-reviews-count {
+      color: black;
+      padding: 4px 0 0 4px;
+    }
+  }
+
+  .product-collection-name {
+    margin: 0.5rem 0;
+  }
+
+  .product-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 85px;
+
+    .product-name {
+      margin-bottom: 0;
+    }
+
+    .product-old-price {
+      color: #b3b3b3;
+      text-decoration: line-through solid 2px red;
+    }
+
+    .product-price {
+      color: black;
+      font-size: 1.5rem;
+      font-weight: 500;
+    }
+  }
+
+  .ant-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0.5rem 0;
+    padding: 20px 40px;
+  }
+}

@@ -10,11 +10,13 @@ const productSchema = new Schema(
   {
     name: { type: String, required: true },
     model: { type: String, required: true },
+    desc: { type: String, required: true },
     color: { type: String, required: true },
     types: [{ type: String, required: true }],
     collectionName: { type: String, required: true },
     materials: [{ type: String, required: true }],
-    functions: [{ type: String, required: true }],
+    mainFeatures: [{ type: String, required: true }],
+    previewImg: { type: String, required: true },
     images: [{ type: String, required: true }],
     discount: { type: Number, default: 0 },
     inStock: { type: Number, required: true },
@@ -24,6 +26,10 @@ const productSchema = new Schema(
   },
   { timestamps: true, toObject: { getters: true } }
 )
+
+productSchema.options.toObject.transform = function (doc, ret, options) {
+  delete ret._id
+}
 
 productSchema.pre(
   'deleteOne',

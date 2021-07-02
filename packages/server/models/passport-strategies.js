@@ -143,7 +143,7 @@ passport.use(
           {
             $or: [{ userName: userNameOrEmail }, { email: userNameOrEmail }],
           },
-          'userName email password isAdmin, avatarUrl'
+          'userName email password isAdmin avatarUrl'
         )
       } catch (err) {
         // TODO: change returned error with custom message
@@ -183,7 +183,9 @@ passport.use(
         })
       }
 
-      return done(null, user.toObject(), { localStrategy: true })
+      return done(null, user.toObject({ localStrategy: true }), {
+        localStrategy: true,
+      })
     }
   )
 )

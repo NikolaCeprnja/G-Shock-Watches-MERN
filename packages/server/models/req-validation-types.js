@@ -21,6 +21,9 @@ const PRODUCT_COLLECTION_NAME = [
   'Master Of G',
   'MR-G',
   'MT-G',
+  'DIGITAL',
+  'ANALOG-DIGITAL',
+  'LIMITED EDITION',
 ]
 
 const PRODUCT_MATERIALS = [
@@ -34,16 +37,23 @@ const PRODUCT_MATERIALS = [
   'Resin',
 ]
 
-const PRODUCT_FUNCTIONS = [
+const PRODUCT_MAIN_FEATURES = [
   'Altimeter',
   'Barometer',
   'Bluetooth-Connected',
+  'Bluetooth smartphone link',
   'GPS',
   'Solar-Powered',
   'Step-Tracker',
   'Thermometer',
   'Tide Graph',
   'Multiband / Atomic Timekeeping',
+  '5-Sensors',
+  '200M Water Resistant',
+  'Interchangeable Band Structure',
+  '7 Year Battery Life',
+  'Multi-Band 6 Atomic Timekeeping',
+  'ISO 200 Meters Water Resistant',
 ]
 
 // REVIEW TYPES
@@ -53,6 +63,6 @@ module.exports = {
   PRODUCT_TYPES,
   PRODUCT_COLLECTION_NAME,
   PRODUCT_MATERIALS,
-  PRODUCT_FUNCTIONS,
+  PRODUCT_MAIN_FEATURES,
   REVIEW_KEYS,
 }

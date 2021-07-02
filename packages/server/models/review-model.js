@@ -1,5 +1,6 @@
 /* eslint-disable global-require */
 const mongoose = require('mongoose')
+const Double = require('@mongoosejs/double/lib')
 
 const ErrorHandler = require('./error-handler')
 
@@ -9,7 +10,7 @@ const reviewSchema = new Schema(
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
-    score: { type: Number, required: true },
+    score: { type: Double, required: true },
     creator: { type: mongoose.Types.ObjectId, required: true, ref: 'User' },
     product: { type: mongoose.Types.ObjectId, required: true, ref: 'Product' },
   },

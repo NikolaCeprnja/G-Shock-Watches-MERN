@@ -4,7 +4,7 @@ const {
   PRODUCT_TYPES,
   PRODUCT_COLLECTION_NAME,
   PRODUCT_MATERIALS,
-  PRODUCT_FUNCTIONS,
+  PRODUCT_MAIN_FEATURES,
   REVIEW_KEYS,
 } = require('../models/req-validation-types')
 const errorFormater = require('../models/req-validation-error')
@@ -125,8 +125,8 @@ const productValidation = method => {
         body('collectionName').isIn(PRODUCT_COLLECTION_NAME),
         body('materials').isArray({ min: 1 }),
         body('materials.*').isIn(PRODUCT_MATERIALS),
-        body('functions').isArray({ min: 1 }),
-        body('functions.*').isIn(PRODUCT_FUNCTIONS),
+        body('mainFeatures').isArray({ min: 1 }),
+        body('mainFeatures.*').isIn(PRODUCT_MAIN_FEATURES),
         body('images').isArray({ min: 1 }),
         body('discount')
           .optional()
@@ -157,7 +157,7 @@ const reviewValidation = method => {
             'Description needs to be between 10 and 100 characters long.'
           ),
         body('score')
-          .isInt({ min: 1, max: 5 })
+          .isFloat({ min: 1, max: 5 })
           .withMessage('Score needs to be a number between 1 and 5.'),
         reqValidationResult,
       ]

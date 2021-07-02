@@ -2,6 +2,8 @@ const router = require('express').Router()
 
 const {
   getProducts,
+  getLatestProducts,
+  getTopRatedProducts,
   getProductById,
   createProduct,
   deleteProduct,
@@ -16,6 +18,10 @@ const { checkReqParamValidity } = require('../middlewares/req-param-middleware')
 
 // GET ROUTES
 router.get('/', getProducts)
+
+router.get('/latest', getLatestProducts)
+
+router.get('/top-rated', getTopRatedProducts)
 
 router.get('/:pid', checkReqParamValidity('pid'), getProductById)
 

@@ -1,6 +1,8 @@
+const path = require('path')
 const mongoose = require('mongoose')
 const User = require('../models/user-model')
 const ErrorHandler = require('../models/error-handler')
+const { removeFile } = require('../utils/fileUpload')
 
 // GET CONTROLLERS
 const getUsers = async (req, res, next) => {
@@ -250,6 +252,9 @@ const deleteUser = async (req, res, next) => {
   if (user) {
     try {
       await user.deleteOne()
+      if (user.avatarUrl) {
+        await removeFile(path.join(__dirname, '/../public', user.avatarUrl))
+      }
     } catch (err) {
       return next(
         new ErrorHandler('Something went wrong, please try again later.', 500)
@@ -258,7 +263,7 @@ const deleteUser = async (req, res, next) => {
 
     if (req.user.id === uid) {
       req.logout()
-      res.clearCookie('token', { httpOnly: true })
+      res.clearCookie('token', { sameSite: 'strict', httpOnly: true })
     }
 
     return res.status(200).json({

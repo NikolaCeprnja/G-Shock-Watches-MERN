@@ -7,7 +7,7 @@ const passport = require('passport')
 const User = require('../models/user-model')
 const ErrorHandler = require('../models/error-handler')
 
-const sendEmail = require('../utils/sendEmail')
+const sendEmail = require('../utils/sendgrid')
 
 const auth = strategy => (req, res, next) => {
   // Authenticate user with provided strategy
@@ -20,6 +20,12 @@ const auth = strategy => (req, res, next) => {
         if (!user) {
           const { message, statusCode, errors } = info
           return next(new ErrorHandler(message, statusCode, errors))
+        }
+
+        if (req.path === '/auth/createNewUser') {
+          return res.status(201).json({
+            message: `Account for user ${user.userName} is successfully created!`,
+          })
         }
 
         // Login currently authenticated user

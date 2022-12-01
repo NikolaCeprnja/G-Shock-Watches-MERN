@@ -9,7 +9,7 @@ const collectionSchema = new Schema(
     gender: { type: String, required: true },
     products: [{ type: mongoose.Types.ObjectId, ref: 'Product' }],
   },
-  { timestamps: true, toObject: { getters: true } }
+  { timestamps: true, toObject: { getters: true, useProjection: true } }
 )
 
 collectionSchema.options.toObject.transform = function (doc, ret, options) {

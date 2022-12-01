@@ -99,28 +99,43 @@ const createReview = async (req, res, next) => {
 const updateReview = async (req, res, next) => {
   const { rid } = req.params
 
-  let reviewToUpdate
+  let updatedReview
 
   try {
-    reviewToUpdate = await Review.findById(rid)
+    updatedReview = await Review.findByIdAndUpdate(
+      rid,
+      { $set: req.body },
+      {
+        lean: true,
+        returnOriginal: false,
+        useFindAndModify: false,
+        // populate: 'creator',
+        projection: {
+          _id: 0,
+          id: '$_id',
+          productId: '$product',
+          title: 1,
+          desc: '$description',
+          score: 1,
+          createdAt: {
+            $dateToString: {
+              format: '%d/%m/%Y',
+              date: '$createdAt',
+            },
+          },
+        },
+      }
+    )
   } catch (err) {
     return next(
-      new ErrorHandler('Somthing went wrong, please try again later.', 500)
+      new ErrorHandler('Something went wrong, please try again later.', 500)
     )
   }
 
-  if (reviewToUpdate) {
-    try {
-      await reviewToUpdate.updateOne({ $set: req.body })
-    } catch (err) {
-      return next(
-        new ErrorHandler('Something went wrong, please try again later.', 500)
-      )
-    }
-
+  if (updatedReview) {
     return res.status(200).json({
       message: 'Review is successfully updated.',
-      updatedReview: reviewToUpdate,
+      updatedReview,
     })
   }
 

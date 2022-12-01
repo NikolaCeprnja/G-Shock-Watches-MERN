@@ -137,6 +137,22 @@ const getUsers = async (req, res, next) => {
   return res.status(404).json({ message: 'Currently there is no users yet.' })
 }
 
+const getTotalUsersCount = async (req, res, next) => {
+  let totalUsers
+
+  try {
+    totalUsers = await User.find({}).countDocuments()
+  } catch (err) {
+    return next(
+      new ErrorHandler('Something went wrong, please try again later.', 500)
+    )
+  }
+
+  return res
+    .status(200)
+    .json({ message: 'Total user documents count', totalUsers })
+}
+
 const getUserById = async (req, res, next) => {
   const { uid } = req.params
   let user
@@ -279,6 +295,7 @@ const deleteUser = async (req, res, next) => {
 
 module.exports = {
   getUsers,
+  getTotalUsersCount,
   getUserById,
   deleteUser,
 }

@@ -252,6 +252,101 @@ const getUserById = async (req, res, next) => {
     .json({ message: 'User with provided uid does not exists.' })
 }
 
+const getPurchasedProductsAndReviews = async (req, res, next) => {
+  const { uid } = req.params
+  let user
+
+  try {
+    user = await User.aggregate([
+      { $match: { _id: mongoose.Types.ObjectId(uid) } },
+      {
+        $lookup: {
+          from: 'products',
+          let: { creator: '$_id', purchasedProducts: '$purchasedProducts' },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $in: ['$_id', '$$purchasedProducts'] },
+              },
+            },
+            {
+              $lookup: {
+                from: 'reviews',
+                let: { pid: '$_id' },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ['$product', '$$pid'] },
+                          { $eq: ['$creator', '$$creator'] },
+                        ],
+                      },
+                    },
+                  },
+                  {
+                    $project: {
+                      _id: 0,
+                      id: '$_id',
+                      title: 1,
+                      desc: '$description',
+                      score: 1,
+                      createdAt: {
+                        $dateToString: {
+                          format: '%d/%m/%Y',
+                          date: '$createdAt',
+                        },
+                      },
+                    },
+                  },
+                ],
+                as: 'reviews',
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                id: '$_id',
+                name: 1,
+                model: 1,
+                // gender: 1,
+                collectionName: 1,
+                previewImg: 1,
+                reviews: 1,
+              },
+            },
+          ],
+          as: 'purchasedProducts',
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          purchasedProducts: 1,
+        },
+      },
+    ])
+  } catch (error) {
+    return next(
+      new ErrorHandler('Something went wrong, please try again later!', 500)
+    )
+  }
+
+  if (user[0]) {
+    if (user[0].purchasedProducts.length > 0) {
+      return res.status(200).json(user[0])
+    }
+
+    return res
+      .status(404)
+      .json({ message: 'There is no purchased products yet.' })
+  }
+
+  return res
+    .status(404)
+    .json({ message: 'User with provided uid does not exists.' })
+}
+
 // DELETE CONTROLLERS
 const deleteUser = async (req, res, next) => {
   const { uid } = req.params
@@ -297,5 +392,6 @@ module.exports = {
   getUsers,
   getTotalUsersCount,
   getUserById,
+  getPurchasedProductsAndReviews,
   deleteUser,
 }

@@ -19,6 +19,7 @@ const {
 } = require('../middlewares/reviews-middleware')
 
 // GET ROUTES
+/** @method GET @access PRIVATE @desc Get all reviews for specific user by its uid. */
 router.get(
   '/users/:uid',
   authJwt,
@@ -27,6 +28,7 @@ router.get(
   getReviewsByUserId
 )
 
+/** @method GET @access PUBLIC @desc Get all reviews for specific product by its pid.  */
 router.get(
   '/products/:pid',
   checkReqParamValidity('pid'),
@@ -34,6 +36,7 @@ router.get(
 )
 
 // POST ROUTES
+/** @method POST @access PRIVATE @desc Create review for purchased product with its pid by currently logged in user. */
 router.post(
   '/products/:pid',
   authJwt,
@@ -45,6 +48,7 @@ router.post(
 )
 
 // PUT ROUTES
+/** @method PUT @access PRIVATE @desc Update review with provided rid. */
 router.put(
   '/:rid',
   authJwt,
@@ -55,6 +59,7 @@ router.put(
 )
 
 // DELETE ROUTES
+/** @method DELETE @access PRIVATE @desc Delete review with provided rid. */
 router.delete(
   '/:rid',
   authJwt,

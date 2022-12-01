@@ -1,4 +1,4 @@
-const { body, oneOf, validationResult } = require('express-validator')
+const { body, check, oneOf, validationResult } = require('express-validator')
 
 const {
   PRODUCT_TYPES,
@@ -12,7 +12,7 @@ const ErrorHandler = require('../models/error-handler')
 
 const reqValidationResult = (req, res, next) => {
   try {
-    if (Object.keys(req.body).length === 0) {
+    if (Object.keys(req.body).length === 0 && !req.file) {
       return next(
         new ErrorHandler('Invalid inputs passed, please check your data.', 400)
       )
@@ -22,10 +22,10 @@ const reqValidationResult = (req, res, next) => {
 
     return next()
   } catch (err) {
-    const error = err.mapped()
+    const errors = err.mapped()
     console.log(error)
 
-    return res.status(422).json({ errors: { ...error } })
+    return res.status(422).json({ errors })
   }
 }
 
@@ -38,17 +38,24 @@ const userValidation = method => {
       return [
         body('userName')
           .trim()
+          .notEmpty()
+          .withMessage('Please input your username.')
           .isLength({ min: 6 })
-          .withMessage('username needs to be at least 6 characters long.'),
+          .withMessage('Username needs to be at least 6 characters long.'),
         body('email')
           .trim()
           .notEmpty()
+          .withMessage('Please input your email address.')
           .isEmail()
           .withMessage('Invalid email address.'),
         body('password')
+          .notEmpty()
+          .withMessage('Please input your password.')
           .isLength({ min: 6 })
           .withMessage('Passowrd needs to be at least 6 characters long.'),
         body('confirmPassword')
+          .notEmpty()
+          .withMessage('Please confirm your password.')
           .isLength({ min: 6 })
           .withMessage('Passowrd needs to be at least 6 characters long.')
           .custom((value, { req }) => value === req.body.password)
@@ -102,6 +109,101 @@ const userValidation = method => {
           .withMessage(
             "Passwords don't match, please check your data and try again."
           ),
+        reqValidationResult,
+      ]
+    }
+    case 'updateUser': {
+      // eslint-disable-next-line global-require
+      const User = require('../models/user-model')
+
+      return [
+        check('avatar')
+          .if((value, { req: { file } }) => file)
+          .custom((value, { req: { file } }) => {
+            if (!['image/png', 'image/jpeg'].includes(file.detectedMimeType)) {
+              return Promise.reject(
+                new ErrorHandler(
+                  'Unsuported file selected.\nOnly .PNG or .JPEG (JPG) files are allowed.',
+                  409
+                )
+              )
+            }
+
+            if (file.size > 1000000) {
+              return Promise.reject(
+                new ErrorHandler('Chosen file needs to be less then 1MB.', 409)
+              )
+            }
+
+            return true
+          }),
+        body('userName')
+          .optional()
+          .trim()
+          .notEmpty()
+          .withMessage('Please input your username.')
+          .isLength({ min: 6 })
+          .withMessage('Username needs to be at least 6 characters long.')
+          .custom((value, { req: { params: { uid } } }) =>
+            User.findOne({
+              _id: { $ne: uid },
+              $or: [
+                { userName: value },
+                { accounts: { $elemMatch: { displayName: value } } },
+              ],
+            }).then(existingUser => {
+              if (existingUser) {
+                return Promise.reject(
+                  new ErrorHandler(
+                    'Username already taken, please try another one.',
+                    409
+                  )
+                )
+              }
+            })
+          ),
+        body('email')
+          .optional()
+          .trim()
+          .notEmpty()
+          .withMessage('Please input your email address.')
+          .isEmail()
+          .withMessage('Invalid email address.')
+          .custom((value, { req: { params: { uid } } }) =>
+            User.findOne({
+              _id: { $ne: uid },
+              $or: [
+                { email: value },
+                { 'accounts.emails': { $elemMatch: { value } } },
+              ],
+            }).then(existingUser => {
+              if (existingUser) {
+                return Promise.reject(
+                  new ErrorHandler(
+                    'Email already taken, please try another one.',
+                    409
+                  )
+                )
+              }
+            })
+          ),
+        body('password')
+          .optional()
+          .notEmpty()
+          .withMessage('Please input your password.')
+          .isLength({ min: 6 })
+          .withMessage('Passowrd needs to be at least 6 characters long.'),
+        body('confirmPassword')
+          .optional()
+          .notEmpty()
+          .withMessage('Please confirm your password.')
+          .isLength({ min: 6 })
+          .withMessage('Passowrd needs to be at least 6 characters long.')
+          .custom((value, { req }) => value === req.body.password)
+          .withMessage(
+            "Passwords don't match, please check your data and try again."
+          ),
+        body('isAdmin').optional().isBoolean(),
         reqValidationResult,
       ]
     }

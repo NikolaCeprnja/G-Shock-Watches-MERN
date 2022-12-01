@@ -2,6 +2,7 @@ const express = require('express')
 const cors = require('cors')
 const config = require('config')
 const cookieParser = require('cookie-parser')
+const boolParser = require('express-query-boolean')
 const path = require('path')
 
 // Express config
@@ -14,6 +15,8 @@ if (app.get('env') === 'production') app.disable('x-powered-by')
 app.use(cors())
 app.use(cookieParser())
 app.use(express.json())
+app.use(boolParser())
+app.use(express.urlencoded({ extended: true }))
 app.use(express.static(path.join(__dirname, 'public')))
 
 // Mongoose config

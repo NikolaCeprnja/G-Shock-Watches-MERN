@@ -6,7 +6,10 @@ const upload = multer()
 
 const {
   getUsers,
+  getTotalUsersCount,
   getUserById,
+  getPurchasedProductsAndReviews,
+  updateUser,
   deleteUser,
 } = require('../controllers/users-controller')
 const {
@@ -25,8 +28,13 @@ const {
 const { checkReqParamValidity } = require('../middlewares/req-param-middleware')
 
 // GET ROUTES
+/** @method GET @access PRIVATE @desc Get all user. */
 router.get('/', authJwt, isAdmin, getUsers)
 
+/** @method GET @access PRIVATE @desc Get total user documents count */
+router.get('/count', authJwt, isAdmin, getTotalUsersCount)
+
+/** @method GET @access PUBLIC @desc Get an currently authenticated user. */
 router.get('/auth', authJwt, (req, res) => {
   if (req.isAuthenticated()) {
     return res.status(200).json({ loggedInUser: req.user })
@@ -35,6 +43,7 @@ router.get('/auth', authJwt, (req, res) => {
   return res.status(401).json({ message: 'Unauthenticated.' })
 })
 
+/** @method GET @access PRIVATE @desc Get user by his uid.  */
 router.get(
   '/:uid',
   authJwt,
@@ -43,11 +52,22 @@ router.get(
   getUserById
 )
 
+/** @method GET @access PRIVATE @desc Get list of user purchased products and reviews based of his uid. */
+router.get(
+  '/:uid/purchased-products',
+  authJwt,
+  checkReqParamValidity('uid'),
+  checkUserPrivileges,
+  getPurchasedProductsAndReviews
+)
+
+/** @method GET @access PUBLIC @desc Signout currently logged in user.  */
 router.get('/auth/signout', (req, res) => {
   res.clearCookie('token', { sameSite: 'strict', httpOnly: true })
   res.json({ message: 'You are successfully signed out.' })
 })
 
+/** @method GET @access PUBLIC @desc Authenticate user using passport Google OAuth2.0 strategy. */
 router.get('/auth/google', (req, res, next) => {
   const redirectTo = req.query.redirect_to
   const state = redirectTo
@@ -61,6 +81,7 @@ router.get('/auth/google', (req, res, next) => {
   })(req, res, next)
 })
 
+/** @method GET @access PUBLIC @desc Redirect after successful auth using passport Google OAuth2.0 strategy. */
 router.get('/auth/google/callback', auth('google'), (req, res) => {
   res
     .status(200)
@@ -77,15 +98,14 @@ router.get('/auth/google/callback', auth('google'), (req, res) => {
       return res.redirect('http://localhost:3000/admin/dashboard')
     }
 
-    return res.redirect(
-      `http://localhost:3000/users/${req.user.id}/profile/dashboard`
-    )
+    return res.redirect(`http://localhost:3000/users/${req.user.id}/profile`)
   }
 })
 
 // POST ROUTES
+/** @method POST @access PUBLIC @desc Create user account using passport local strategy and sign user in. */
 router.post(
-  '/auth/signup',
+  ['/auth/signup', '/auth/createNewUser'],
   upload.single('avatar'),
   userValidation('signup'),
   auth('signup'),
@@ -99,6 +119,7 @@ router.post(
       })
 )
 
+/** @method POST @access PUBLIC @desc User signin with passport local strategy. */
 router.post(
   '/auth/signin',
   userValidation('signin'),
@@ -113,6 +134,7 @@ router.post(
       })
 )
 
+/** @method POST @access PUBLIC @desc Send an email for user password reset. */
 router.post(
   '/auth/forgot-password',
   userValidation('forgotPassword'),
@@ -121,13 +143,26 @@ router.post(
 )
 
 // PUT ROUTES
+/** @method PUT @access PUBLIC @desc Reset the forgotten user password based of provided resetPasswordToken.  */
 router.put(
   '/auth/reset-password/:resetPasswordToken',
   userValidation('resetPassword'),
   resetPassword
 )
 
+/** @method PUT @access PRIVATE @desc Update user account based of his uid. */
+router.put(
+  '/:uid',
+  authJwt,
+  checkReqParamValidity('uid'),
+  checkUserPrivileges,
+  upload.single('avatar'),
+  userValidation('updateUser'),
+  updateUser
+)
+
 // DELETE ROUTES
+/** @method DELETE @access PRIVATE @desc Remove user account based of his uid. */
 router.delete(
   '/:uid',
   authJwt,

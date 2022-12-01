@@ -38,6 +38,23 @@ const userSchema = new Schema(
   { timestamps: true, toObject: { getters: true } }
 )
 
+userSchema.index(
+  {
+    userName: 'text',
+    email: 'text',
+    'accounts.displayName': 'text',
+    'accounts.emails.value': 'text',
+  },
+  {
+    weights: {
+      userName: 1,
+      email: 1,
+      'accounts.displayName': 1,
+      'accounts.emails.value': 1,
+    },
+  }
+)
+
 userSchema.options.toObject.transform = function (doc, ret, options) {
   delete ret._id
   delete ret.password

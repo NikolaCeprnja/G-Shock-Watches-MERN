@@ -1,14 +1,13 @@
-const fs = require('fs')
-const { promisify } = require('util')
-const pipeline = promisify(require('stream').pipeline)
-const passport = require('passport')
 const config = require('config')
+const bcrypt = require('bcryptjs')
+const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
 const JWTStrategy = require('passport-jwt').Strategy
 const GoogleStrategy = require('passport-google-oauth20').Strategy
-const bcrypt = require('bcryptjs')
 
 const User = require('./user-model')
+const ErrorHandler = require('./error-handler')
+const { saveFile } = require('../utils/fileUpload')
 
 // Local strategy for user signup
 passport.use(
@@ -43,7 +42,6 @@ passport.use(
       }
 
       const errors = {}
-      // FIXME: modify all error messages to be in the same format like errorFormatter
       if (existingUsers) {
         existingUsers.forEach(existingUser => {
           if (
@@ -102,11 +100,10 @@ passport.use(
 
       if (file) {
         const fileName = `${user.id}-${file.fieldName}${file.detectedFileExtension}`
-
-        const path = `${__dirname}/../public/images/avatars/${fileName}`
+        const filePath = `${__dirname}/../public/images/avatars/${fileName}`
 
         try {
-          await pipeline(file.stream, fs.createWriteStream(path))
+          await saveFile(file, filePath)
         } catch (err) {
           return done(err)
         }
@@ -168,7 +165,12 @@ passport.use(
       try {
         passValidity = await user.isValidPassword(password)
       } catch (err) {
-        return done(err)
+        return done(
+          new ErrorHandler(
+            'Something went wrong while authenticating, please try again later.',
+            500
+          )
+        )
       }
 
       if (!passValidity) {

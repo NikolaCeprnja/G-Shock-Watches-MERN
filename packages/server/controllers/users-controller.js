@@ -2,7 +2,7 @@ const path = require('path')
 const mongoose = require('mongoose')
 const User = require('../models/user-model')
 const ErrorHandler = require('../models/error-handler')
-const { removeFile } = require('../utils/fileUpload')
+const { saveFile, removeFile } = require('../utils/fileUpload')
 
 // GET CONTROLLERS
 const getUsers = async (req, res, next) => {
@@ -347,6 +347,95 @@ const getPurchasedProductsAndReviews = async (req, res, next) => {
     .json({ message: 'User with provided uid does not exists.' })
 }
 
+// PUT CONTROLLERS
+const updateUser = async (req, res, next) => {
+  const { uid } = req.params
+  const {
+    file,
+    body: { avatar, ...restBodyParams },
+  } = req
+  let updatedUser
+  let userToUpdate
+
+  try {
+    userToUpdate = await User.findById(uid, 'avatarUrl')
+
+    if (!userToUpdate) {
+      throw new ErrorHandler('User with provided uid does not exists.', 404)
+    }
+
+    // * File exists, replace existing one or just insert new avatar
+    if (file) {
+      if (userToUpdate.avatarUrl) {
+        await removeFile(
+          path.join(__dirname, '/../public', userToUpdate.avatarUrl)
+        )
+      }
+
+      const fileName = `${userToUpdate.id}-${file.fieldName}${file.detectedFileExtension}`
+      const filePath = `${__dirname}/../public/images/avatars/${fileName}`
+
+      await saveFile(file, filePath)
+      restBodyParams.avatarUrl = `/images/avatars/${fileName}`
+    }
+    // * File doesn't exists, it's removed
+    else if (userToUpdate.avatarUrl && avatar === 'undefined') {
+      try {
+        await removeFile(
+          path.join(__dirname, '/../public', userToUpdate.avatarUrl)
+        )
+        restBodyParams.avatarUrl = undefined
+      } catch (err) {
+        restBodyParams.avatarUrl = undefined
+      }
+    }
+
+    updatedUser = await User.findByIdAndUpdate(
+      uid,
+      { $set: restBodyParams },
+      {
+        // lean: true,
+        returnOriginal: false,
+        useFindAndModify: false,
+        projection: {
+          _id: 0,
+          id: '$_id',
+          userName: 1,
+          email: 1,
+          avatarUrl: 1,
+          cloudinaryId: 1,
+          cloudinaryUrl: 1,
+          // purchasedProducts: 1,
+          // FIXME: handle getUserById accounts photo to match user-model obj when user login with oauth2.0 strategy
+          // FIXME: handle purchasedProducts and reviews when navigating to profile page...
+          /* _id: 0,
+          __v: 0,
+          reviews: 0,
+          password: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          purchasedProducts: 0, */
+        },
+      }
+    )
+  } catch (error) {
+    if (error instanceof ErrorHandler) {
+      return next(error)
+    }
+
+    return next(
+      new ErrorHandler('Something went wrong, please try again later.', 500)
+    )
+  }
+
+  if (updatedUser) {
+    return res.status(200).json({
+      message: `User ${updatedUser.userName} is successfully updated!`,
+      updatedUser,
+    })
+  }
+}
+
 // DELETE CONTROLLERS
 const deleteUser = async (req, res, next) => {
   const { uid } = req.params
@@ -393,5 +482,6 @@ module.exports = {
   getTotalUsersCount,
   getUserById,
   getPurchasedProductsAndReviews,
+  updateUser,
   deleteUser,
 }

@@ -18,7 +18,7 @@ const PRODUCT_COLLECTION_NAME = [
   'G-MS',
   'G-SHOCK Women',
   'G-STEEL',
-  'Master Of G',
+  'MASTER OF G',
   'MR-G',
   'MT-G',
   'DIGITAL',
@@ -29,7 +29,7 @@ const PRODUCT_COLLECTION_NAME = [
 const PRODUCT_MATERIALS = [
   'Mineral Glass',
   'Sapphire Crystal',
-  'lon Plated (IP)',
+  'Ion Plated (IP)',
   'Titanium',
   'Carbon',
   'Stainless Steel',

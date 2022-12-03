@@ -581,6 +581,157 @@ const createProduct = async (req, res, next) => {
   })
 }
 
+// PUT CONTROLLERS
+const updateProduct = async (req, res, next) => {
+  const { pid } = req.params
+  const {
+    files: {
+      previewImg: [newUploadedPreviewImg],
+      'images[]': newUploadedImages,
+    },
+    body: {
+      previewImg: [existingPreviewImg] = '',
+      images: existingImages = [],
+      collectionName,
+      specifications,
+      removedFileList = [],
+      ...productData
+    },
+  } = req
+  const options = {
+    new: true,
+    lean: true,
+    useFindAndModify: false,
+    populate: 'reviews',
+    projection: {
+      _id: 0,
+      __v: 0,
+      createdAt: 0,
+      updatedAt: 0,
+    },
+  }
+  let productToUpdate
+  let updatedProduct
+  let previousCollection
+  let previewImgFileName
+  let updatedPreviewImg
+  let updatedImagesPaths
+
+  try {
+    productToUpdate = await Product.findById(pid, 'images previewImg')
+    updatedImagesPaths = productToUpdate.images
+
+    if (newUploadedPreviewImg) {
+      previewImgFileName = newUploadedPreviewImg.originalName
+      const previewImgFilePath = `${__dirname}/../public/images/products/${previewImgFileName}`
+
+      await saveFile(newUploadedPreviewImg, previewImgFilePath)
+
+      updatedImagesPaths.unshift(productToUpdate.previewImg)
+      updatedPreviewImg = `/images/products/${previewImgFileName}`
+    } else if (
+      existingPreviewImg &&
+      existingPreviewImg !== productToUpdate.previewImg
+    ) {
+      updatedImagesPaths = updatedImagesPaths.filter(
+        imgPath => imgPath !== existingPreviewImg
+      )
+      updatedImagesPaths.unshift(productToUpdate.previewImg)
+    }
+
+    if (newUploadedImages.length > 0) {
+      newUploadedImages.forEach(async file => {
+        const fileName = file.originalName
+        updatedImagesPaths.push(`/images/products/${fileName}`)
+        const filePath = `${__dirname}/../public/images/products/${fileName}`
+        await saveFile(file, filePath)
+      })
+    }
+
+    if (removedFileList) {
+      removedFileList.forEach(async fileToRemove => {
+        try {
+          await removeFile(`${__dirname}/../public${fileToRemove}`)
+        } catch (error) {
+          console.log({ error })
+        }
+      })
+      updatedImagesPaths = updatedImagesPaths.filter(
+        imgPath => !removedFileList.includes(imgPath)
+      )
+    }
+
+    previousCollection = await Collection.findOne(
+      { products: pid },
+      'name products'
+    )
+
+    if (previousCollection.name !== collectionName) {
+      const session = await mongoose.startSession()
+      session.startTransaction()
+      previousCollection.products = previousCollection.products.filter(
+        productId => productId.toString() !== pid
+      )
+      await previousCollection.save({ session })
+      updatedProduct = await Product.findByIdAndUpdate(
+        pid,
+        {
+          $set: {
+            ...productData,
+            collectionName,
+            previewImg: updatedPreviewImg || existingPreviewImg,
+            images: updatedImagesPaths,
+            specifications: specifications.split(/\n/),
+          },
+        },
+        {
+          ...options,
+          session,
+        }
+      )
+      const newCollection = await Collection.findOne({
+        name: collectionName,
+      }).session(session)
+      newCollection.products.push(pid)
+      await newCollection.save()
+      await session.commitTransaction()
+      session.endSession()
+    } else {
+      updatedProduct = await Product.findByIdAndUpdate(
+        pid,
+        {
+          $set: {
+            ...productData,
+            collectionName,
+            previewImg: updatedPreviewImg || existingPreviewImg,
+            images: updatedImagesPaths,
+            specifications: specifications.split(/\n/),
+          },
+        },
+        options
+      )
+    }
+  } catch (err) {
+    return next(
+      new ErrorHandler(
+        'Something went wrong while updating the product, please try again later.',
+        500
+      )
+    )
+  }
+
+  if (updatedProduct) {
+    return res.status(200).json({
+      message: 'Product is successfully updated!',
+      updatedProduct,
+    })
+  }
+
+  return res
+    .status(404)
+    .json({ message: 'Product with provided pid does not exists' })
+}
+
 // DELETE CONTROLLERS
 const deleteProduct = async (req, res, next) => {
   const { pid } = req.params
@@ -625,5 +776,6 @@ module.exports = {
   getTopRatedProducts,
   getProductById,
   createProduct,
+  updateProduct,
   deleteProduct,
 }

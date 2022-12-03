@@ -182,6 +182,22 @@ const getProducts = async (req, res, next) => {
   })
 }
 
+const getTotalProductsCount = async (req, res, next) => {
+  let totalProducts
+
+  try {
+    totalProducts = await Product.find({}).countDocuments()
+  } catch (err) {
+    return next(
+      new ErrorHandler('Something went wrong, please try again later.', 500)
+    )
+  }
+
+  return res
+    .status(200)
+    .json({ message: 'Total product documents count', totalProducts })
+}
+
 const getLatestProducts = async (req, res, next) => {
   let latestProducts
 
@@ -604,6 +620,7 @@ const deleteProduct = async (req, res, next) => {
 
 module.exports = {
   getProducts,
+  getTotalProductsCount,
   getLatestProducts,
   getTopRatedProducts,
   getProductById,

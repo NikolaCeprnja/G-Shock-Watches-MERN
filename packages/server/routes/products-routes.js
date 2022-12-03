@@ -5,10 +5,12 @@ const upload = multer()
 
 const {
   getProducts,
+  getTotalProductsCount,
   getLatestProducts,
   getTopRatedProducts,
   getProductById,
   createProduct,
+  updateProduct,
   deleteProduct,
 } = require('../controllers/products-controller')
 const { authJwt } = require('../controllers/auth-controller')
@@ -22,6 +24,9 @@ const { checkReqParamValidity } = require('../middlewares/req-param-middleware')
 // GET ROUTES
 /** @method GET @access PUBLIC @desc Get all products. */
 router.get('/', getProducts)
+
+/** @method GET @access PRIVATE @desc Get total product documents count */
+router.get('/count', authJwt, isAdmin, getTotalProductsCount)
 
 /** @method GET @access PUBLIC @desc Get latest products. */
 router.get('/latest', getLatestProducts)
@@ -44,6 +49,21 @@ router.post(
   ]),
   productValidation('createProduct'),
   createProduct
+)
+
+// PUT ROUTES
+/** @method PUT @access PRIVATE @desc Update existing product by its pid. */
+router.put(
+  '/:pid',
+  authJwt,
+  isAdmin,
+  checkReqParamValidity('pid'),
+  upload.fields([
+    { name: 'images[]', maxCount: 5 },
+    { name: 'previewImg', maxCount: 1 },
+  ]),
+  productValidation('updateProduct'),
+  updateProduct
 )
 
 // DELETE ROUTES

@@ -185,8 +185,16 @@ const getLatestProducts = async (req, res, next) => {
 
   try {
     latestProducts = await Product.aggregate([
-      { $limit: 4 },
       { $sort: { createdAt: -1 } },
+      { $limit: 4 },
+      {
+        $lookup: {
+          from: 'collections',
+          localField: 'collectionName',
+          foreignField: 'name',
+          as: 'collection',
+        },
+      },
       {
         $lookup: {
           from: 'reviews',
@@ -201,6 +209,7 @@ const getLatestProducts = async (req, res, next) => {
           id: '$_id',
           name: 1,
           model: 1,
+          gender: { $arrayElemAt: ['$collection.gender', 0] },
           collectionName: 1,
           previewImg: 1,
           discount: {
@@ -255,6 +264,14 @@ const getTopRatedProducts = async (req, res, next) => {
       { $match: { $expr: { $ne: [{ $size: '$reviews' }, 0] } } },
       {
         $lookup: {
+          from: 'collections',
+          localField: 'collectionName',
+          foreignField: 'name',
+          as: 'collection',
+        },
+      },
+      {
+        $lookup: {
           from: 'reviews',
           localField: 'reviews',
           foreignField: '_id',
@@ -268,6 +285,7 @@ const getTopRatedProducts = async (req, res, next) => {
           id: '$_id',
           name: 1,
           model: 1,
+          gender: { $arrayElemAt: ['$collection.gender', 0] },
           collectionName: 1,
           previewImg: 1,
           discount: {
@@ -290,7 +308,6 @@ const getTopRatedProducts = async (req, res, next) => {
       { $sort: { avgRating: -1, numReviews: -1 } },
     ])
   } catch (err) {
-    console.log(err)
     return next(
       new ErrorHandler('Something went wrong, please try again later.', 500)
     )

@@ -1,8 +1,10 @@
 const mongoose = require('mongoose')
+const path = require('path')
 
 const Product = require('../models/product-model')
 const Collection = require('../models/collection-model')
 const ErrorHandler = require('../models/error-handler')
+const { saveFile, removeFile } = require('../utils/fileUpload')
 
 // GET CONTROLLERS
 const getProducts = async (req, res, next) => {
@@ -480,12 +482,20 @@ const getProductById = async (req, res, next) => {
 
 // POST CONTROLLERS
 const createProduct = async (req, res, next) => {
-  const productData = req.body
-  const { collectionName } = productData
+  // TODO: add validation for uploaded files
+  const {
+    files: {
+      previewImg: [previewImg],
+      'images[]': images,
+    },
+    body: { collectionName, specifications, ...productData },
+  } = req
 
   let newProduct
   const product = new Product({
     ...productData,
+    collectionName,
+    specifications: specifications.split(/\n/),
   })
 
   try {
@@ -503,6 +513,50 @@ const createProduct = async (req, res, next) => {
     return next(
       new ErrorHandler('Something went wrong, please try again later.', 500)
     )
+  }
+
+  if (previewImg && images) {
+    const imagesPaths = []
+    const previewImgFileName = previewImg.originalName
+    const previewImgFilePath = `${__dirname}/../public/images/products/${previewImgFileName}`
+
+    try {
+      await saveFile(previewImg, previewImgFilePath)
+
+      images.forEach(async file => {
+        const fileName = file.originalName
+        imagesPaths.push(`/images/products/${fileName}`)
+        const filePath = `${__dirname}/../public/images/products/${fileName}`
+        await saveFile(file, filePath)
+      })
+    } catch (err) {
+      return next(
+        new ErrorHandler('Something went wrong, please try again later.', 500)
+      )
+    }
+
+    product.previewImg = `/images/products/${previewImgFileName}`
+    product.images = imagesPaths
+
+    try {
+      // update previewImg and images path properties after saving files locally
+      await Product.findByIdAndUpdate(
+        newProduct.id,
+        {
+          $set: {
+            previewImg: product.previewImg,
+            images: product.images,
+          },
+        },
+        {
+          useFindAndModify: false,
+        }
+      )
+    } catch (err) {
+      return next(
+        new ErrorHandler('Something went wrong, please try again later.', 500)
+      )
+    }
   }
 
   return res.status(201).json({
@@ -527,6 +581,10 @@ const deleteProduct = async (req, res, next) => {
   if (product) {
     try {
       await product.deleteOne()
+      await removeFile(path.join(__dirname, '/../public', product.previewImg))
+      product.images.forEach(async filePath => {
+        await removeFile(path.join(__dirname, '/../public', filePath))
+      })
     } catch (err) {
       return next(
         new ErrorHandler('Something went wrong, please try again later.', 500)

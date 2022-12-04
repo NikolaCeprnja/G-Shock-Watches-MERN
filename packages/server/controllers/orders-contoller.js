@@ -664,9 +664,158 @@ const getOrderById = async (req, res, next) => {
     .json({ message: 'Order with provided oid does not exists.' })
 }
 
+const getOrdersByUserId = async (req, res, next) => {
+  let orders
+  const { uid } = req.params
+
+  try {
+    orders = await Order.aggregate([
+      {
+        $match: { $expr: { $eq: ['$customer', { $toObjectId: uid }] } },
+      },
+      { $unwind: '$orderedProducts' },
+      {
+        $lookup: {
+          from: 'products',
+          let: { orderedProduct: '$orderedProducts' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$_id', '$$orderedProduct.id'] } } },
+            {
+              $project: {
+                _id: 0,
+                id: '$_id',
+                name: 1,
+                model: 1,
+                collectionName: 1,
+                previewImg: 1,
+                orderedPrice: '$$orderedProduct.price',
+                orderedDiscount: '$$orderedProduct.discount',
+                orderedQuantity: '$$orderedProduct.quantity',
+                totalPrice: {
+                  $cond: {
+                    if: { $ne: ['$$orderedProduct.discount', 0] },
+                    then: {
+                      $toDouble: {
+                        $multiply: [
+                          {
+                            $subtract: [
+                              '$$orderedProduct.price',
+                              {
+                                $multiply: [
+                                  {
+                                    $divide: ['$$orderedProduct.discount', 100],
+                                  },
+                                  '$$orderedProduct.price',
+                                ],
+                              },
+                            ],
+                          },
+                          '$$orderedProduct.quantity',
+                        ],
+                      },
+                    },
+                    else: {
+                      $toDouble: {
+                        $multiply: [
+                          '$$orderedProduct.price',
+                          '$$orderedProduct.quantity',
+                        ],
+                      },
+                    },
+                  },
+                },
+                currentlyInStock: '$inStock',
+              },
+            },
+          ],
+          as: 'orderedProducts',
+        },
+      },
+      { $unwind: '$orderedProducts' },
+      {
+        $group: {
+          _id: '$_id',
+          status: { $first: '$status' },
+          currentStatus: { $first: { $last: '$status' } },
+          email: { $first: '$email' },
+          currency: { $first: '$currency' },
+          totalAmount: { $first: '$totalAmount' },
+          orderedProducts: { $push: '$orderedProducts' },
+          shippingAddr: { $first: '$shippingAddr' },
+          billingAddr: { $first: '$billingAddr' },
+          createdAt: { $first: '$createdAt' },
+          updatedAt: { $first: '$updatedAt' },
+        },
+      },
+      {
+        $addFields: {
+          totalProducts: { $sum: '$orderedProducts.orderedQuantity' },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          id: '$_id',
+          currentStatus: 1,
+          status: {
+            $map: {
+              input: '$status',
+              as: 'status',
+              in: {
+                info: '$$status.info',
+                date: {
+                  $dateToString: {
+                    format: '%d/%m/%Y - %H:%M:%S',
+                    date: '$$status.date',
+                  },
+                },
+              },
+            },
+          },
+          email: 1,
+          currency: 1,
+          totalAmount: 1,
+          orderedProducts: 1,
+          totalProducts: 1,
+          shippingAddr: 1,
+          billingAddr: 1,
+          createdAt: {
+            $dateToString: {
+              format: '%d/%m/%Y - %H:%M:%S',
+              date: '$createdAt',
+            },
+          },
+          updatedAt: {
+            $dateToString: {
+              format: '%d/%m/%Y - %H:%M:%S',
+              date: '$updatedAt',
+            },
+          },
+        },
+      },
+    ])
+  } catch (err) {
+    return next(
+      new ErrorHandler('Something went wrong, please try again later.', 500)
+    )
+  }
+
+  if (orders.length > 0) {
+    return res.status(200).json({ orders })
+  }
+
+  return res.status(404).json({
+    message:
+      req.user.id !== uid
+        ? "This user doesn't have any orders yet."
+        : 'There is no orders yet.',
+  })
+}
+
 module.exports = {
   getOrders,
   getTotalOrdersCount,
   getTotalOrdersSales,
   getOrderById,
+  getOrdersByUserId,
 }

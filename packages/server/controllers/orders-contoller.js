@@ -182,7 +182,326 @@ const getTotalOrdersCount = async (req, res, next) => {
     .json({ message: 'Total order documents count', totalOrders })
 }
 
+const getTotalOrdersSales = async (req, res, next) => {
+  let totalSales
+  let totalOrdersCount
+  let totalSalesPeriod
+  const MONTHS_ARRAY = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ]
+  const TODAY = new Date()
+  const { period } = req.query
+
+  switch (period) {
+    case 'today': {
+      totalSalesPeriod = {
+        $expr: {
+          $eq: [{ $dayOfMonth: '$status.date' }, { $dayOfMonth: TODAY }],
+        },
+      }
+      break
+    }
+    case 'last-week': {
+      totalSalesPeriod = {
+        $expr: {
+          $gte: [
+            '$status.date',
+            {
+              $dateFromString: {
+                dateString: new Date(
+                  TODAY.getTime() - 7 * 24 * 60 * 60 * 1000
+                ).toISOString(),
+              },
+            },
+          ],
+        },
+      }
+      break
+    }
+    case 'last-month': {
+      totalSalesPeriod = {
+        $expr: {
+          $eq: [
+            { $month: '$status.date' },
+            { $subtract: [{ $month: TODAY }, 1] },
+          ],
+        },
+      }
+      break
+    }
+    case 'last-six-months': {
+      totalSalesPeriod = {
+        $expr: {
+          $gte: [
+            { $month: '$status.date' },
+            { $subtract: [{ $month: TODAY }, 6] },
+          ],
+        },
+      }
+    }
+  }
+
+  try {
+    totalOrdersCount = await Order.aggregate([
+      {
+        $match: { 'status.info': { $nin: ['canceled', 'returned'] } },
+      },
+      { $unwind: '$status' },
+      {
+        $match: { ...totalSalesPeriod },
+      },
+      {
+        $group: {
+          _id: '$_id',
+          data: { $mergeObjects: '$$ROOT' },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          value: '$count',
+        },
+      },
+    ])
+    totalSales = await Order.aggregate([
+      {
+        $match: {
+          'status.info': {
+            $not: {
+              $in: ['canceled', 'returned'],
+            },
+            $in: ['paid'],
+          },
+        },
+      },
+      { $unwind: '$status' },
+      {
+        $match: {
+          $and: [
+            { $expr: { $eq: ['$status.info', 'paid'] } },
+            { ...totalSalesPeriod },
+          ],
+        },
+      },
+      ...(period === 'last-six-months'
+        ? [
+            {
+              $group: {
+                _id: { yearMonth: { $substrCP: ['$status.date', 0, 7] } },
+                count: { $sum: '$totalAmount' },
+                totalPaidOrders: { $sum: 1 },
+              },
+            },
+            {
+              $sort: {
+                '_id.yearMonth': 1,
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                totalAmount: '$count',
+                totalPaidOrders: '$totalPaidOrders',
+                monthYear: {
+                  $concat: [
+                    {
+                      $arrayElemAt: [
+                        MONTHS_ARRAY,
+                        {
+                          $subtract: [
+                            { $toInt: { $substrCP: ['$_id.yearMonth', 5, 2] } },
+                            1,
+                          ],
+                        },
+                      ],
+                    },
+                    '-',
+                    {
+                      $substrCP: ['$_id.yearMonth', 0, 4],
+                    },
+                  ],
+                },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                data: {
+                  $push: {
+                    label: '$monthYear',
+                    total: {
+                      amount: '$totalAmount',
+                      paidOrders: '$totalPaidOrders',
+                    },
+                  },
+                },
+              },
+            },
+            {
+              $addFields: {
+                lastSixMonths: {
+                  $range: [
+                    { $add: [{ $subtract: [{ $month: TODAY }, 6] }, 1] },
+                    { $add: [{ $month: TODAY }, 1] },
+                  ],
+                },
+              },
+            },
+            {
+              $addFields: {
+                templateData: {
+                  $map: {
+                    input: '$lastSixMonths',
+                    as: 'm',
+                    in: {
+                      month_year: {
+                        $concat: [
+                          {
+                            $arrayElemAt: [
+                              MONTHS_ARRAY,
+                              {
+                                $subtract: ['$$m', 1],
+                              },
+                            ],
+                          },
+                          '-',
+                          {
+                            $toString: { $year: TODAY },
+                          },
+                        ],
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            {
+              $addFields: {
+                data: {
+                  $map: {
+                    input: '$templateData',
+                    as: 't',
+                    in: {
+                      label: '$$t.month_year',
+                      total: {
+                        $reduce: {
+                          input: '$data',
+                          initialValue: { amount: 0, paidOrders: 0 },
+                          in: {
+                            amount: {
+                              $cond: {
+                                if: { $eq: ['$$t.month_year', '$$this.label'] },
+                                then: {
+                                  $add: [
+                                    '$$this.total.amount',
+                                    '$$value.amount',
+                                  ],
+                                },
+                                else: { $add: [0, '$$value.amount'] },
+                              },
+                            },
+                            paidOrders: {
+                              $cond: {
+                                if: { $eq: ['$$t.month_year', '$$this.label'] },
+                                then: {
+                                  $add: [
+                                    '$$this.total.paidOrders',
+                                    '$$value.paidOrders',
+                                  ],
+                                },
+                                else: { $add: [0, '$$value.paidOrders'] },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                data: '$data',
+              },
+            },
+          ]
+        : [
+            {
+              $group: {
+                _id: '$_id',
+                orderInfo: { $mergeObjects: '$$ROOT' },
+                orderStatus: { $push: '$status' },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                data: {
+                  $mergeObjects: ['$orderInfo', { status: '$orderStatus' }],
+                },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                count: { $sum: '$data.totalAmount' },
+                totalPaidOrders: { $sum: 1 },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                ...(totalOrdersCount.length > 0 && {
+                  percent: {
+                    $multiply: [
+                      {
+                        $divide: [
+                          '$totalPaidOrders',
+                          totalOrdersCount[0].value,
+                        ],
+                      },
+                      100,
+                    ],
+                  },
+                }),
+                amount: '$count',
+              },
+            },
+          ]),
+    ])
+  } catch (err) {
+    return next(
+      new ErrorHandler('Something went wrong, please try again later.', 500)
+    )
+  }
+
+  return res.status(200).json({
+    message: `Total orders sales for ${period.split('-').join(' ')}`,
+    totalSales: period !== 'last-six-months' ? totalSales[0] : totalSales,
+  })
+}
+
 module.exports = {
   getOrders,
   getTotalOrdersCount,
+  getTotalOrdersSales,
 }

@@ -166,6 +166,23 @@ const getOrders = async (req, res, next) => {
   })
 }
 
+const getTotalOrdersCount = async (req, res, next) => {
+  let totalOrders
+
+  try {
+    totalOrders = await Order.find({}).countDocuments()
+  } catch (err) {
+    return next(
+      new ErrorHandler('Something went wrong, please try again later.', 500)
+    )
+  }
+
+  return res
+    .status(200)
+    .json({ message: 'Total order documents count', totalOrders })
+}
+
 module.exports = {
   getOrders,
+  getTotalOrdersCount,
 }

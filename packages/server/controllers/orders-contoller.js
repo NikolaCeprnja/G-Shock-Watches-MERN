@@ -1,3 +1,4 @@
+const mongoose = require('mongoose')
 const Order = require('../models/order-model')
 const ErrorHandler = require('../models/error-handler')
 
@@ -500,8 +501,172 @@ const getTotalOrdersSales = async (req, res, next) => {
   })
 }
 
+const getOrderById = async (req, res, next) => {
+  let order
+  const { oid } = req.params
+
+  try {
+    order = await Order.aggregate([
+      { $match: { _id: mongoose.Types.ObjectId(oid) } },
+      {
+        $lookup: {
+          from: 'users',
+          let: { customer: '$customer' },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$_id', '$$customer'] },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                id: '$_id',
+                email: 1,
+                userName: 1,
+                avatarUrl: 1,
+                cloudinaryUrl: 1,
+                accounts: 1,
+              },
+            },
+          ],
+          as: 'customer',
+        },
+      },
+      { $unwind: '$customer' },
+      { $unwind: '$orderedProducts' },
+      {
+        $lookup: {
+          from: 'products',
+          let: { orderedProduct: '$orderedProducts' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$_id', '$$orderedProduct.id'] } } },
+            {
+              $project: {
+                _id: 0,
+                id: '$_id',
+                name: 1,
+                model: 1,
+                collectionName: 1,
+                previewImg: 1,
+                orderedPrice: '$$orderedProduct.price',
+                orderedDiscount: '$$orderedProduct.discount',
+                orderedQuantity: '$$orderedProduct.quantity',
+                totalPrice: {
+                  $cond: {
+                    if: { $ne: ['$$orderedProduct.discount', 0] },
+                    then: {
+                      $toDouble: {
+                        $multiply: [
+                          {
+                            $subtract: [
+                              '$$orderedProduct.price',
+                              {
+                                $multiply: [
+                                  {
+                                    $divide: ['$$orderedProduct.discount', 100],
+                                  },
+                                  '$$orderedProduct.price',
+                                ],
+                              },
+                            ],
+                          },
+                          '$$orderedProduct.quantity',
+                        ],
+                      },
+                    },
+                    else: {
+                      $toDouble: {
+                        $multiply: [
+                          '$$orderedProduct.price',
+                          '$$orderedProduct.quantity',
+                        ],
+                      },
+                    },
+                  },
+                },
+                currentlyInStock: '$inStock',
+              },
+            },
+          ],
+          as: 'orderedProducts',
+        },
+      },
+      { $unwind: '$orderedProducts' },
+      {
+        $group: {
+          _id: '$_id',
+          status: { $first: '$status' },
+          email: { $first: '$email' },
+          customer: { $first: '$customer' },
+          currency: { $first: '$currency' },
+          totalAmount: { $first: '$totalAmount' },
+          orderedProducts: { $push: '$orderedProducts' },
+          shippingAddr: { $first: '$shippingAddr' },
+          billingAddr: { $first: '$billingAddr' },
+          createdAt: { $first: '$createdAt' },
+          updatedAt: { $first: '$updatedAt' },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          id: '$_id',
+          status: {
+            $map: {
+              input: '$status',
+              as: 'status',
+              in: {
+                info: '$$status.info',
+                date: {
+                  $dateToString: {
+                    format: '%d/%m/%Y - %H:%M:%S',
+                    date: '$$status.date',
+                  },
+                },
+              },
+            },
+          },
+          email: 1,
+          customer: 1,
+          currency: 1,
+          totalAmount: 1,
+          orderedProducts: 1,
+          shippingAddr: 1,
+          billingAddr: 1,
+          createdAt: {
+            $dateToString: {
+              format: '%d/%m/%Y - %H:%M:%S',
+              date: '$createdAt',
+            },
+          },
+          updatedAt: {
+            $dateToString: {
+              format: '%d/%m/%Y - %H:%M:%S',
+              date: '$updatedAt',
+            },
+          },
+        },
+      },
+    ])
+  } catch (err) {
+    return next(
+      new ErrorHandler('Something went wrong, please try again later.', 500)
+    )
+  }
+
+  if (order[0]) {
+    return res.status(200).json({ order: order[0] })
+  }
+
+  return res
+    .status(404)
+    .json({ message: 'Order with provided oid does not exists.' })
+}
+
 module.exports = {
   getOrders,
   getTotalOrdersCount,
   getTotalOrdersSales,
+  getOrderById,
 }

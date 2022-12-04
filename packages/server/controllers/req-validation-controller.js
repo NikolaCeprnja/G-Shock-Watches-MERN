@@ -23,7 +23,7 @@ const reqValidationResult = (req, res, next) => {
     return next()
   } catch (err) {
     const errors = err.mapped()
-    console.log(error)
+    console.log(errors)
 
     return res.status(422).json({ errors })
   }
@@ -212,6 +212,9 @@ const userValidation = method => {
 
 // PRODUCT VALIDATION
 const productValidation = method => {
+  // eslint-disable-next-line global-require
+  const Product = require('../models/product-model')
+
   switch (method) {
     case 'createProduct': {
       return [
@@ -220,7 +223,19 @@ const productValidation = method => {
           .withMessage('Name needs to be at least 5 characters long.'),
         body('model')
           .isLength({ min: 2 })
-          .withMessage('Model needs to be at least 2 characters long.'),
+          .withMessage('Model needs to be at least 2 characters long.')
+          .custom((value, { req: { body: { name } } }) =>
+            Product.findOne({ name, model: value }).then(existingProduct => {
+              if (existingProduct) {
+                return Promise.reject(
+                  new ErrorHandler(
+                    'Product with provided model already exists.',
+                    409
+                  )
+                )
+              }
+            })
+          ),
         body('color').notEmpty(),
         body('types').isArray({ min: 1 }),
         body('types.*').isIn(PRODUCT_TYPES),
@@ -228,19 +243,65 @@ const productValidation = method => {
         body('materials').isArray({ min: 1 }),
         body('materials.*').isIn(PRODUCT_MATERIALS),
         body('mainFeatures').isArray({ min: 1 }),
-        body('mainFeatures.*').isIn(PRODUCT_MAIN_FEATURES),
-        body('images').isArray({ min: 1 }),
+        // body('mainFeatures.*').isIn(PRODUCT_MAIN_FEATURES),
         body('discount')
           .optional()
-          .isInt({ min: 1, max: 100 })
+          .isInt({ min: 0, max: 100 })
           .withMessage('Discount must be a number between 1 and 100.'),
         body('inStock')
-          .isInt({ min: 1 })
-          .withMessage('InStock must be a number greater than 0.'),
+          .isInt({ min: 0 })
+          .withMessage('InStock must be a positive number.'),
         body('reviews').optional().isArray({ min: 1 }),
         body('reviews.*').isMongoId(),
-        body('specifications').isArray({ min: 1 }),
+        body('specifications').isString(),
         body('price').isFloat({ min: 99.99 }),
+        reqValidationResult,
+      ]
+    }
+    case 'updateProduct': {
+      return [
+        body('name')
+          .optional()
+          .isLength({ min: 5 })
+          .withMessage('Name needs to be at least 5 characters long.'),
+        body('model')
+          .optional()
+          .isLength({ min: 2 })
+          .withMessage('Model needs to be at least 2 characters long.')
+          .custom((value, { req: { params: { pid }, body: { name } } }) =>
+            Product.findOne({ _id: { $ne: pid }, name, model: value }).then(
+              existingProduct => {
+                if (existingProduct) {
+                  return Promise.reject(
+                    new ErrorHandler(
+                      'Product with provided model already exists.',
+                      409
+                    )
+                  )
+                }
+              }
+            )
+          ),
+        body('color').optional().notEmpty(),
+        body('types').optional().isArray({ min: 1 }),
+        body('types.*').isIn(PRODUCT_TYPES),
+        body('collectionName').optional().isIn(PRODUCT_COLLECTION_NAME),
+        body('materials').optional().isArray({ min: 1 }),
+        body('materials.*').isIn(PRODUCT_MATERIALS),
+        body('mainFeatures').optional().isArray({ min: 1 }),
+        // body('mainFeatures.*').isIn(PRODUCT_MAIN_FEATURES),
+        body('discount')
+          .optional({ checkFalsy: true })
+          .isInt({ min: 0, max: 100 })
+          .withMessage('Discount must be a number between 0 and 100.'),
+        body('inStock')
+          .optional()
+          .isInt({ min: 0 })
+          .withMessage('InStock must be a positive number.'),
+        body('reviews').optional().isArray({ min: 1 }),
+        body('reviews.*').isMongoId(),
+        body('specifications').optional().isString(),
+        body('price').optional().isFloat({ min: 99.99 }),
         reqValidationResult,
       ]
     }

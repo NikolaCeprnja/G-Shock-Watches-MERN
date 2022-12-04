@@ -9,15 +9,15 @@ const { Schema } = mongoose
 const productSchema = new Schema(
   {
     name: { type: String, required: true },
-    model: { type: String, required: true },
+    model: { type: String, required: true, unique: true },
     desc: { type: String, required: true },
     color: { type: String, required: true },
     types: [{ type: String, required: true }],
     collectionName: { type: String, required: true },
     materials: [{ type: String, required: true }],
     mainFeatures: [{ type: String, required: true }],
-    previewImg: { type: String, required: true },
-    images: [{ type: String, required: true }],
+    previewImg: { type: String, default: '' },
+    images: [{ type: String, default: '' }],
     discount: { type: Number, default: 0 },
     inStock: { type: Number, required: true },
     reviews: [{ type: mongoose.Types.ObjectId, ref: 'Review' }],
@@ -25,6 +25,11 @@ const productSchema = new Schema(
     price: { type: Double, required: true },
   },
   { timestamps: true, toObject: { getters: true } }
+)
+
+productSchema.index(
+  { name: 'text', model: 'text', collectionName: 'text' },
+  { weights: { name: 1, model: 1, collectionName: 1 } }
 )
 
 productSchema.options.toObject.transform = function (doc, ret, options) {

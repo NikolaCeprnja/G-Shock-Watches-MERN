@@ -812,10 +812,120 @@ const getOrdersByUserId = async (req, res, next) => {
   })
 }
 
+const getOrdersByProductId = async (req, res, next) => {
+  let orders
+  const { pid } = req.params
+
+  try {
+    orders = await Order.aggregate([
+      {
+        $match: {
+          $expr: {
+            $in: [{ $toObjectId: pid }, '$orderedProducts.id'],
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          let: { customer: '$customer' },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$_id', '$$customer'] },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                id: '$_id',
+                email: 1,
+                userName: 1,
+                avatarUrl: 1,
+                cloudinaryUrl: 1,
+                accounts: 1,
+              },
+            },
+          ],
+          as: 'customer',
+        },
+      },
+      { $unwind: '$customer' },
+      { $unwind: '$orderedProducts' },
+      {
+        $lookup: {
+          from: 'products',
+          let: { orderedProduct: '$orderedProducts' },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$_id', { $toObjectId: pid }] },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                orderedPrice: '$$orderedProduct.price',
+                orderedDiscount: '$$orderedProduct.discount',
+                orderedQuantity: '$$orderedProduct.quantity',
+              },
+            },
+          ],
+          as: 'orderInfo',
+        },
+      },
+      { $unwind: '$orderInfo' },
+      {
+        $project: {
+          _id: 0,
+          id: '$_id',
+          status: 1,
+          email: 1,
+          customer: 1,
+          currency: 1,
+          totalAmount: 1,
+          orderInfo: 1,
+          shippingAddr: 1,
+          billingAddr: 1,
+          createdAt: {
+            $dateToString: {
+              format: '%d/%m/%Y - %H:%M:%S',
+              date: '$createdAt',
+            },
+          },
+          updatedAt: {
+            $dateToString: {
+              format: '%d/%m/%Y - %H:%M:%S',
+              date: '$updatedAt',
+            },
+          },
+        },
+      },
+    ])
+  } catch (err) {
+    return next(
+      new ErrorHandler('Something went wrong, please try again later.', 500)
+    )
+  }
+
+  if (orders.length > 0) {
+    return res.status(200).json({
+      message: `List of all orders for product with pid:${pid}`,
+      orders,
+    })
+  }
+
+  return res.status(404).json({
+    message:
+      'No items were found matching this combination of selected filters.',
+  })
+}
+
 module.exports = {
   getOrders,
   getTotalOrdersCount,
   getTotalOrdersSales,
   getOrderById,
   getOrdersByUserId,
+  getOrdersByProductId,
 }

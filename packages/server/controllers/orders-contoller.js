@@ -1,5 +1,7 @@
+/* eslint-disable no-loop-func */
 const mongoose = require('mongoose')
 const Order = require('../models/order-model')
+const Product = require('../models/product-model')
 const ErrorHandler = require('../models/error-handler')
 
 // GET CONTOLLERS
@@ -921,6 +923,63 @@ const getOrdersByProductId = async (req, res, next) => {
   })
 }
 
+// POST CONTROLLERS
+const createOrder = async (req, res, next) => {
+  let createdOrder
+  const customer = req.user
+  const { totalAmount } = req
+  const {
+    items,
+    email,
+    address: { shipping: shippingAddr, billing: billingAddr },
+  } = req.body
+  const productIds = items.map(item => mongoose.Types.ObjectId(item.id))
+
+  try {
+    const session = await mongoose.startSession()
+    const orderedProducts = await Product.find({ _id: { $in: productIds } })
+      .select('_id inStock discount price')
+      .session(session)
+
+    session.startTransaction()
+    const updatedProducts = []
+    // eslint-disable-next-line no-restricted-syntax
+    for (const product of orderedProducts) {
+      const foundItem = items.find(item => item.id === product.id)
+      foundItem.price = product.price
+      foundItem.discount = product.discount
+      product.inStock -= foundItem.quantity
+      updatedProducts.push(product.save())
+    }
+
+    // update all orderedProducts quantity values.
+    await Promise.all(updatedProducts)
+
+    const newOrder = new Order({
+      totalAmount,
+      email,
+      customer: customer.id,
+      orderedProducts: items,
+      shippingAddr,
+      billingAddr,
+      status: [{}],
+    })
+
+    createdOrder = await newOrder.save({ session })
+    await session.commitTransaction()
+    session.endSession()
+  } catch (err) {
+    return next(
+      new ErrorHandler('Something went wrong, please try again later.', 500)
+    )
+  }
+
+  return res.status(201).json({
+    createdOrder: createdOrder.toObject({ newOrderCreated: true }),
+    message: 'New order is successfully created!',
+  })
+}
+
 module.exports = {
   getOrders,
   getTotalOrdersCount,
@@ -928,4 +987,5 @@ module.exports = {
   getOrderById,
   getOrdersByUserId,
   getOrdersByProductId,
+  createOrder,
 }

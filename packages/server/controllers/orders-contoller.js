@@ -1,6 +1,7 @@
 /* eslint-disable no-loop-func */
 const mongoose = require('mongoose')
 const Order = require('../models/order-model')
+const User = require('../models/user-model')
 const Product = require('../models/product-model')
 const ErrorHandler = require('../models/error-handler')
 
@@ -980,6 +981,79 @@ const createOrder = async (req, res, next) => {
   })
 }
 
+// PUT CONTROLLERS
+const updateOrder = async (req, res, next) => {
+  const { oid } = req.params
+  const { status } = req.body
+  const options = {
+    new: true,
+    lean: true,
+    useFindAndModify: false,
+    populate: 'customer orderedProducts.id',
+    projection: {
+      _id: 0,
+      __v: 0,
+      createdAt: 0,
+      updatedAt: 0,
+    },
+  }
+  let updatedOrder
+
+  try {
+    if (status === 'fulfilled') {
+      const session = await mongoose.startSession()
+      session.startTransaction()
+      const orderForUpdate = await Order.findById(
+        oid,
+        'customer orderedProducts.id'
+      )
+      const customerPurchasedProducts = orderForUpdate.orderedProducts.map(
+        product => mongoose.Types.ObjectId(product.id)
+      )
+      await User.updateOne(
+        { _id: orderForUpdate.customer },
+        {
+          $addToSet: {
+            purchasedProducts: { $each: customerPurchasedProducts },
+          },
+        }
+      ).session(session)
+      updatedOrder = await Order.findByIdAndUpdate(
+        oid,
+        {
+          $push: { status: { info: status } },
+        },
+        { ...options, session }
+      )
+      await session.commitTransaction()
+      session.endSession()
+    } else {
+      updatedOrder = await Order.findByIdAndUpdate(
+        oid,
+        {
+          $push: { status: { info: status } },
+        },
+        options
+      )
+    }
+  } catch (err) {
+    return next(
+      new ErrorHandler('Something went wrong, please try again later.', 500)
+    )
+  }
+
+  if (updatedOrder) {
+    return res.status(200).json({
+      message: 'Order is successfully updated!',
+      updatedOrder,
+    })
+  }
+
+  return res
+    .status(404)
+    .json({ message: 'Order with provided oid does not exists' })
+}
+
 module.exports = {
   getOrders,
   getTotalOrdersCount,
@@ -988,4 +1062,5 @@ module.exports = {
   getOrdersByUserId,
   getOrdersByProductId,
   createOrder,
+  updateOrder,
 }

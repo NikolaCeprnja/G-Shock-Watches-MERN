@@ -5,10 +5,16 @@ const axios = Axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
+const getCollections = async () => {
+  const response = await axios()
+
+  return response
+}
+
 const getCollectionsByGender = async gender => {
   const response = await axios(`/${gender}`)
 
   return response
 }
 
-export default { getCollectionsByGender }
+export default { getCollections, getCollectionsByGender }

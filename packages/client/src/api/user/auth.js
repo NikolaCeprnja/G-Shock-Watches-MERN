@@ -17,8 +17,8 @@ const signin = async data => {
   return response
 }
 
-const signup = async data => {
-  const response = await axios.post('/signup', data)
+export const signup = async (data, path = '/signup') => {
+  const response = await axios.post(path, data)
 
   return response
 }

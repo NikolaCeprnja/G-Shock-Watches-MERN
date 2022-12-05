@@ -33,12 +33,14 @@ const reviewRoutes = require('./routes/review-routes')
 const collectionRoutes = require('./routes/collections-routes')
 const offerRoutes = require('./routes/offers-routes')
 const productRoutes = require('./routes/products-routes')
+const orderRoutes = require('./routes/order-routes')
 
 app.use('/api/users', userRoutes)
 app.use('/api/reviews', reviewRoutes)
 app.use('/api/collections', collectionRoutes)
 app.use('/api/offers', offerRoutes)
 app.use('/api/products', productRoutes)
+app.use('/api/orders', orderRoutes)
 
 // Errors handler config
 const {

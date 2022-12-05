@@ -29,6 +29,7 @@ const userSchema = new Schema(
     },
     isAdmin: { type: Boolean, default: false },
     avatarUrl: String,
+    orders: [{ type: mongoose.Types.ObjectId, ref: 'Order' }],
     purchasedProducts: [{ type: mongoose.Types.ObjectId, ref: 'Product' }],
     reviews: [{ type: mongoose.Types.ObjectId, ref: 'Review' }],
     accounts: [accountSchema],

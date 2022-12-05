@@ -315,9 +315,9 @@ const reviewValidation = method => {
       return [
         body('title').notEmpty().withMessage("Title can't be empty"),
         body('description')
-          .isLength({ min: 10, max: 100 })
+          .isLength({ min: 10, max: 600 })
           .withMessage(
-            'Description needs to be between 10 and 100 characters long.'
+            'Description needs to be between 10 and 600 characters long.'
           ),
         body('score')
           .isFloat({ min: 1, max: 5 })
@@ -356,14 +356,36 @@ const reviewValidation = method => {
         body('title').optional().notEmpty().withMessage("Title can't be empty"),
         body('description')
           .optional()
-          .isLength({ min: 10, max: 100 })
+          .isLength({ min: 10, max: 600 })
           .withMessage(
-            'Description needs to be between 10 and 100 characters long.'
+            'Description needs to be between 10 and 600 characters long.'
           ),
         body('score')
           .optional()
-          .isInt({ min: 1, max: 5 })
+          .isFloat({ min: 1, max: 5 })
           .withMessage('Score needs to be a number between 1 and 5.'),
+        reqValidationResult,
+      ]
+    }
+  }
+}
+
+// ORDER VALIDATION
+const orderValidation = method => {
+  switch (method) {
+    case 'createOrder': {
+      return [
+        body('items')
+          .isArray({ min: 1 })
+          .withMessage(
+            'Please add one or more products to the cart before you can create an order.'
+          ),
+        body('address.shipping')
+          .notEmpty()
+          .withMessage('Please input your shipping address.'),
+        body('address.billing')
+          .notEmpty()
+          .withMessage('Please input your billing address.'),
         reqValidationResult,
       ]
     }
@@ -374,4 +396,5 @@ module.exports = {
   userValidation,
   productValidation,
   reviewValidation,
+  orderValidation,
 }

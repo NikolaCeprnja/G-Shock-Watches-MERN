@@ -1,19 +1,6 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import { createSlice } from '@reduxjs/toolkit'
 
-import offers from '@api/offer/index'
-
-// Thunks
-export const getOffers = createAsyncThunk('offers/getOffers', async () => {
-  try {
-    const response = await offers.getOffers()
-    console.log(response)
-    const { data, status } = response
-    return { ...data, status }
-  } catch (err) {
-    console.log(err.response)
-    return err.response
-  }
-})
+import * as offerThunk from './offerThunk'
 
 const initialState = {
   loading: false,
@@ -25,14 +12,14 @@ export const offerSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: {
-    [getOffers.pending]: state => {
+    [offerThunk.getOffers.pending]: state => {
       state.loading = true
     },
-    [getOffers.fulfilled]: (state, { payload }) => {
+    [offerThunk.getOffers.fulfilled]: (state, { payload }) => {
       state.loading = false
       state.data = payload.offers
     },
-    [getOffers.rejected]: state => {
+    [offerThunk.getOffers.rejected]: state => {
       state.loading = false
     },
   },

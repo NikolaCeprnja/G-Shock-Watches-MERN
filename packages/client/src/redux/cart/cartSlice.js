@@ -34,6 +34,7 @@ const cartSlice = createSlice({
 
       existingItem.quantity -= 1
     },
+    removeAll: () => initialState,
   },
 })
 
@@ -73,6 +74,6 @@ export const selectCartItemsSubtotal = createDraftSafeSelector(
     ) ?? 0
 )
 
-export const { addItem, removeItem } = cartSlice.actions
+export const { addItem, removeItem, removeAll } = cartSlice.actions
 
 export default cartSlice.reducer

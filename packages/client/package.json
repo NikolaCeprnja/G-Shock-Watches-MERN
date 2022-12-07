@@ -13,7 +13,7 @@
   "dependencies": {
     "@ant-design/icons": "^4.5.0",
     "@craco/craco": "^6.1.1",
-    "@reduxjs/toolkit": "^1.1.0",
+    "@reduxjs/toolkit": "^1.7.0",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
@@ -33,6 +33,7 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.3",
     "react-transition-group": "^4.4.1",
+    "redux-persist": "^6.0.0",
     "yup": "^0.32.9"
   },
   "devDependencies": {

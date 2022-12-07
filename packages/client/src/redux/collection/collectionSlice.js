@@ -1,28 +1,9 @@
-import {
-  createSlice,
-  createAsyncThunk,
-  createDraftSafeSelector,
-} from '@reduxjs/toolkit'
+import { createSlice, createDraftSafeSelector } from '@reduxjs/toolkit'
 
-import collections from '@api/collection/index'
-
-// Thunks
-export const getCollectionsByGender = createAsyncThunk(
-  'collections/getCollectionByGender',
-  async gender => {
-    try {
-      const response = await collections.getCollectionsByGender(gender)
-      console.log(response)
-      const { data, status } = response
-      return { ...data, status }
-    } catch (err) {
-      console.log(err.response)
-      return err.response
-    }
-  }
-)
+import * as collectionThunk from './collectionThunk'
 
 const initialState = {
+  loading: false,
   men: { loading: false, data: undefined },
   women: { loading: false, data: undefined },
 }
@@ -32,10 +13,47 @@ export const collectionSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: {
-    [getCollectionsByGender.pending]: (state, { meta: { arg } }) => {
+    [collectionThunk.getCollections.pending]: state => {
+      state.loading = true
+    },
+    [collectionThunk.getCollections.fulfilled]: (
+      state,
+      { payload: { collections: allCollections } }
+    ) => {
+      state.loading = false
+
+      if (!state.men.data) {
+        state.men.data = []
+      }
+
+      if (!state.women.data) {
+        state.women.data = []
+      }
+
+      allCollections.forEach(collection => {
+        state[collection.gender].data = [
+          ...new Map(
+            [...state[collection.gender].data, collection].map(coll => [
+              coll.id,
+              coll,
+            ])
+          ).values(),
+        ]
+      })
+    },
+    [collectionThunk.getCollections.rejected]: state => {
+      state.loading = false
+    },
+    [collectionThunk.getCollectionsByGender.pending]: (
+      state,
+      { meta: { arg } }
+    ) => {
       state[arg].loading = true
     },
-    [getCollectionsByGender.fulfilled]: (state, { meta: { arg }, payload }) => {
+    [collectionThunk.getCollectionsByGender.fulfilled]: (
+      state,
+      { meta: { arg }, payload }
+    ) => {
       state[arg].loading = false
 
       if (!state[arg].data) {
@@ -51,13 +69,16 @@ export const collectionSlice = createSlice({
         ).values(),
       ]
     },
-    [getCollectionsByGender.rejected]: (state, { meta: { arg } }) => {
+    [collectionThunk.getCollectionsByGender.rejected]: (
+      state,
+      { meta: { arg } }
+    ) => {
       state[arg].loading = false
     },
   },
 })
 
-const selectCollections = state => state.collections
+export const selectCollections = state => state.collections
 
 export const selectCollectionByGender = gender =>
   createDraftSafeSelector(

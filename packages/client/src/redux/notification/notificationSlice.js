@@ -6,7 +6,7 @@ const initialState = {
 }
 
 export const notificationSlice = createSlice({
-  name: 'notifications',
+  name: 'notification',
   initialState,
   reducers: {
     create: (state, { payload }) => {
@@ -28,17 +28,17 @@ export const notificationSlice = createSlice({
         state.data.push(payload)
       }
     },
-
     remove: (state, { payload }) => {
-      state.data = state.data.filter(
+      state.data = state.data?.filter(
         notification => notification.id !== payload
       )
     },
+    removeAll: () => initialState,
   },
 })
 
 export const selectNotifications = state => state.notifications
 
-export const { create, remove } = notificationSlice.actions
+export const { create, remove, removeAll } = notificationSlice.actions
 
 export default notificationSlice.reducer

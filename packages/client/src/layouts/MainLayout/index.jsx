@@ -11,7 +11,10 @@ const MainLayout = ({ children }) => {
   return (
     <Layout style={{ background: 'unset' }}>
       <Navbar />
-      <Content>{children}</Content>
+      <Content
+        style={{ display: 'flex', flexDirection: 'column', marginTop: '64px' }}>
+        {children}
+      </Content>
       <Footer
         style={{
           color: '#fff',

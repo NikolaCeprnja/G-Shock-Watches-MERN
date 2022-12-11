@@ -4,7 +4,8 @@ import { Carousel } from 'antd'
 
 import OfferItem from '@components/OfferItem/index'
 
-import { selectOffers, getOffers } from '@redux/offer/offerSlice'
+import { selectOffers } from '@redux/offer/offerSlice'
+import { getOffers } from '@redux/offer/offerThunk'
 
 const OffersCarousel = () => {
   const dispatch = useDispatch()

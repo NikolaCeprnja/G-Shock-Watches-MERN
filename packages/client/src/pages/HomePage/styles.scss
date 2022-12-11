@@ -1,7 +1,6 @@
 .HomePage {
   .offers-carousel {
     height: 500px;
-    margin-top: 63px;
     position: relative;
 
     &:active {
@@ -60,42 +59,49 @@
     }
   }
 
-  .products-preview-container {
+  .products-preview-wrapper {
     display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
     padding: 0 15%;
     margin-bottom: 3rem;
 
     .title {
-      flex: 100%;
+      text-align: center;
 
       h2 {
         margin-top: 3rem;
         margin-bottom: 0;
         font-size: 2.5rem;
         font-weight: bold;
-        text-align: center;
         text-transform: capitalize;
       }
 
       hr {
-        width: 20%;
+        width: 20ch;
         margin: 1rem auto 3rem auto;
       }
     }
 
-    .product-item-skeleton {
-      h3 {
-        margin: 1rem auto;
-      }
+    .products-preview-container {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: center;
 
-      ul {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
+      .product-item-skeleton-info {
+        h3 {
+          margin: 1rem auto;
+        }
+
+        ul {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
       }
     }
   }

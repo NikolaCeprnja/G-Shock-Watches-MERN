@@ -25,6 +25,9 @@
             ],
             "@redux/*": [
                 "./redux/*"
+            ],
+            "@validation/*": [
+                "./validation/*"
             ]
         }
     },

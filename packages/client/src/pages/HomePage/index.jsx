@@ -6,7 +6,7 @@ import ProductsPreview from '@containers/ProductsPreview/index'
 import {
   getLatestProducts,
   getTopRatedProducts,
-} from '@redux/product/productSlice'
+} from '@redux/product/productThunk'
 
 import './styles.scss'
 
@@ -18,12 +18,12 @@ const HomePage = () => {
         title='New watches'
         action={getLatestProducts}
         type='latest'
+        skeletons={4}
       />
       <ProductsPreview
         title='Top rated products'
         action={getTopRatedProducts}
         type='topRated'
-        skeletons={8}
       />
     </div>
   )

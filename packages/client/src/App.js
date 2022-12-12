@@ -1,7 +1,7 @@
 import React, { useEffect, Suspense, lazy } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Switch, Route } from 'react-router-dom'
-import { Spin, BackTop } from 'antd'
+import { Spin, BackTop, notification as antdNotifications } from 'antd'
 
 import AuthLayout from '@layouts/AuthLayout/index'
 import MainLayout from '@layouts/MainLayout/index'
@@ -10,7 +10,8 @@ import Notification from '@components/Notification/index'
 
 import ProtectedRoute from '@components/ProtectedRoute/index'
 
-import { authUser } from '@redux/user/userSlice'
+import { authUser } from '@redux/user/userThunk'
+import { selectLoggedInUser } from '@redux/user/userSlice'
 import { selectNotifications } from '@redux/notification/notificationSlice'
 
 import './App.less'
@@ -20,18 +21,29 @@ const SigninPage = lazy(() => import('@pages/SigninPage/index'))
 const SignupPage = lazy(() => import('@pages/SignupPage/index'))
 const ForgotPasswordPage = lazy(() => import('@pages/ForgotPasswordPage/index'))
 const ResetPasswordPage = lazy(() => import('@pages/ResetPasswordPage/index'))
-/* const ReviewsPage = lazy(() => import('@pages/ReviewsPage/index'))
-const WatchesPage = lazy(() => import('@pages/WatchesPage/index')) */
 
-function App() {
+const App = () => {
   const dispatch = useDispatch()
+  const loggedInUser = useSelector(selectLoggedInUser)
   const notifications = useSelector(selectNotifications)
 
   useEffect(() => {
-    const getAuthUser = () => dispatch(authUser())
+    const getAuthUser = async () => {
+      try {
+        await dispatch(authUser())
+      } catch (err) {
+        console.log(err)
+      }
+    }
 
     getAuthUser()
   }, [dispatch])
+
+  useEffect(() => {
+    if (!loggedInUser.info && loggedInUser.auth === 'unauthenticated') {
+      antdNotifications.destroy()
+    }
+  }, [loggedInUser])
 
   return (
     <>
@@ -50,52 +62,38 @@ function App() {
             exact
             path='/auth/signin'
             to='/'
-            component={SigninPage}
             layout={AuthLayout}
+            component={SigninPage}
           />
           <ProtectedRoute
             exact
             path='/auth/signup'
             to='/'
-            component={SignupPage}
             layout={AuthLayout}
+            component={SignupPage}
           />
           <ProtectedRoute
             exact
             path='/auth/forgot-password'
             to='/'
-            component={ForgotPasswordPage}
             layout={AuthLayout}
+            component={ForgotPasswordPage}
           />
           <ProtectedRoute
             exact
             path='/auth/reset-password/:resetToken'
             to='/'
-            component={ResetPasswordPage}
             layout={AuthLayout}
+            component={ResetPasswordPage}
           />
-          {/* <ProtectedRoute
-            exact
-            path='/users/:uid/reviews'
-            isPrivate
-            component={ReviewsPage}
-            layout={MainLayout}
-          />
-          <Route
-            exact
-            path='/watches/:type'
-            render={() => (
-              <MainLayout>
-                <WatchesPage />
-              </MainLayout>
-            )}
-          /> */}
+          {/* // TODO: add 403, 404 and 500 pages */}
+          <Route path='*' render={() => <div>Error, 404 Page!</div>} />
         </Switch>
-        {notifications.data?.map(notification => (
-          <Notification key={notification.id} {...notification} />
-        ))}
         <BackTop />
       </Suspense>
+      {notifications.data?.map(notification => (
+        <Notification key={notification.id} {...notification} />
+      ))}
     </>
   )
 }

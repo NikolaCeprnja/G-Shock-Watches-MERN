@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
-import { Rate, Tag, Button } from 'antd'
+import { Rate, Tag, Button, Skeleton } from 'antd'
 import { ShoppingCartOutlined } from '@ant-design/icons'
 
 import { selectCartItemCount, addItem } from '@redux/cart/cartSlice'
@@ -12,6 +12,12 @@ import './styles.scss'
 const ProductItem = ({ product }) => {
   const dispatch = useDispatch()
   const cartItemCount = useSelector(selectCartItemCount(product.id))
+  const [imgIsLoading, setImgIsLoading] = useState(true)
+  const collectionColor = Object.freeze({
+    men: 'geekblue',
+    women: 'purple',
+    all: 'gold',
+  })
 
   return (
     <div className='product-item' title={`${product.name}-${product.model}`}>
@@ -22,10 +28,16 @@ const ProductItem = ({ product }) => {
         </div>
       )}
       <Link
-        to={`/watches/${product.collectionName.toLowerCase()}/${product.id}`}>
+        to={`/watches/${
+          product.gender
+        }/${product.collectionName.toLowerCase()}/${product.id}`}>
         <div className='img-wrapper'>
+          {imgIsLoading && (
+            <Skeleton.Image style={{ width: '200px', height: '200px' }} />
+          )}
           <img
-            className='product-img'
+            onLoad={() => setImgIsLoading(false)}
+            className={`product-img${imgIsLoading ? ' loading' : ''}`}
             src={product.previewImg}
             alt={`${product.name}-img`}
             width={200}
@@ -38,7 +50,9 @@ const ProductItem = ({ product }) => {
             ({product.numReviews || 0})
           </span>
         </div>
-        <Tag className='product-collection-name' color='gold'>
+        <Tag
+          className='product-collection-name'
+          color={collectionColor[product.gender]}>
           {product.collectionName}
         </Tag>
         <div className='product-info'>
@@ -49,7 +63,9 @@ const ProductItem = ({ product }) => {
           <span className='product-price'>
             $
             {product.discount
-              ? product.price - (product.discount / 100) * product.price
+              ? Math.floor(
+                  product.price - (product.discount / 100) * product.price
+                )
               : product.price}
           </span>
         </div>
@@ -63,6 +79,7 @@ const ProductItem = ({ product }) => {
               id: product.id,
               name: product.name,
               model: product.model,
+              gender: product.gender,
               collectionName: product.collectionName,
               previewImg: product.previewImg,
               price: product.price,
@@ -74,7 +91,9 @@ const ProductItem = ({ product }) => {
         Add to Cart
       </Button>
       <Link
-        to={`/watches/${product.collectionName.toLowerCase()}/${product.id}`}>
+        to={`/watches/${
+          product.gender
+        }/${product.collectionName.toLowerCase()}/${product.id}`}>
         Learn More
       </Link>
     </div>

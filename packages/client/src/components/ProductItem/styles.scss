@@ -60,8 +60,8 @@
   }
 
   .img-wrapper {
-    height: 180px;
-    width: 100%;
+    width: 200px;
+    height: 200px;
     transition: all 0.2s ease-in;
 
     .product-img {
@@ -69,6 +69,10 @@
       height: 100%;
       object-fit: contain;
       filter: drop-shadow(5px 5px 8px rgba(0, 0, 0, 0.35));
+
+      &.loading {
+        display: none;
+      }
     }
   }
 
@@ -106,7 +110,7 @@
 
     .product-old-price {
       color: #b3b3b3;
-      text-decoration: line-through solid 2px red;
+      text-decoration: line-through solid 2px #f5222d;
     }
 
     .product-price {

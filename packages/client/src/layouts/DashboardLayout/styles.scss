@@ -1,0 +1,36 @@
+.DashboardLayout {
+  background: unset !important;
+
+  .dashboard-sider-wrapper {
+    left: 0;
+    position: fixed;
+    height: 100vh;
+    max-height: calc(100% - 53px);
+    z-index: 1;
+    overflow: hidden auto !important;
+    background-color: #252f3e;
+
+    & > .ant-layout-sider-children {
+      width: inherit;
+    }
+  }
+
+  .sider-trigger-btn,
+  .home-page-btn {
+    font-size: 1.3rem;
+  }
+
+  .sider-trigger-btn {
+    margin-left: 1.5rem;
+  }
+
+  .home-page-btn {
+    padding: 0;
+    color: #000;
+    margin-right: 1.5rem;
+
+    span {
+      font-size: 1rem;
+    }
+  }
+}

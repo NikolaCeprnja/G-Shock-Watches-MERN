@@ -82,3 +82,9 @@ export const forgotPassValidationSchema = (nonExistingUsers, errMsg) =>
   Yup.object().shape({
     userNameOrEmail: userNameValidation(nonExistingUsers, errMsg, true),
   })
+
+export const resetPassValidationSchema = Yup.object().shape({
+  newPassword: passwordValidation(true),
+  confirmNewPassword: confirmPasswordValidation('newPassword', true),
+})
+

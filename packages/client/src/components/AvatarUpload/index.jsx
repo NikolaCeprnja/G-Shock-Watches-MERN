@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { Upload, Tooltip } from 'antd'
 import { FormItem } from 'formik-antd'
@@ -7,10 +7,14 @@ import { UploadOutlined } from '@ant-design/icons'
 
 import './styles.scss'
 
-const AvatarUpload = ({ form, field: { name, value } }) => {
+const AvatarUpload = ({
+  form,
+  field: { name, value },
+  defaultFileList,
+  ...otherProps
+}) => {
   const { errors, setFieldValue } = form
-
-  const [fileList, setFileList] = useState([])
+  const [fileList, setFileList] = useState(defaultFileList)
 
   const uploadButton = (
     <Tooltip title='Upload Your Profile Image' placement='bottom'>
@@ -26,6 +30,21 @@ const AvatarUpload = ({ form, field: { name, value } }) => {
       setFieldValue(name, info.file)
     }
   }
+
+  const handleRemove = () => {
+    setFileList([])
+    setFieldValue(name, null)
+  }
+
+  useEffect(() => {
+    setFileList(defaultFileList)
+  }, [defaultFileList])
+
+  useEffect(() => {
+    if (!value || value === null) {
+      setFileList([])
+    }
+  }, [value])
 
   return (
     <FormItem
@@ -46,6 +65,7 @@ const AvatarUpload = ({ form, field: { name, value } }) => {
           return true
         }}>
         <Upload
+          {...otherProps}
           name={name}
           accept='image/png, image/jpeg'
           className='avatar-uploader'
@@ -55,17 +75,16 @@ const AvatarUpload = ({ form, field: { name, value } }) => {
             setFieldValue(name, file)
             if (file.size >= 1000000) {
               file.status = 'error'
+            } else {
+              file.thumbUrl = URL.createObjectURL(file)
             }
-            file.thumbUrl = URL.createObjectURL(file)
             setFileList([file])
             return false
           }}
           fileList={fileList}
+          defaultFileList={defaultFileList}
           onChange={handleChange}
-          onRemove={() => {
-            setFileList([])
-            setFieldValue(name, undefined)
-          }}>
+          onRemove={handleRemove}>
           {!value ? uploadButton : null}
         </Upload>
       </ImgCrop>
@@ -76,11 +95,13 @@ const AvatarUpload = ({ form, field: { name, value } }) => {
 AvatarUpload.defaultProps = {
   form: {},
   field: {},
+  defaultFileList: [],
 }
 
 AvatarUpload.propTypes = {
   form: PropTypes.instanceOf(Object),
   field: PropTypes.instanceOf(Object),
+  defaultFileList: PropTypes.arrayOf(Object),
 }
 
 export default AvatarUpload

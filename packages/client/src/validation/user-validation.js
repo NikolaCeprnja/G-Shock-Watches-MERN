@@ -77,3 +77,8 @@ export const signinValidationSchema = (nonExistingUsers, errMsg) =>
     userNameOrEmail: userNameValidation(nonExistingUsers, errMsg, true),
     password: passwordValidation(),
   })
+
+export const forgotPassValidationSchema = (nonExistingUsers, errMsg) =>
+  Yup.object().shape({
+    userNameOrEmail: userNameValidation(nonExistingUsers, errMsg, true),
+  })

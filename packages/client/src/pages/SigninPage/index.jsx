@@ -1,32 +1,75 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
-import { unwrapResult } from '@reduxjs/toolkit'
 import { useDispatch, useSelector } from 'react-redux'
 import { Card, Button, Alert } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { Formik, Field } from 'formik'
 import { Form, SubmitButton } from 'formik-antd'
-import * as Yup from 'yup'
 
 import InputField from '@components/InputField/index'
 import { ReactComponent as GoogleIcon } from '@assets/Google_logo.svg'
 
-import { selectUser, signin } from '@redux/user/userSlice'
+import { signin } from '@redux/user/userThunk'
+import { selectLoggedInUser } from '@redux/user/userSlice'
 import { create as createNotification } from '@redux/notification/notificationSlice'
+import { signinValidationSchema } from '@validation/user-validation'
 
 import './styles.scss'
 
 const SigninPage = ({ location }) => {
   const dispatch = useDispatch()
-  const loggedInUser = useSelector(selectUser)
+  const loggedInUser = useSelector(selectLoggedInUser)
   const [validateOnBlur, setValidateOnBlur] = useState(true)
   const [serverResponse, setServerResponse] = useState({})
   const [errMsg, setErrMsg] = useState('')
   const [nonExistingUsers, setNonExistingUsers] = useState([])
 
+  const handleSubmit = useCallback(
+    async (values, { setFieldError }) => {
+      setValidateOnBlur(true)
+      setServerResponse({})
+      try {
+        const { message } = await dispatch(signin(values)).unwrap()
+
+        dispatch(
+          createNotification({
+            id: 'signedin',
+            type: 'success',
+            title: 'Welcome back!',
+            description: message,
+          })
+        )
+      } catch (error) {
+        const {
+          status,
+          statusText,
+          data: { errors, message },
+        } = error
+
+        if (errors) {
+          setValidateOnBlur(false)
+          Object.keys(errors).forEach(err => {
+            setFieldError(err, errors[err].message)
+            if (err === 'userNameOrEmail') {
+              setNonExistingUsers(users => [...users, errors[err].value])
+              setErrMsg(errors[err].message)
+            }
+          })
+        } else {
+          setServerResponse({
+            status,
+            statusText,
+            message,
+          })
+        }
+      }
+    },
+    [dispatch]
+  )
+
   return (
-    <div className='Signin'>
+    <div className='SigninPage'>
       {Object.keys(serverResponse).length > 0 && (
         <Alert
           type={serverResponse.status >= 400 ? 'error' : 'success'}
@@ -57,61 +100,8 @@ const SigninPage = ({ location }) => {
       <Card title='Sign In'>
         <Formik
           initialValues={{ userNameOrEmail: '', password: '' }}
-          onSubmit={async (values, { setFieldError }) => {
-            setValidateOnBlur(true)
-            setServerResponse({})
-            try {
-              const response = await dispatch(signin(values))
-
-              const { message } = unwrapResult(response)
-              dispatch(
-                createNotification({
-                  id: 'signedin',
-                  type: 'success',
-                  title: 'You are successfully logged in!',
-                  description: message,
-                })
-              )
-            } catch (error) {
-              console.log(error)
-              const {
-                status,
-                statusText,
-                data: { errors, message },
-              } = error
-
-              if (errors) {
-                setValidateOnBlur(false)
-                Object.keys(errors).forEach(err => {
-                  setFieldError(err, errors[err].message)
-                  if (err === 'userNameOrEmail') {
-                    setNonExistingUsers([
-                      ...nonExistingUsers,
-                      errors[err].value,
-                    ])
-                    setErrMsg(errors[err].message)
-                  }
-                })
-              } else {
-                setServerResponse({
-                  status,
-                  statusText,
-                  message,
-                })
-              }
-            }
-          }}
-          validationSchema={Yup.object().shape({
-            userNameOrEmail: Yup.string()
-              .trim()
-              .min(6, 'Must be at least 6 characters long.')
-              .max(30, 'Maximum 30 characters long.')
-              .required('Please input your username or email.')
-              .notOneOf(nonExistingUsers, errMsg),
-            password: Yup.string()
-              .min(6, 'Must be at least 6 characters long.')
-              .required('Please input your password.'),
-          })}
+          onSubmit={handleSubmit}
+          validationSchema={signinValidationSchema(nonExistingUsers, errMsg)}
           validateOnBlur={validateOnBlur}>
           {({ dirty, isValid }) => (
             <Form layout='vertical' size='large'>
@@ -133,11 +123,22 @@ const SigninPage = ({ location }) => {
                   Forgot password?
                 </Link>
               </Form.Item>
-              <Form.Item name='signin'>
+              <Form.Item name='signin' style={{ marginBottom: 0 }}>
                 <SubmitButton block disabled={!dirty || !isValid}>
                   Sign in
                 </SubmitButton>
               </Form.Item>
+              <div
+                className='signin-divider'
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                <hr />
+                <span>OR</span>
+                <hr />
+              </div>
               <Form.Item name='signinWithGoogle'>
                 <Button
                   id='google-signin-btn'

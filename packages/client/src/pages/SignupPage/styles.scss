@@ -1,4 +1,4 @@
-.Signup {
+.SignupPage {
   margin: 1.5rem 0;
   display: flex;
   flex-direction: column;
@@ -11,6 +11,15 @@
     position: relative;
     background-color: rgba(0, 0, 0, 0.2);
     border-radius: 15px;
+
+    div.form-item-upload {
+      width: 100%;
+      position: absolute;
+      top: 100px;
+      left: 50%;
+      z-index: 1;
+      transform: translateX(-50%);
+    }
 
     div.ant-card-head {
       height: 151px;

@@ -1,25 +1,64 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, Alert } from 'antd'
 import { UserOutlined } from '@ant-design/icons'
 import { Formik, Field } from 'formik'
 import { Form, SubmitButton } from 'formik-antd'
-import * as Yup from 'yup'
 
 import InputField from '@components/InputField/index'
 
 import { forgotPassword } from '@api/user/auth'
+import { forgotPassValidationSchema } from '@validation/user-validation'
 
 import './styles.scss'
 
 const ForgotPasswordPage = () => {
   const [errMsg, setErrMsg] = useState('')
-  const [nonExistUsers, setNonExistUsers] = useState([])
+  const [nonExistingUsers, setNonExistingUsers] = useState([])
   const [serverResponse, setServerResponse] = useState({})
+
+  const handleSubmit = useCallback(
+    async (values, { setFieldError, resetForm }) => {
+      setServerResponse({})
+      try {
+        const response = await forgotPassword(values)
+        const {
+          status,
+          data: { message },
+        } = response
+
+        setServerResponse({ status, message })
+        resetForm()
+      } catch ({ response }) {
+        const {
+          status,
+          statusText,
+          data: { errors, message },
+        } = response
+
+        if (errors) {
+          Object.keys(errors).forEach(err => {
+            setFieldError(err, errors[err].message)
+            if (err === 'userNameOrEmail') {
+              setErrMsg(errors[err].message)
+              setNonExistingUsers(users => [...users, errors[err].value])
+            }
+          })
+        } else {
+          setServerResponse({
+            status,
+            statusText,
+            message,
+          })
+        }
+      }
+    },
+    []
+  )
 
   return (
     <>
-      <div className='Forgotpassword'>
+      <div className='ForgotpasswordPage'>
         {Object.keys(serverResponse).length > 0 && (
           <Alert
             type={serverResponse.status >= 400 ? 'error' : 'success'}
@@ -42,50 +81,11 @@ const ForgotPasswordPage = () => {
         <Card title='Forgot Password'>
           <Formik
             initialValues={{ userNameOrEmail: '' }}
-            onSubmit={async (values, { setFieldError, resetForm }) => {
-              setServerResponse({})
-              try {
-                const response = await forgotPassword(values)
-                const {
-                  status,
-                  data: { message },
-                } = response
-
-                setServerResponse({ status, message })
-                resetForm()
-              } catch ({ response }) {
-                console.log(response)
-                const {
-                  status,
-                  statusText,
-                  data: { errors, message },
-                } = response
-
-                if (errors) {
-                  Object.keys(errors).forEach(err => {
-                    setFieldError(err, errors[err].message)
-                    if (err === 'userNameOrEmail') {
-                      setErrMsg(errors[err].message)
-                      setNonExistUsers([...nonExistUsers, errors[err].value])
-                    }
-                  })
-                } else {
-                  setServerResponse({
-                    status,
-                    statusText,
-                    message,
-                  })
-                }
-              }
-            }}
-            validationSchema={Yup.object().shape({
-              userNameOrEmail: Yup.string()
-                .trim()
-                .min(6, 'Must be at least 6 characters long.')
-                .max(30, 'Maximum 30 characters long.')
-                .required('Please input your username or email.')
-                .notOneOf(nonExistUsers, errMsg),
-            })}>
+            onSubmit={handleSubmit}
+            validationSchema={forgotPassValidationSchema(
+              nonExistingUsers,
+              errMsg
+            )}>
             {({ dirty, isValid }) => (
               <Form layout='vertical' size='large'>
                 <Field

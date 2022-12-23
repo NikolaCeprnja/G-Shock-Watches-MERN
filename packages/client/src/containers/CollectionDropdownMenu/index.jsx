@@ -2,14 +2,12 @@ import React, { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { useHistory, useLocation, useRouteMatch } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { Dropdown, Menu, Skeleton, Button } from 'antd'
+import { Dropdown, Menu, Skeleton } from 'antd'
 
 import CollectionItem from '@components/CollectionItem/index'
 
-import {
-  selectCollectionByGender,
-  getCollectionsByGender,
-} from '@redux/collection/collectionSlice'
+import { selectCollectionByGender } from '@redux/collection/collectionSlice'
+import { getCollectionsByGender } from '@redux/collection/collectionThunk'
 
 const CollectionDropdownMenu = ({ gender, skeletons }) => {
   const history = useHistory()
@@ -23,9 +21,11 @@ const CollectionDropdownMenu = ({ gender, skeletons }) => {
   useEffect(() => {
     const query = new URLSearchParams(search)
 
-    if (query.has('collection') && match.params?.type === gender) {
+    if (query.has('collectionName') && match.params?.type === gender) {
       return setSelectedKeys(
-        `/watches/${gender}?collection=${query.get('collection').toLowerCase()}`
+        `/watches/${gender}?collectionName=${query
+          .get('collectionName')
+          .toLowerCase()}`
       )
     }
 
@@ -67,9 +67,11 @@ const CollectionDropdownMenu = ({ gender, skeletons }) => {
                     flexWrap: 'nowrap',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    padding: '10px',
+                    padding: '12px',
                   }}>
-                  <Skeleton.Image style={{ width: '160px', height: '160px' }} />
+                  <Skeleton.Image
+                    style={{ width: 'calc(14vw * 0.88)', height: '14vw' }}
+                  />
                   <Skeleton
                     active
                     className='collection-item-skeleton'
@@ -80,7 +82,7 @@ const CollectionDropdownMenu = ({ gender, skeletons }) => {
             : data?.length > 0 &&
               data.map(({ name, ...rest }) => (
                 <CollectionItem
-                  key={`/watches/${gender}?collection=${name.toLowerCase()}`}
+                  key={`/watches/${gender}?collectionName=${name.toLowerCase()}`}
                   name={name}
                   {...rest}
                 />
@@ -88,16 +90,6 @@ const CollectionDropdownMenu = ({ gender, skeletons }) => {
           {!loading && !data?.length && (
             <div>There is no collections for {gender}</div>
           )}
-          <li>
-            <Button
-              size='large'
-              style={{
-                textTransform: 'capitalize',
-              }}
-              onClick={() =>
-                setIsVisible(false)
-              }>{`Shop ${gender}'s watches`}</Button>
-          </li>
         </Menu>
       }>
       <div style={{ textTransform: 'capitalize' }}>{gender}</div>

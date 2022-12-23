@@ -8,7 +8,7 @@ import CollectionDropdownMenu from '@containers/CollectionDropdownMenu/index'
 
 import AvatarDropdownMenu from '@components/AvatarDropdownMenu/index'
 
-import { selectUser } from '@redux/user/userSlice'
+import { selectLoggedInUser } from '@redux/user/userSlice'
 
 import { ReactComponent as Logo } from '@assets/GShock_logo.svg'
 
@@ -20,7 +20,7 @@ const { Item } = Menu
 const Navbar = () => {
   const history = useHistory()
   const { pathname } = useLocation()
-  const loggedInUser = useSelector(selectUser)
+  const loggedInUser = useSelector(selectLoggedInUser)
   const [selectedKeys, setSelectedKeys] = useState([])
 
   useEffect(() => {

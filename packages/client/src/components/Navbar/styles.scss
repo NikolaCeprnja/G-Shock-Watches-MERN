@@ -5,7 +5,7 @@ header.ant-layout-header {
     display: flex;
 
     .logo {
-      width: 80px;
+      width: 100px;
       height: 100%;
     }
 
@@ -57,26 +57,22 @@ li.user-info {
 
 div.ant-dropdown.collection-dropdown-menu {
   position: fixed;
-  top: 63px !important;
-  left: 0 !important;
-  right: 0;
+  inset: 63px 0 0 !important;
+  height: fit-content;
 
   & > ul {
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-flow: row nowrap;
+    overflow-x: auto;
     align-items: center;
+    justify-content: center;
+
+    .collection-item {
+      height: fit-content !important;
+    }
 
     .collection-item-skeleton h3 {
       margin: 1rem auto;
-    }
-
-    & > :last-child {
-      display: flex;
-      flex: 0 1 100%;
-      justify-content: center;
-      margin: 15px 0;
     }
   }
 }

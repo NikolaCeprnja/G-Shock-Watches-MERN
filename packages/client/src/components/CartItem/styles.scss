@@ -51,9 +51,7 @@
         display: block;
         color: rgb(179, 179, 179);
         font-size: 0.8rem;
-        text-decoration: line-through;
-        text-decoration-color: red;
-        text-decoration-thickness: 2px;
+        text-decoration: line-through solid 2px #f5222d;
         line-height: 1;
       }
 

@@ -8,13 +8,12 @@ const OfferItem = ({ offer: { imgUrls, videoUrl, title, description } }) => {
       {imgUrls.length ? (
         <img
           className='offer-img'
-          data-src={`${imgUrls[3]}`}
+          srcSet={`
+					${imgUrls[0]} 480w,
+					${imgUrls[1]} 991w,
+					${imgUrls[2]} 1200w,
+					${imgUrls[3]} 1900w`}
           sizes='100vw'
-          /* srcSet='
-					/images/offers/MRGB2000R_480x480.jpg 480w,
-					/images/offers/MRGB2000R_991x991.jpg 991w,
-					/images/offers/MRGB2000R_1200x1200.jpg 1200w,
-					/images/offers/MRGB2000R_1900x1900.jpg 1900w' */
           alt='offer-img'
           src={`${imgUrls[3]}`}
         />

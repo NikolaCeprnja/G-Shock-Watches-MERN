@@ -9,7 +9,7 @@ import {
   LogoutOutlined,
 } from '@ant-design/icons'
 
-import { signout } from '@redux/user/userSlice'
+import { signout } from '@redux/user/userThunk'
 
 import './styles.scss'
 

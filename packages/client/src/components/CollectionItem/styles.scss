@@ -1,9 +1,14 @@
 .collection-item {
-  width: 200px;
-  box-sizing: border-box;
-
   .collection-img {
     width: 100%;
+    height: 100%;
+    max-height: 14vw;
+    max-width: calc(14vw * 0.88);
+    object-fit: contain;
+
+    &.loading {
+      display: none;
+    }
   }
 
   .collection-name {

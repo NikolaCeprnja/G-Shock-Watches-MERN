@@ -11,10 +11,10 @@ const Notification = ({ id, type, title, description, duration }) => {
   useEffect(() => {
     notification[type]({
       key: id,
-      top: 88,
       duration,
       description,
       message: title,
+      placement: 'bottomRight',
       onClose: async () => {
         await dispatch(removeNotification(id))
       },
@@ -27,7 +27,7 @@ const Notification = ({ id, type, title, description, duration }) => {
 }
 
 Notification.defaultProps = {
-  duration: 0,
+  duration: 4.5,
 }
 
 Notification.propTypes = {

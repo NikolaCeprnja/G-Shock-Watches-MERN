@@ -53,9 +53,9 @@ const CartDropdownMenu = () => {
             ) : (
               cartItems.map(item => (
                 <CartItem
-                  key={`/watches/${item.collectionName.toLowerCase()}/${
-                    item.id
-                  }`}
+                  key={`/watches/${
+                    item.gender
+                  }/${item.collectionName.toLowerCase()}/${item.id}`}
                   item={item}
                 />
               ))
@@ -72,7 +72,10 @@ const CartDropdownMenu = () => {
               type='primary'
               htmlType='button'
               disabled={!cartItems?.length > 0 ?? true}
-              onClick={() => history.push('/checkout')}>
+              onClick={() => {
+                setIsVisible(false)
+                history.push('/checkout')
+              }}>
               Checkout
             </Button>
           </Item>

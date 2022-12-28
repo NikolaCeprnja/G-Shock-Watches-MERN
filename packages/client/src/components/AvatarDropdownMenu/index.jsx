@@ -10,6 +10,7 @@ import {
 } from '@ant-design/icons'
 
 import { signout } from '@redux/user/userThunk'
+import { removeAll as removeAllNotifications } from '@redux/notification/notificationSlice'
 
 import './styles.scss'
 
@@ -42,6 +43,7 @@ const AvatarDropdownMenu = ({
 
     history.push('/')
     dispatch(signout())
+    dispatch(removeAllNotifications())
   }
 
   const handleVisibleChange = visible => {
@@ -60,6 +62,7 @@ const AvatarDropdownMenu = ({
           <Item key='userName' className='user-info' disabled>
             {photo || avatarUrl ? (
               <Image
+                preview={false}
                 width={80}
                 height={80}
                 src={photo || avatarUrl}
@@ -77,18 +80,18 @@ const AvatarDropdownMenu = ({
           <SubMenu
             popupClassName='user-actions-submenu'
             className={
-              selectedKey === `/users/${id}/profile/dashboard` &&
+              selectedKey === `/users/${id}/profile` &&
               'dropdown-menu-title-active'
             }
-            key={`/users/${id}/profile/dashboard`}
+            key={`/users/${id}/profile`}
             icon={<UserOutlined />}
             title='Your Profile'
             onTitleClick={e => {
               setIsVisible(false)
               history.push(e.key)
             }}>
-            <Item key={`/users/${id}/reviews`}>Reviews</Item>
-            <Item key={`/users/${id}/purchased-products`}>
+            <Item key={`/users/${id}/profile/reviews`}>Reviews</Item>
+            <Item key={`/users/${id}/profile/purchased-products`}>
               Purchased products
             </Item>
             <Item key={`/users/${id}/profile/settings`}>Settings</Item>

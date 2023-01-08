@@ -21,6 +21,7 @@ const SigninPage = lazy(() => import('@pages/SigninPage/index'))
 const SignupPage = lazy(() => import('@pages/SignupPage/index'))
 const ForgotPasswordPage = lazy(() => import('@pages/ForgotPasswordPage/index'))
 const ResetPasswordPage = lazy(() => import('@pages/ResetPasswordPage/index'))
+const WatchesPage = lazy(() => import('@pages/WatchesPage/index'))
 
 const App = () => {
   const dispatch = useDispatch()
@@ -85,6 +86,15 @@ const App = () => {
             to='/'
             layout={AuthLayout}
             component={ResetPasswordPage}
+          />
+          <Route
+            exact
+            path={['/watches/:type?', '/watches/:gender?/:name/:pid']}
+            render={() => (
+              <MainLayout>
+                <WatchesPage />
+              </MainLayout>
+            )}
           />
           {/* // TODO: add 403, 404 and 500 pages */}
           <Route path='*' render={() => <div>Error, 404 Page!</div>} />

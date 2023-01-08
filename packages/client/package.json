@@ -26,6 +26,7 @@
     "formik-antd": "^2.0.1",
     "node-sass": "^5.0.0",
     "prop-types": "^15.7.2",
+    "qs": "^6.10.1",
     "react": "^17.0.1",
     "react-document-title": "^2.0.3",
     "react-dom": "^17.0.1",

@@ -1,0 +1,19 @@
+.CheckoutShippingPage {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  padding: 1.5rem 3rem;
+
+  .shipping-title {
+    padding: 1rem;
+    font-size: 2rem;
+  }
+
+  .shipping-details-form {
+    width: 40vw;
+    display: flex;
+    flex-direction: column;
+    //     align-self: center;
+    justify-content: center;
+  }
+}

@@ -22,6 +22,7 @@ const SignupPage = lazy(() => import('@pages/SignupPage/index'))
 const ForgotPasswordPage = lazy(() => import('@pages/ForgotPasswordPage/index'))
 const ResetPasswordPage = lazy(() => import('@pages/ResetPasswordPage/index'))
 const WatchesPage = lazy(() => import('@pages/WatchesPage/index'))
+const CheckoutPage = lazy(() => import('@pages/CheckoutPage/index'))
 
 const App = () => {
   const dispatch = useDispatch()
@@ -93,6 +94,15 @@ const App = () => {
             render={() => (
               <MainLayout>
                 <WatchesPage />
+              </MainLayout>
+            )}
+          />
+          <Route
+            exact
+            path='/checkout/:currentStep?'
+            render={() => (
+              <MainLayout>
+                <CheckoutPage />
               </MainLayout>
             )}
           />

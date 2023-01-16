@@ -1,6 +1,10 @@
 import React from 'react'
 import { Tag, InputNumber } from 'antd'
 import {
+  UserOutlined,
+  ShoppingCartOutlined,
+  CarOutlined,
+  SmileOutlined,
   DeleteOutlined,
 } from '@ant-design/icons'
 
@@ -9,6 +13,34 @@ const COLLECTION_COLOR = Object.freeze({
   women: 'purple',
   all: 'gold',
 })
+
+const CHECKOUT_STEPS = [
+  {
+    key: 'auth',
+    title: 'Authenticate',
+    icon: <UserOutlined />,
+    path: '/checkout/auth',
+  },
+  {
+    key: 'checkout',
+    title: 'Checkout',
+    icon: <ShoppingCartOutlined />,
+    path: '/checkout/summary',
+  },
+  {
+    key: 'shipping',
+    title: 'Shipping',
+    icon: <CarOutlined />,
+    path: '/checkout/shipping',
+  },
+  {
+    key: 'finish',
+    title: 'Finish',
+    icon: <SmileOutlined />,
+    path: '/checkout/finish',
+    disabled: true,
+  },
+]
 
 const PRODUCT_CHECKOUT_COLUMNS = (
   handleCartItemQuantityChange,
@@ -127,5 +159,6 @@ const PRODUCT_CHECKOUT_COLUMNS = (
 
 export {
   COLLECTION_COLOR,
+  CHECKOUT_STEPS,
   PRODUCT_CHECKOUT_COLUMNS,
 }

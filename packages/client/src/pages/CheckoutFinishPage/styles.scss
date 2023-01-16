@@ -1,0 +1,26 @@
+.result-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  .result-title {
+    font-size: 2rem;
+  }
+
+  .result-subtitle {
+    font-size: 1.1rem;
+
+    hr {
+      width: 50%;
+      height: 2px;
+      border: 0;
+      background-color: #8c8c8c;
+      margin: 0.8rem auto;
+    }
+  }
+
+  .ant-result-extra button:first-of-type {
+    margin-right: 1rem;
+  }
+}

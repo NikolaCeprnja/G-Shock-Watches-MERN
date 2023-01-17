@@ -1,0 +1,28 @@
+.area-chart-tooltip {
+  margin: 0px;
+  padding: 10px;
+  background-color: #fff;
+  border: 1px solid rgb(204, 204, 204);
+  white-space: nowrap;
+
+  .label {
+    width: fit-content;
+    margin: 0 auto;
+  }
+
+  ul {
+    padding: 0;
+    margin: 0;
+
+    li {
+      display: block;
+      padding-top: 4px;
+      padding-bottom: 4px;
+      color: #8884d8;
+    }
+
+    li.total-amount > span:first-child {
+      padding-left: 1.2px;
+    }
+  }
+}

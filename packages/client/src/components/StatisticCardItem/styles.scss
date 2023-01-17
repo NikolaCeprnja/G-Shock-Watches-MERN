@@ -1,0 +1,27 @@
+.statistic-card {
+  min-height: 155px;
+
+  .statistic-title {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  .statistic-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0;
+
+    .preview-more {
+      color: #00f;
+      font-size: 1rem;
+      text-decoration: underline;
+      text-underline-offset: 0.5ch;
+    }
+  }
+
+  .ant-statistic .ant-skeleton-title {
+    width: 40%;
+    font-size: 2rem;
+  }
+}

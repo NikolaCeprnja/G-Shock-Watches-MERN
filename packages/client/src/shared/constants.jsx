@@ -1,5 +1,5 @@
 import React from 'react'
-import { Tag, InputNumber } from 'antd'
+import { Tag, Rate, InputNumber } from 'antd'
 import {
   UserOutlined,
   ShoppingCartOutlined,
@@ -39,6 +39,122 @@ const CHECKOUT_STEPS = [
     icon: <SmileOutlined />,
     path: '/checkout/finish',
     disabled: true,
+  },
+]
+
+const PRODUCT_COLUMNS = (
+  defaultFilteredValue = undefined,
+  defaultSortOrder = undefined
+) => [
+  {
+    title: 'Name-Model',
+    dataIndex: 'name',
+    width: '25%',
+    render: (name, { model, previewImg }) => (
+      <div>
+        <img
+          src={previewImg}
+          alt={`${name}-img`}
+          width='60'
+          height='auto'
+          style={{ marginRight: '1rem' }}
+        />
+        <span>{`${name}-${model}`}</span>
+      </div>
+    ),
+  },
+  {
+    title: 'Collection',
+    align: 'center',
+    dataIndex: 'collectionName',
+    defaultFilteredValue: defaultFilteredValue?.collectionName,
+    filters: [
+      { text: 'MT-G', value: 'MT-G' },
+      { text: 'G-STEEL', value: 'G-STEEL' },
+      { text: 'DIGITAL', value: 'DIGITAL' },
+      { text: 'ANALOG-DIGITAL', value: 'ANALOG-DIGITAL' },
+      { text: 'MR-G', value: 'MR-G' },
+      { text: 'MASTER OF G', value: 'MASTER OF G' },
+      { text: 'G-SHOCK MOVE', value: 'G-SHOCK MOVE' },
+      { text: 'G-MS', value: 'G-MS' },
+      { text: 'G-SHOCK WOMEN', value: 'G-SHOCK WOMEN' },
+      { text: 'BABY-G', value: 'BABY-G' },
+      { text: 'LIMITED EDITION', value: 'LIMITED EDITION' },
+    ],
+    render: (collectionName, { gender }) => (
+      <Tag color={COLLECTION_COLOR[gender]}>{collectionName}</Tag>
+    ),
+  },
+  {
+    key: 'data.price',
+    title: 'Price',
+    align: 'center',
+    sorter: true,
+    defaultSortOrder: defaultSortOrder?.price,
+    dataIndex: 'price',
+    render: (price, { discount }) => {
+      if (discount) {
+        const currentPrice = price - (price / 100) * discount
+
+        return (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            <span
+              style={{
+                color: 'rgb(179, 179, 179)',
+                textDecoration: 'line-through solid 1px #f5222d',
+              }}>
+              ${price.toFixed(2)}
+            </span>
+            <span style={{ fontSize: '1rem' }}>${currentPrice.toFixed(2)}</span>
+          </div>
+        )
+      }
+
+      return <span>${price.toFixed(2)}</span>
+    },
+  },
+  {
+    key: 'data.discount',
+    title: 'Discount',
+    align: 'center',
+    sorter: true,
+    defaultSortOrder: defaultSortOrder?.discount,
+    dataIndex: 'discount',
+    render: discount =>
+      discount ? <Tag color='red'>{discount}%</Tag> : <span>/</span>,
+  },
+  {
+    key: 'data.inStock',
+    title: 'In Stock',
+    align: 'center',
+    sorter: true,
+    defaultSortOrder: defaultSortOrder?.inStock,
+    dataIndex: 'inStock',
+  },
+  {
+    key: 'data.numReviews',
+    title: 'Reviews',
+    align: 'center',
+    sorter: true,
+    defaultSortOrder: defaultSortOrder?.numReviews,
+    dataIndex: 'numReviews',
+    render: (numReviews, { avgRating }) => (
+      <div>
+        <Rate
+          disabled
+          allowHalf
+          value={avgRating}
+          style={{ marginRight: '0.5rem' }}
+        />
+        <span>({numReviews || 0})</span>
+      </div>
+    ),
   },
 ]
 
@@ -160,5 +276,6 @@ const PRODUCT_CHECKOUT_COLUMNS = (
 export {
   COLLECTION_COLOR,
   CHECKOUT_STEPS,
+  PRODUCT_COLUMNS,
   PRODUCT_CHECKOUT_COLUMNS,
 }

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Tag, Rate, InputNumber } from 'antd'
+import { Tag, Rate, Select, InputNumber } from 'antd'
 import {
   UserOutlined,
   ShoppingCartOutlined,
@@ -7,6 +7,8 @@ import {
   SmileOutlined,
   DeleteOutlined,
 } from '@ant-design/icons'
+
+const { Option } = Select
 
 const COLLECTION_COLOR = Object.freeze({
   men: 'geekblue',
@@ -273,9 +275,134 @@ const PRODUCT_CHECKOUT_COLUMNS = (
   },
 ]
 
+const PRODUCT_COLOR_OPTIONS = (
+  <>
+    <Option
+      value='white'
+      style={{
+        width: '50px',
+        height: '50px',
+        margin: '0.5rem 0.5rem 0.5rem 1rem',
+        color: 'white',
+        backgroundColor: 'white',
+      }}>
+      White
+    </Option>
+    <Option
+      value='gray'
+      style={{
+        width: '50px',
+        height: '50px',
+        margin: '0.5rem',
+        color: 'gray',
+        backgroundColor: 'gray',
+      }}>
+      Gray
+    </Option>
+    <Option
+      value='black'
+      style={{
+        width: '50px',
+        height: '50px',
+        margin: '0.5rem',
+        color: 'black',
+        backgroundColor: 'black',
+      }}>
+      Black
+    </Option>
+    <Option
+      value='green'
+      style={{
+        width: '50px',
+        height: '50px',
+        margin: '0.5rem',
+        color: 'green',
+        backgroundColor: 'green',
+      }}>
+      Green
+    </Option>
+    <Option
+      value='blue'
+      style={{
+        width: '50px',
+        height: '50px',
+        margin: '0.5rem',
+        color: 'blue',
+        backgroundColor: 'blue',
+      }}>
+      Blue
+    </Option>
+    <Option
+      value='gold'
+      style={{
+        width: '50px',
+        height: '50px',
+        margin: '0.5rem',
+        color: 'gold',
+        backgroundColor: 'gold',
+      }}>
+      Gold
+    </Option>
+    <Option
+      value='red'
+      style={{
+        width: '50px',
+        height: '50px',
+        margin: '0.5rem',
+        color: 'red',
+        backgroundColor: 'red',
+      }}>
+      Red
+    </Option>
+  </>
+)
+
+const PRODUCT_TYPES_OPTIONS = (
+  <>
+    <Option value='Sports'>Sports</Option>
+    <Option value='Extreme Conditions'>Extreme Conditions</Option>
+    <Option value='Interchangeable Bands'>Interchangeable Bands</Option>
+    <Option value='Mud Resistant'>Mud Resistant</Option>
+    <Option value='Water Resistant'>Water Resistant</Option>
+  </>
+)
+
+const PRODUCT_MATERIALS_OPTIONS = (
+  <>
+    <Option value='Mineral Glass'>Mineral Glass</Option>
+    <Option value='Sapphire Crystal'>Sapphire Crystal</Option>
+    <Option value='Ion Plated (IP)'>Ion Plated (IP)</Option>
+    <Option value='Titanium'>Titanium</Option>
+    <Option value='Carbon'>Carbon</Option>
+    <Option value='Stainless Steel'>Stainless Steel</Option>
+    <Option value='Cloth'>Cloth</Option>
+    <Option value='Resin'>Resin</Option>
+  </>
+)
+
+const PRODUCT_MAIN_FEATURES_OPTIONS = (
+  <>
+    <Option value='Altimeter'>Altimeter</Option>
+    <Option value='Barometer'>Barometer</Option>
+    <Option value='Bluetooth-Connected'>Bluetooth-Connected</Option>
+    <Option value='GPS'>GPS</Option>
+    <Option value='Solar-Powered'>Solar-Powered</Option>
+    <Option value='Step-Tracker'>Step-Tracker</Option>
+    <Option value='Thermometer'>Thermometer</Option>
+    <Option value='Tide Graph'>Tide Graph</Option>
+    <Option value='Multiband / Atomic Timekeeping'>
+      Multiband / Atomic Timekeeping
+    </Option>
+  </>
+)
+
 export {
   COLLECTION_COLOR,
   CHECKOUT_STEPS,
   PRODUCT_COLUMNS,
   PRODUCT_CHECKOUT_COLUMNS,
+  PRODUCT_COLOR_OPTIONS,
+  PRODUCT_TYPES_OPTIONS,
+  PRODUCT_MATERIALS_OPTIONS,
+  PRODUCT_MAIN_FEATURES_OPTIONS,
 }

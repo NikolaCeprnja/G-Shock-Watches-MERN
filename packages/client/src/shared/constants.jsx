@@ -1,5 +1,5 @@
 import React from 'react'
-import { Tag, Rate, Select, InputNumber } from 'antd'
+import { Tag, Rate, Avatar, Select, InputNumber } from 'antd'
 import {
   UserOutlined,
   ShoppingCartOutlined,
@@ -14,6 +14,14 @@ const COLLECTION_COLOR = Object.freeze({
   men: 'geekblue',
   women: 'purple',
   all: 'gold',
+})
+
+const ORDER_STATUS_COLOR = Object.freeze({
+  created: 'blue',
+  paid: 'gold',
+  canceled: 'red',
+  fulfilled: 'green',
+  returned: 'orange',
 })
 
 const CHECKOUT_STEPS = [
@@ -275,6 +283,245 @@ const PRODUCT_CHECKOUT_COLUMNS = (
   },
 ]
 
+const ORDERS_COLUMNS = (
+  defaultFilteredValue = undefined,
+  defaultSortOrder = undefined,
+  userOrderPage = false
+) => [
+  {
+    title: 'ID',
+    dataIndex: 'id',
+  },
+  ...(!userOrderPage
+    ? [
+        {
+          title: 'Customer',
+          dataIndex: 'customer',
+          render: customer => {
+            const { userName, avatarUrl, accounts } = customer
+            const { displayName, photos } = Object(accounts[0])
+
+            return (
+              <div>
+                <Avatar
+                  alt='avatar-img'
+                  size='large'
+                  src={avatarUrl || (photos && photos[0].value)}
+                  icon={<UserOutlined />}
+                  style={{ marginRight: '1rem' }}
+                />
+                <span>{userName || displayName}</span>
+              </div>
+            )
+          },
+        },
+      ]
+    : []),
+  {
+    title: 'Total',
+    dataIndex: 'totalAmount',
+    align: 'center',
+    sorter: true,
+    defaultSortOrder: defaultSortOrder?.totalAmount,
+    render: totalAmount => (
+      <span style={{ fontSize: '1rem' }}>${totalAmount.toFixed(2)}</span>
+    ),
+  },
+  {
+    title: 'Ordered Products',
+    dataIndex: 'totalProducts',
+    align: 'center',
+    sorter: true,
+    defaultSortOrder: defaultSortOrder?.totalProducts,
+  },
+  {
+    title: 'Status',
+    dataIndex: userOrderPage ? 'currentStatus' : 'status',
+    align: 'center',
+    defaultFilteredValue: defaultFilteredValue?.status,
+    filters: [
+      { text: 'created', value: 'created' },
+      { text: 'paid', value: 'paid' },
+      { text: 'canceled', value: 'canceled' },
+      { text: 'fulfilled', value: 'fulfilled' },
+      { text: 'returned', value: 'returned' },
+    ],
+    render: status => (
+      <Tag color={ORDER_STATUS_COLOR[status.info]}>{status.info}</Tag>
+    ),
+  },
+  {
+    title: 'Created At',
+    dataIndex: 'createdAt',
+    align: 'center',
+    sorter: true,
+    defaultSortOrder: defaultSortOrder?.createdAt,
+  },
+]
+
+const ORDER_CUSTOMER_COLUMNS = [
+  {
+    title: 'Username',
+    dataIndex: ['customer', 'userName'],
+    width: '25%',
+    render: (userName, { customer: { avatarUrl, accounts } }) => {
+      const { displayName, photos } = Object(accounts[0])
+
+      return (
+        <div>
+          <Avatar
+            alt='avatar-img'
+            size='large'
+            src={avatarUrl || (photos && photos[0].value)}
+            icon={<UserOutlined />}
+            style={{ marginRight: '1rem' }}
+          />
+          <span>{userName || displayName}</span>
+        </div>
+      )
+    },
+  },
+  {
+    title: 'Email',
+    dataIndex: ['customer', 'email'],
+    render: (email, { customer: { accounts } }) => {
+      const { emails } = Object(accounts[0])
+
+      return <span>{email || (emails && emails[0].value)}</span>
+    },
+  },
+  {
+    title: 'Additional Contact Info',
+    align: 'center',
+    dataIndex: 'email',
+    render: (email, { customer: { email: customerEmail, accounts } }) => {
+      const { emails } = Object(accounts[0])
+
+      if (
+        email === customerEmail ||
+        (emails && email === emails[0].value) ||
+        !email
+      ) {
+        return '/'
+      }
+
+      return email
+    },
+  },
+]
+
+const ORDER_STAUTS_COLUMNS = statusLength => [
+  {
+    title: 'Status',
+    align: 'center',
+    dataIndex: 'info',
+    render: info => <Tag color={ORDER_STATUS_COLOR[info]}>{info}</Tag>,
+  },
+  {
+    title: 'Updated On',
+    align: 'center',
+    ...(statusLength > 1 && { defaultSortOrder: 'descend' }),
+    ...(statusLength > 1 && {
+      sorter: ({ date: dateA }, { date: dateB }) => {
+        dateA = new Date(dateA)
+        dateB = new Date(dateB)
+        if (dateA < dateB) {
+          return -1
+        }
+        if (dateA > dateB) {
+          return 1
+        }
+
+        return 1
+      },
+    }),
+    dataIndex: 'date',
+  },
+]
+
+const ORDER_PRODUCTS_COLUMNS = [
+  {
+    title: 'Name-Model',
+    align: 'center',
+    dataIndex: 'name',
+    width: '25%',
+    render: (name, { model, previewImg }) => (
+      <div>
+        <img
+          src={previewImg}
+          alt={`${name}-img`}
+          width='60'
+          height='auto'
+          style={{ marginRight: '1rem' }}
+        />
+        <span>{`${name}-${model}`}</span>
+      </div>
+    ),
+  },
+  {
+    title: 'Collection',
+    dataIndex: 'collectionName',
+    render: (collectionName, { gender }) => (
+      <Tag color={COLLECTION_COLOR[gender]}>{collectionName}</Tag>
+    ),
+  },
+  {
+    title: 'Price',
+    align: 'right',
+    dataIndex: 'orderedPrice',
+    render: (orderedPrice, { orderedDiscount }) => {
+      if (orderedDiscount) {
+        const currentPrice =
+          orderedPrice - (orderedPrice / 100) * orderedDiscount
+
+        return (
+          <div
+            style={{
+              marginLeft: 'auto',
+              width: 'fit-content',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            <span
+              style={{
+                color: 'rgb(179, 179, 179)',
+                textDecoration: 'line-through solid 1px #f5222d',
+              }}>
+              ${orderedPrice.toFixed(2)}
+            </span>
+            <span style={{ fontSize: '1rem' }}>${currentPrice.toFixed(2)}</span>
+          </div>
+        )
+      }
+
+      return <span>${orderedPrice.toFixed(2)}</span>
+    },
+  },
+  {
+    title: 'Discount',
+    align: 'center',
+    dataIndex: 'orderedDiscount',
+    render: orderedDiscount =>
+      orderedDiscount ? (
+        <Tag color='red'>{orderedDiscount}%</Tag>
+      ) : (
+        <span>/</span>
+      ),
+  },
+  {
+    title: 'Quantity',
+    align: 'center',
+    dataIndex: 'orderedQuantity',
+  },
+  {
+    title: 'Total',
+    dataIndex: 'totalPrice',
+    render: totalPrice => <span>${totalPrice.toFixed(2)}</span>,
+  },
+]
+
 const PRODUCT_COLOR_OPTIONS = (
   <>
     <Option
@@ -401,6 +648,10 @@ export {
   CHECKOUT_STEPS,
   PRODUCT_COLUMNS,
   PRODUCT_CHECKOUT_COLUMNS,
+  ORDERS_COLUMNS,
+  ORDER_CUSTOMER_COLUMNS,
+  ORDER_STAUTS_COLUMNS,
+  ORDER_PRODUCTS_COLUMNS,
   PRODUCT_COLOR_OPTIONS,
   PRODUCT_TYPES_OPTIONS,
   PRODUCT_MATERIALS_OPTIONS,

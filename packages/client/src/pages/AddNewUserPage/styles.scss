@@ -1,0 +1,84 @@
+.AddNewUserPageWrapper {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .AddNewUserPage {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    padding: 0 2rem 2rem;
+
+    .caption-background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 288px;
+      background-size: cover;
+      background: linear-gradient(to right, #1b2330 0%, #252f3e 100%);
+      pointer-events: none;
+    }
+
+    .caption {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 37px 0;
+    }
+
+    .ant-tabs-nav-wrap {
+      height: 55px;
+      background-color: #fafafa;
+
+      .ant-tabs-tab {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+      }
+    }
+  }
+
+  .user-preview-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    .user-back-arrow {
+      width: fit-content;
+      font-size: 1rem;
+      font-weight: 500;
+
+      &:hover {
+        color: #fff;
+      }
+    }
+
+    .new-user-preview {
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 0.5rem 0;
+
+      & > form > div {
+        margin-bottom: 0;
+      }
+    }
+
+    .user-name-wrapper * {
+      color: #fff;
+    }
+
+    .user-name {
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .user-name,
+    .user-email {
+      color: #fff;
+      margin-bottom: 0;
+    }
+  }
+}

@@ -26,6 +26,12 @@
             "@redux/*": [
                 "./redux/*"
             ],
+            "@shared/*": [
+                "./shared/*"
+            ],
+            "@utils/*": [
+                "./utils/*"
+            ],
             "@validation/*": [
                 "./validation/*"
             ]

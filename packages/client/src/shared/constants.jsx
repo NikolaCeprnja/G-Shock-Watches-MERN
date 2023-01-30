@@ -522,6 +522,34 @@ const ORDER_PRODUCTS_COLUMNS = [
   },
 ]
 
+const USER_REVIEWS_COLUMNS = [
+  {
+    title: 'Name-Model',
+    dataIndex: 'name',
+    width: '25%',
+    render: (name, { model, previewImg }) => (
+      <div>
+        <img
+          src={previewImg}
+          alt={`${name}-img`}
+          width='60'
+          height='auto'
+          style={{ marginRight: '1rem' }}
+        />
+        <span>{`${name}-${model}`}</span>
+      </div>
+    ),
+  },
+  {
+    title: 'Collection',
+    align: 'center',
+    dataIndex: 'collectionName',
+    render: (collectionName, { gender }) => (
+      <Tag color={COLLECTION_COLOR[gender]}>{collectionName}</Tag>
+    ),
+  },
+]
+
 const PRODUCT_COLOR_OPTIONS = (
   <>
     <Option
@@ -652,6 +680,7 @@ export {
   ORDER_CUSTOMER_COLUMNS,
   ORDER_STAUTS_COLUMNS,
   ORDER_PRODUCTS_COLUMNS,
+  USER_REVIEWS_COLUMNS,
   PRODUCT_COLOR_OPTIONS,
   PRODUCT_TYPES_OPTIONS,
   PRODUCT_MATERIALS_OPTIONS,

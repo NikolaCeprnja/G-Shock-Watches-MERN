@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { Upload, Tooltip } from 'antd'
+import { getIn } from 'formik'
 import { FormItem } from 'formik-antd'
 import ImgCrop from 'antd-img-crop'
 import { UploadOutlined } from '@ant-design/icons'
@@ -13,7 +14,8 @@ const AvatarUpload = ({
   defaultFileList,
   ...otherProps
 }) => {
-  const { errors, setFieldValue } = form
+  const { errors } = getIn(form.errors, name)
+  const { setFieldValue } = form
   const [fileList, setFileList] = useState(defaultFileList)
 
   const uploadButton = (
@@ -49,8 +51,8 @@ const AvatarUpload = ({
   return (
     <FormItem
       className='form-item-upload'
-      help={errors[name] ? errors[name] : undefined}
-      validateStatus={errors[name] ? 'error' : 'success'}>
+      help={errors || undefined}
+      validateStatus={errors ? 'error' : 'success'}>
       <ImgCrop
         grid
         rotate

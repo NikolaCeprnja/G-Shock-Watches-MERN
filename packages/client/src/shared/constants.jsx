@@ -1,5 +1,5 @@
 import React from 'react'
-import { Tag, Rate, Avatar, Select, InputNumber } from 'antd'
+import { Tag, Rate, Avatar, Select, Checkbox, InputNumber } from 'antd'
 import {
   UserOutlined,
   ShoppingCartOutlined,
@@ -522,6 +522,78 @@ const ORDER_PRODUCTS_COLUMNS = [
   },
 ]
 
+const USERS_COLUMNS = (defaultFilteredValue, defaultSortOrder) => [
+  {
+    title: 'Username',
+    dataIndex: 'userName',
+    width: '25%',
+    render: (userName, { avatarUrl, cloudinaryUrl, accounts }) => {
+      const { displayName, photos } = Object(accounts[0])
+
+      return (
+        <div>
+          <Avatar
+            alt='avatar-img'
+            size='large'
+            src={avatarUrl || cloudinaryUrl || (photos && photos[0].value)}
+            icon={<UserOutlined />}
+            style={{ marginRight: '1rem' }}
+          />
+          <span>{userName || displayName}</span>
+        </div>
+      )
+    },
+  },
+  {
+    title: 'Email',
+    align: 'center',
+    dataIndex: 'email',
+    render: (email, { accounts }) => {
+      const { emails } = Object(accounts[0])
+
+      return <span>{email || (emails && emails[0].value)}</span>
+    },
+  },
+  {
+    title: 'Is Admin',
+    align: 'center',
+    dataIndex: 'isAdmin',
+    filterMultiple: false,
+    defaultFilteredValue: defaultFilteredValue?.isAdmin,
+    filters: [
+      { text: 'true', value: true },
+      { text: 'false', value: false },
+    ],
+    render: isAdmin => <Checkbox readOnly checked={isAdmin} />,
+  },
+  {
+    title: 'Purchased Products',
+    align: 'center',
+    sorter: true,
+    defaultSortOrder: defaultSortOrder?.numPurchasedProducts,
+    dataIndex: 'numPurchasedProducts',
+    render: numPurchasedProducts => <span>{numPurchasedProducts || '/'}</span>,
+  },
+  {
+    title: 'Reviews',
+    align: 'center',
+    sorter: true,
+    defaultSortOrder: defaultSortOrder?.numReviews,
+    dataIndex: 'numReviews',
+    render: (numReviews, { avgRating }) => (
+      <div>
+        <Rate
+          disabled
+          allowHalf
+          value={avgRating}
+          style={{ marginRight: '0.5rem' }}
+        />
+        <span>({numReviews || 0})</span>
+      </div>
+    ),
+  },
+]
+
 const USER_REVIEWS_COLUMNS = [
   {
     title: 'Name-Model',
@@ -680,6 +752,7 @@ export {
   ORDER_CUSTOMER_COLUMNS,
   ORDER_STAUTS_COLUMNS,
   ORDER_PRODUCTS_COLUMNS,
+  USERS_COLUMNS,
   USER_REVIEWS_COLUMNS,
   PRODUCT_COLOR_OPTIONS,
   PRODUCT_TYPES_OPTIONS,

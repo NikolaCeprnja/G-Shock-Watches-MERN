@@ -14,7 +14,7 @@ const AvatarUpload = ({
   defaultFileList,
   ...otherProps
 }) => {
-  const { errors } = getIn(form.errors, name)
+  const errors = getIn(form.errors, name)
   const { setFieldValue } = form
   const [fileList, setFileList] = useState(defaultFileList)
 

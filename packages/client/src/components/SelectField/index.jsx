@@ -13,8 +13,8 @@ const SelectField = ({
   ...props
 }) => {
   const { name } = field
-  const { errors } = getIn(form.errors, name)
-  const { touched } = getIn(form.touched, name)
+  const errors = getIn(form.errors, name)
+  const touched = getIn(form.touched, name)
 
   return (
     <FormItem

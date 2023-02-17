@@ -5,9 +5,10 @@ import { Spin, BackTop, notification as antdNotifications } from 'antd'
 
 import AuthLayout from '@layouts/AuthLayout/index'
 import MainLayout from '@layouts/MainLayout/index'
+import DashboardLayout from '@layouts/DashboardLayout/index'
 
 import Notification from '@components/Notification/index'
-
+import AdminSiderMenu from '@components/AdminSiderMenu/index'
 import ProtectedRoute from '@components/ProtectedRoute/index'
 
 import { authUser } from '@redux/user/userThunk'
@@ -21,6 +22,8 @@ const SigninPage = lazy(() => import('@pages/SigninPage/index'))
 const SignupPage = lazy(() => import('@pages/SignupPage/index'))
 const ForgotPasswordPage = lazy(() => import('@pages/ForgotPasswordPage/index'))
 const ResetPasswordPage = lazy(() => import('@pages/ResetPasswordPage/index'))
+const AdminPanelPage = lazy(() => import('@pages/AdminPanelPage/index'))
+const UserProfilePage = lazy(() => import('@pages/UserProfilePage/index'))
 const WatchesPage = lazy(() => import('@pages/WatchesPage/index'))
 const CheckoutPage = lazy(() => import('@pages/CheckoutPage/index'))
 
@@ -87,6 +90,21 @@ const App = () => {
             to='/'
             layout={AuthLayout}
             component={ResetPasswordPage}
+          />
+          <ProtectedRoute
+            exact
+            path='/admin/*'
+            isPrivate
+            layout={DashboardLayout}
+            siderMenu={AdminSiderMenu}
+            component={AdminPanelPage}
+          />
+          <ProtectedRoute
+            exact
+            isPrivate
+            path='/users/:uid/profile/:activeTab?'
+            layout={MainLayout}
+            component={UserProfilePage}
           />
           <Route
             exact

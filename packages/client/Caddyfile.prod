@@ -1,0 +1,25 @@
+{
+    admin 0.0.0.0
+}
+:{$PORT} {
+    root * /srv
+    route {
+        reverse_proxy /api/* https://gsw-server.onrender.com {
+            header_up Host gsw-server.onrender.com
+        }
+        handle_path /images/* {
+            rewrite * /gshockwatches/image/upload{http.request.orig_uri.path}
+            reverse_proxy https://res.cloudinary.com {
+                header_up Host res.cloudinary.com
+            }
+        }
+        handle_path /videos/* {
+            rewrite * /gshockwatches/video/upload{http.request.orig_uri.path}
+            reverse_proxy https://res.cloudinary.com {
+                header_up Host res.cloudinary.com
+            }
+        }
+        try_files {path} {path}/ /index.html
+        file_server
+    }
+}

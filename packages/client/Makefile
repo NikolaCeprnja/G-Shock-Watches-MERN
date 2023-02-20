@@ -7,6 +7,6 @@ client-build-local:
 	 -f ./Dockerfile.prod ../../
 client-build-prod:
 	docker build \
-	 -t g-shock-wathces/client:prod \
+	 -t g-shock-watches/client:prod \
 	 --build-arg CADDYFILE=./packages/client/Caddyfile.prod \
 	 -f ./Dockerfile.prod ../../

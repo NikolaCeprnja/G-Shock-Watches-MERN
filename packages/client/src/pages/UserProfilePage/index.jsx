@@ -66,9 +66,7 @@ const UserProfilePage = ({ history }) => {
             uid: '0',
             status: 'done',
             path: user.avatarUrl,
-            thumbUrl:
-              (user.avatarUrl && `http://localhost:5000${user.avatarUrl}`) ||
-              user.photo,
+            thumbUrl: user.avatarUrl || user.photo,
           },
         ])
       } else {

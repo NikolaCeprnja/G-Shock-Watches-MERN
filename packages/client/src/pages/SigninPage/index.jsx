@@ -147,7 +147,9 @@ const SigninPage = ({ location }) => {
                   htmlType='button'
                   icon={<GoogleIcon id='google-icon' />}
                   onClick={() => {
-                    window.location = `http://localhost:5000/api/users/auth/google${
+                    window.location = `${
+                      process.env.REACT_APP_API_BASE_URL
+                    }/api/users/auth/google${
                       location.state
                         ? `?redirect_to=${location.state.from.pathname}`
                         : ''

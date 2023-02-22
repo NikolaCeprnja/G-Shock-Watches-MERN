@@ -5,6 +5,9 @@ WORKDIR /usr/src/app
 
 ENV PATH /usr/src/app/node_modules/.bin:$PATH
 
+ARG API_BASE_URL
+ENV REACT_APP_API_BASE_URL ${API_BASE_URL}
+
 COPY ./packages/client/package.json ./
 COPY ./yarn.lock ./
 

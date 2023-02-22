@@ -81,16 +81,16 @@ const UpdateProductPage = ({ history }) => {
           name: product.previewImg.split('/').pop(),
           status: 'done',
           path: product.previewImg,
-          url: `http://localhost:5000${product.previewImg}`,
-          thumbUrl: `http://localhost:5000${product.previewImg}`,
+          url: product.previewImg,
+          thumbUrl: product.previewImg,
         },
         ...product.images?.map((image, idx) => ({
           uid: `${idx + 1}`,
           name: image.split('/').pop(),
           status: 'done',
           path: image,
-          url: `http://localhost:5000${image}`,
-          thumbUrl: `http://localhost:5000${image}`,
+          url: image,
+          thumbUrl: image,
         })),
       ])
 

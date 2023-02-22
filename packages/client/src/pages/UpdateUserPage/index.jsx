@@ -84,9 +84,7 @@ const UpdateUserPage = ({ history }) => {
             uid: '0',
             status: 'done',
             path: user.avatarUrl,
-            thumbUrl:
-              (user.avatarUrl && `http://localhost:5000${user.avatarUrl}`) ||
-              user.accounts[0]?.photos[0]?.value,
+            thumbUrl: user.avatarUrl || user.accounts[0]?.photos[0]?.value,
           },
         ])
       } else {

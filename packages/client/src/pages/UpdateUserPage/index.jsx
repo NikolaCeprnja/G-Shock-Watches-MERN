@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React, {
   lazy,
   useLayoutEffect,
@@ -120,11 +119,7 @@ const UpdateUserPage = ({ history, match }) => {
             uid: '0',
             status: 'done',
             path: user.avatarUrl,
-            thumbUrl:
-              (user.avatarUrl &&
-                `${process.env.REACT_APP_API_BASE_URL + user.avatarUrl}`) ||
-              user.cloudinaryUrl ||
-              user.accounts[0]?.photos[0]?.value,
+            thumbUrl: user.avatarUrl || user.accounts[0]?.photos[0]?.value,
           },
         ])
       } else {

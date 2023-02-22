@@ -90,11 +90,7 @@ const UserProfilePage = ({ history, match }) => {
             uid: '0',
             status: 'done',
             path: user.avatarUrl,
-            thumbUrl:
-              (user.avatarUrl &&
-                `${process.env.REACT_APP_API_BASE_URL + user.avatarUrl}`) ||
-              user.cloudinaryUrl ||
-              user.photo,
+            thumbUrl: user.avatarUrl || user.photo,
           },
         ])
       } else {

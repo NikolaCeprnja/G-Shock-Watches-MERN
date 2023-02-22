@@ -147,18 +147,16 @@ const UpdateProductPage = ({ history, match }) => {
           name: product.previewImg.split('/').pop(),
           status: 'done',
           path: product.previewImg,
-          url: `${process.env.REACT_APP_API_BASE_URL + product.previewImg}`,
-          thumbUrl: `${
-            process.env.REACT_APP_API_BASE_URL + product.previewImg
-          }`,
+          url: product.previewImg,
+          thumbUrl: product.previewImg,
         },
         ...product.images?.map((image, idx) => ({
           uid: `${idx + 1}`,
           name: image.split('/').pop(),
           status: 'done',
           path: image,
-          url: `${process.env.REACT_APP_API_BASE_URL + image}`,
-          thumbUrl: `${process.env.REACT_APP_API_BASE_URL + image}`,
+          url: image,
+          thumbUrl: image,
         })),
       ])
 

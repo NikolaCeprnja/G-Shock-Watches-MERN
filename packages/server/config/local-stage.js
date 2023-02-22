@@ -3,6 +3,9 @@ module.exports = {
     PORT: process.env.PORT,
     HOST: process.env.HOST_LOCAL,
   },
+  CLIENT: {
+    BASE_URL: process.env.CLIENT_BASE_URL_LOCAL,
+  },
   DB: {
     URI: process.env.DB_URI_LOCAL,
   },

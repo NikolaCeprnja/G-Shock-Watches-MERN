@@ -1,6 +1,7 @@
 const router = require('express').Router()
 const passport = require('passport')
 const multer = require('multer')
+const config = require('config')
 
 const upload = multer()
 
@@ -91,14 +92,16 @@ router.get('/auth/google/callback', auth('google'), (req, res) => {
     const { state } = req.query
     const { redirectTo } = JSON.parse(Buffer.from(state, 'base64').toString())
     if (typeof redirectTo === 'string' && redirectTo.startsWith('/')) {
-      res.redirect(`http://localhost:3000${redirectTo}`)
+      res.redirect(`${config.get('CLIENT.BASE_URL')}${redirectTo}`)
     }
   } catch {
     if (req.user.isAdmin) {
-      return res.redirect('http://localhost:3000/admin/dashboard')
+      return res.redirect(`${config.get('CLIENT.BASE_URL')}/admin/dashboard`)
     }
 
-    return res.redirect(`http://localhost:3000/users/${req.user.id}/profile`)
+    return res.redirect(
+      `${config.get('CLIENT.BASE_URL')}/users/${req.user.id}/profile`
+    )
   }
 })
 

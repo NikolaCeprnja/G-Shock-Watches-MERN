@@ -84,9 +84,10 @@ router.get('/auth/google', (req, res, next) => {
 
 /** @method GET @access PUBLIC @desc Redirect after successful auth using passport Google OAuth2.0 strategy. */
 router.get('/auth/google/callback', auth('google'), (req, res) => {
-  res
-    .status(200)
-    .cookie('token', req.token, { sameSite: 'strict', httpOnly: true })
+  res.status(200).cookie('token', req.token, {
+    domain: config.get('CLIENT.DOMAIN'),
+    httpOnly: true,
+  })
 
   try {
     const { state } = req.query

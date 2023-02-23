@@ -3,6 +3,7 @@ module.exports = {
     HOST: process.env.HOST_DEV,
   },
   CLIENT: {
+    DOMAIN: process.env.CLIENT_DOMAIN_DEV,
     BASE_URL: process.env.CLIENT_BASE_URL_DEV,
   },
   DB: {

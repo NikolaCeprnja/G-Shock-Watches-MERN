@@ -1,5 +1,6 @@
 module.exports = {
   CLIENT: {
+    DOMAIN: process.env.CLIENT_DOMAIN_LOCAL,
     BASE_URL: process.env.CLIENT_BASE_URL_LOCAL,
   },
   SERVER: {

@@ -1,4 +1,5 @@
 const router = require('express').Router()
+const jwt = require('jsonwebtoken')
 const passport = require('passport')
 const multer = require('multer')
 const config = require('config')
@@ -63,8 +64,29 @@ router.get(
 )
 
 /** @method GET @access PUBLIC @desc Signout currently logged in user.  */
-router.get('/auth/signout', (req, res) => {
-  res.clearCookie('token', { sameSite: 'strict', httpOnly: true })
+router.get('/auth/signout', (req, res, next) => {
+  jwt.verify(
+    req.cookies.token,
+    config.get('JWT.SECRET'),
+    {
+      ignoreExpiration: true,
+    },
+    (err, decodedToken) => {
+      if (err) {
+        return next(err)
+      }
+
+      res.clearCookie('token', {
+        ...(decodedToken.auth?.googleStrategy
+          ? {
+              domain: config.get('CLIENT.DOMAIN'),
+            }
+          : { sameSite: 'strict' }),
+        httpOnly: true,
+      })
+    }
+  )
+
   res.json({ message: 'You are successfully signed out.' })
 })
 

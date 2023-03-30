@@ -11,7 +11,6 @@ const {
   updateOrder,
 } = require('../controllers/orders-contoller')
 const { authJwt } = require('../controllers/auth-controller')
-const { orderValidation } = require('../controllers/req-validation-controller')
 
 const { isAdmin } = require('../middlewares/auth-middleware')
 const { checkReqParamValidity } = require('../middlewares/req-param-middleware')
@@ -20,6 +19,8 @@ const {
   calculateTotalOrderAmount,
 } = require('../middlewares/products-middleware')
 const { checkOrderOvnership } = require('../middlewares/order-middleware')
+
+const { orderValidation } = require('../validation/order-validation')
 
 // GET ROUTES
 /** @method GET @access PRIVATE @desc Get all orders. */

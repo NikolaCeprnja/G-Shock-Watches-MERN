@@ -8,6 +8,7 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy
 const User = require('./user-model')
 const ErrorHandler = require('./error-handler')
 const { saveFile } = require('../utils/fileUpload')
+const { uploadFile } = require('../utils/cloudinary')
 
 // Local strategy for user signup
 passport.use(
@@ -35,15 +36,26 @@ passport.use(
 
       if (file) {
         const fileName = `${user.id}-${file.fieldName}${file.detectedFileExtension}`
-        const filePath = `${__dirname}/../public/images/avatars/${fileName}`
 
         try {
-          await saveFile(file, filePath)
+          if (process.env.NODE_ENV === 'development') {
+            const filePath = `${__dirname}/../public/images/avatars/${fileName}`
+            await saveFile(file, filePath)
+            user.avatarUrl = `/images/avatars/${fileName}`
+          } else {
+            // cloudinary file upload
+            const response = await uploadFile(file.stream, {
+              public_id: fileName.slice(0, -4),
+              folder: '/images/avatars',
+              format: file.detectedFileExtension.slice(1),
+            })
+
+            user.cloudinaryId = response.public_id
+            user.cloudinaryUrl = response.secure_url
+          }
         } catch (err) {
           return done(err)
         }
-
-        user.avatarUrl = `/images/avatars/${fileName}`
       }
 
       try {
@@ -75,7 +87,7 @@ passport.use(
           {
             $or: [{ userName: userNameOrEmail }, { email: userNameOrEmail }],
           },
-          'userName email password isAdmin avatarUrl'
+          'userName email password isAdmin avatarUrl cloudinaryId cloudinaryUrl'
         )
       } catch (err) {
         // TODO: change returned error with custom message

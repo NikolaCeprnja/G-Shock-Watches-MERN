@@ -39,7 +39,15 @@ const Navbar = () => {
         className='main-navbar'
         selectedKeys={selectedKeys}
         onClick={e => {
-          history.push(e.key)
+          const {
+            domEvent: { target },
+          } = e
+
+          if (
+            !target.parentElement.classList.contains('collection-dropdown-menu')
+          ) {
+            history.push(e.key)
+          }
         }}>
         <Item key='/'>
           <Logo className='logo' />

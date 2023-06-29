@@ -1,0 +1,10 @@
+http://localhost:80 {
+	root * /srv
+    route {
+        reverse_proxy /api/* server:5000
+        reverse_proxy /images/* server:5000
+        reverse_proxy /videos/* server:5000
+        try_files {path} {path}/ /index.html
+        file_server
+    }
+}

@@ -1,0 +1,27 @@
+name: g-shock-watches-prod
+services:
+  client:
+    image: g-shock-watches/client:local
+    ports:
+      - 80:80
+    working_dir: /usr/src/app
+    container_name: g-shock-watches-client-prod
+    restart: unless-stopped
+    networks:
+      - api-network
+    depends_on:
+      - server
+  server:
+    image: g-shock-watches/server:dev
+    ports:
+      - 5000:5000
+    working_dir: /usr/src/app
+    container_name: g-shock-watches-server-prod
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+    restart: unless-stopped
+    networks:
+      - api-network
+
+networks:
+  api-network:

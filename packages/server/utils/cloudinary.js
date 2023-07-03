@@ -23,6 +23,18 @@ const uploadFile = (stream, options) =>
     stream.pipe(cloudinaryStream)
   })
 
+const removeFile = (publicId, options = undefined) =>
+  new Promise((resolve, reject) => {
+    cloudinary.uploader.destroy(publicId, options, (error, result) => {
+      if (result) {
+        resolve(result)
+      } else {
+        reject(error)
+      }
+    })
+  })
+
 module.exports = {
   uploadFile,
+  removeFile,
 }

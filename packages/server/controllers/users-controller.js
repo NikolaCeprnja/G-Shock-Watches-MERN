@@ -3,6 +3,10 @@ const mongoose = require('mongoose')
 const User = require('../models/user-model')
 const ErrorHandler = require('../models/error-handler')
 const { saveFile, removeFile } = require('../utils/fileUpload')
+const {
+  uploadFile: upFileToCloudinary,
+  removeFile: rmFileFromCloudinary,
+} = require('../utils/cloudinary')
 
 // GET CONTROLLERS
 const getUsers = async (req, res, next) => {
@@ -366,27 +370,49 @@ const updateUser = async (req, res, next) => {
 
     // * File exists, replace existing one or just insert new avatar
     if (file) {
-      if (userToUpdate.avatarUrl) {
-        await removeFile(
-          path.join(__dirname, '/../public', userToUpdate.avatarUrl)
-        )
-      }
-
       const fileName = `${userToUpdate.id}-${file.fieldName}${file.detectedFileExtension}`
-      const filePath = `${__dirname}/../public/images/avatars/${fileName}`
 
-      await saveFile(file, filePath)
-      restBodyParams.avatarUrl = `/images/avatars/${fileName}`
+      if (process.env.NODE_ENV === 'development') {
+        if (userToUpdate.avatarUrl) {
+          await removeFile(
+            path.join(__dirname, '/../public', userToUpdate.avatarUrl)
+          )
+        }
+
+        const filePath = `${__dirname}/../public/images/avatars/${fileName}`
+
+        await saveFile(file, filePath)
+        restBodyParams.avatarUrl = `/images/avatars/${fileName}`
+      } else {
+        if (userToUpdate.cloudinaryId) {
+          await rmFileFromCloudinary(userToUpdate.cloudinaryId)
+        }
+
+        const response = await upFileToCloudinary(file.stream, {
+          public_id: fileName.slice(0, -4),
+          folder: '/images/avatars',
+          format: file.detectedFileExtension.slice(1),
+        })
+
+        restBodyParams.cloudinaryId = response.public_id
+        restBodyParams.cloudinaryUrl = response.secure_url
+      }
     }
     // * File doesn't exists, it's removed
     else if (userToUpdate.avatarUrl && avatar === 'undefined') {
       try {
-        await removeFile(
-          path.join(__dirname, '/../public', userToUpdate.avatarUrl)
-        )
-        restBodyParams.avatarUrl = undefined
+        if (process.env.NODE_ENV === 'development') {
+          await removeFile(
+            path.join(__dirname, '/../public', userToUpdate.avatarUrl)
+          )
+          restBodyParams.avatarUrl = undefined
+        } else {
+          await rmFileFromCloudinary(userToUpdate.cloudinaryId)
+          restBodyParams.cloudinaryId = undefined
+          restBodyParams.cloudinaryUrl = undefined
+        }
       } catch (err) {
-        restBodyParams.avatarUrl = undefined
+        console.log(err)
       }
     }
 
@@ -454,6 +480,10 @@ const deleteUser = async (req, res, next) => {
       await user.deleteOne()
       if (user.avatarUrl) {
         await removeFile(path.join(__dirname, '/../public', user.avatarUrl))
+      }
+
+      if (user.cloudinaryId) {
+        await rmFileFromCloudinary(user.cloudinaryId)
       }
     } catch (err) {
       return next(

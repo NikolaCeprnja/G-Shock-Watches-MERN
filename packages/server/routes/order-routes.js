@@ -9,6 +9,7 @@ const {
   getOrdersByProductId,
   createOrder,
   updateOrder,
+  deleteOrder,
 } = require('../controllers/orders-contoller')
 const { authJwt } = require('../controllers/auth-controller')
 
@@ -79,5 +80,14 @@ router.put(
   updateOrder
 )
 
+// DELETE ROUTES
+/** @method DELETE @access PRIVATE @desc Delete order which has specific oid. */
+router.delete(
+  '/:oid',
+  authJwt,
+  checkReqParamValidity('oid'),
+  checkOrderOvnership,
+  deleteOrder
+)
 
 module.exports = router

@@ -9,7 +9,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "server": "nodemon index.js --trace-sync-io",
+    "server": "nodemon --trace-sync-io --inspect-brk=0.0.0.0 index.js",
     "lint:fix": "eslint --ignore-path ../../.eslintignore --fix"
   },
   "dependencies": {

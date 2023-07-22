@@ -24,7 +24,8 @@ services:
       context: ./
       dockerfile: ./packages/server/Dockerfile
     ports:
-      - 5000:5000
+      - '5000:5000'
+      - '9229:9229'
     working_dir: /usr/src/app
     container_name: g-shock-watches-server
     environment:

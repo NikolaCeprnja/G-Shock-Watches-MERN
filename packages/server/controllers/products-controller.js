@@ -14,6 +14,16 @@ const getProducts = async (req, res, next) => {
   const curPage = (({ page }) => Number(page))(req.query) || 1
   if (req.query.page) delete req.query.page
   const skipNext = showPerPage * (curPage - 1)
+  const baseQuery = {
+    $expr: {
+      $and: [
+        { $in: ['$_id', '$$products'] },
+        {
+          $gt: ['$inStock', req.query.inStockOnly ? 0 : -1],
+        },
+      ],
+    },
+  }
   let searchQuery
   if (Object.keys(req.query).includes('searchTerm')) {
     searchQuery = {
@@ -35,29 +45,37 @@ const getProducts = async (req, res, next) => {
   if (req.query.gender) {
     collectionQuery.gender = req.query.gender
   }
-  const totalProducts = await Collection.aggregate([
-    { $match: { ...collectionQuery } },
-    {
-      $lookup: {
-        from: 'products',
-        let: { products: '$products' },
-        pipeline: [
-          {
-            $match: {
-              $expr: { $in: ['$_id', '$$products'] },
-              ...searchQuery,
-            },
-          },
-          { $count: 'count' },
-        ],
-        as: 'products',
-      },
-    },
-    { $unwind: '$products' },
-    { $group: { _id: null, count: { $sum: '$products.count' } } },
-  ])
-  let sortBy
 
+  let totalProducts
+  try {
+    totalProducts = await Collection.aggregate([
+      { $match: { ...collectionQuery } },
+      {
+        $lookup: {
+          from: 'products',
+          let: { products: '$products' },
+          pipeline: [
+            {
+              $match: {
+                ...baseQuery,
+                ...searchQuery,
+              },
+            },
+            { $count: 'count' },
+          ],
+          as: 'products',
+        },
+      },
+      { $unwind: '$products' },
+      { $group: { _id: null, count: { $sum: '$products.count' } } },
+    ])
+  } catch (err) {
+    return next(
+      new ErrorHandler('Something went wrong, please try again later.', 500)
+    )
+  }
+
+  let sortBy
   if (req.query.sortBy) {
     sortBy = JSON.parse(req.query.sortBy)
 
@@ -85,7 +103,7 @@ const getProducts = async (req, res, next) => {
           pipeline: [
             {
               $match: {
-                $expr: { $in: ['$_id', '$$products'] },
+                ...baseQuery,
                 ...searchQuery,
               },
             },

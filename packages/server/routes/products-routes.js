@@ -14,12 +14,11 @@ const {
   deleteProduct,
 } = require('../controllers/products-controller')
 const { authJwt } = require('../controllers/auth-controller')
-const {
-  productValidation,
-} = require('../controllers/req-validation-controller')
 
 const { isAdmin } = require('../middlewares/auth-middleware')
 const { checkReqParamValidity } = require('../middlewares/req-param-middleware')
+
+const { productValidation } = require('../validation/product-validation')
 
 // GET ROUTES
 /** @method GET @access PUBLIC @desc Get all products. */

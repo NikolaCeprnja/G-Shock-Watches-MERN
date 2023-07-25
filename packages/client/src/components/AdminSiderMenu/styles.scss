@@ -1,0 +1,124 @@
+.AdminSiderMenu {
+  width: inherit !important;
+  height: 100%;
+  position: relative;
+  border: 0 !important;
+  background-color: #252f3e !important;
+
+  & > :first-child {
+    margin: 0 0 5rem 0 !important;
+    padding: 1rem 0 !important;
+    background-color: #1b2330 !important;
+  }
+
+  & > li:not(.admin-menu-divider) {
+    margin: 0;
+    height: fit-content;
+    padding: 0.4rem 1.2rem;
+  }
+
+  &.ant-menu-inline-collapsed {
+    &
+      > li:not(:first-child):not(.admin-sider-submenu):not(.admin-menu-divider):not(.signout-menu-item) {
+      padding: 0.4rem calc(50% - 0.75rem) !important;
+    }
+
+    & > li.admin-sider-submenu {
+      padding: 0.4rem 0 !important;
+
+      & > div {
+        padding: 0 calc(50% - 0.75rem) !important;
+      }
+    }
+  }
+
+  & > li:not(:first-child).ant-menu-item-selected {
+    background-color: #3b4452 !important;
+  }
+
+  .user-info {
+    display: flex;
+    flex-direction: column;
+    position: relative !important;
+    padding: 2rem 2rem 3.5rem 2rem !important;
+    height: fit-content !important;
+    overflow: visible !important;
+
+    .avatar-wrapper {
+      z-index: 2;
+      position: absolute;
+      bottom: -58px;
+      padding: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background-color: #252f3e;
+
+      & > div {
+        margin: 0;
+      }
+    }
+
+    .user-name,
+    .user-email {
+      line-height: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .user-name {
+      color: #fff;
+      font-size: 1.2rem;
+      margin-bottom: 0.8rem;
+    }
+  }
+
+  .admin-sider-submenu {
+    font-size: 1rem;
+    font-weight: 500;
+
+    & > div {
+      padding: 0 !important;
+    }
+
+    ul {
+      li:not(.ant-menu-item-selected) {
+        margin: 0 !important;
+        height: fit-content !important;
+        padding: 0.4rem 1.2rem !important;
+        background-color: #252f3e;
+      }
+
+      li.ant-menu-item-selected {
+        display: flex;
+        align-items: center;
+        height: fit-content !important;
+        margin: 0 !important;
+        padding: 0.4rem 1.2rem !important;
+        background-color: #3b4452 !important;
+      }
+    }
+  }
+
+  .admin-menu-divider {
+    z-index: 1;
+    left: 0;
+    bottom: 50px;
+    position: fixed;
+    width: inherit;
+  }
+
+  .signout-menu-item {
+    left: 0;
+    bottom: 0;
+    position: fixed !important;
+    width: inherit !important;
+    height: fit-content;
+    background-color: #252f3e;
+    padding: 0.4rem 2rem !important;
+
+    &:hover {
+      background-color: #3b4452 !important;
+    }
+  }
+}

@@ -18,7 +18,6 @@ const {
   forgotPassword,
   resetPassword,
 } = require('../controllers/auth-controller')
-const { userValidation } = require('../controllers/req-validation-controller')
 
 const {
   isAdmin,
@@ -26,6 +25,8 @@ const {
   checkResetPassToken,
 } = require('../middlewares/auth-middleware')
 const { checkReqParamValidity } = require('../middlewares/req-param-middleware')
+
+const { userValidation } = require('../validation/user-validation')
 
 // GET ROUTES
 /** @method GET @access PRIVATE @desc Get all user. */

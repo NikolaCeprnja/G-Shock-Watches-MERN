@@ -8,7 +8,6 @@ const {
   deleteReview,
 } = require('../controllers/reviews-controller')
 const { authJwt } = require('../controllers/auth-controller')
-const { reviewValidation } = require('../controllers/req-validation-controller')
 
 const { checkUserPrivileges } = require('../middlewares/auth-middleware')
 const { checkReqParamValidity } = require('../middlewares/req-param-middleware')
@@ -17,6 +16,8 @@ const {
   checkReviewOvnership,
   checkReviewExistence,
 } = require('../middlewares/reviews-middleware')
+
+const { reviewValidation } = require('../validation/review-validation')
 
 // GET ROUTES
 /** @method GET @access PRIVATE @desc Get all reviews for specific user by its uid. */

@@ -29,6 +29,8 @@ const userSchema = new Schema(
     },
     isAdmin: { type: Boolean, default: false },
     avatarUrl: String,
+    cloudinaryId: String,
+    cloudinaryUrl: String,
     orders: [{ type: mongoose.Types.ObjectId, ref: 'Order' }],
     purchasedProducts: [{ type: mongoose.Types.ObjectId, ref: 'Product' }],
     reviews: [{ type: mongoose.Types.ObjectId, ref: 'Review' }],
@@ -61,13 +63,23 @@ userSchema.options.toObject.transform = function (doc, ret, options) {
   delete ret.password
 
   if (options.localStrategy) {
-    const { id, userName, email, isAdmin, avatarUrl } = ret
+    const {
+      id,
+      userName,
+      email,
+      isAdmin,
+      avatarUrl,
+      cloudinaryId,
+      cloudinaryUrl,
+    } = ret
     return {
       id,
       isAdmin,
       userName,
       email,
       avatarUrl,
+      cloudinaryId,
+      cloudinaryUrl,
     }
   }
 

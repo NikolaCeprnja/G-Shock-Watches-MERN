@@ -8,6 +8,7 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy
 const User = require('./user-model')
 const ErrorHandler = require('./error-handler')
 const { saveFile } = require('../utils/fileUpload')
+const { uploadFile } = require('../utils/cloudinary')
 
 // Local strategy for user signup
 passport.use(
@@ -24,71 +25,6 @@ passport.use(
         body: { email, isAdmin },
       } = req
 
-      let existingUsers
-
-      try {
-        existingUsers = await User.find(
-          {
-            $or: [
-              { userName },
-              { email },
-              { accounts: { $elemMatch: { displayName: userName } } },
-            ],
-          },
-          'userName email accounts'
-        )
-      } catch (err) {
-        return done(err)
-      }
-
-      const errors = {}
-      if (existingUsers) {
-        existingUsers.forEach(existingUser => {
-          if (
-            existingUser.userName === userName ||
-            existingUser.accounts.some(acc => acc.displayName === userName)
-          ) {
-            errors.userName = {
-              message: 'Username already taken, please try another one.',
-              value: userName,
-            }
-          }
-
-          if (existingUser.email === email) {
-            errors.email = {
-              message: 'Email already taken, please try another one.',
-              value: email,
-            }
-          }
-        })
-      }
-
-      if (file) {
-        if (
-          file.detectedMimeType !== 'image/png' &&
-          file.detectedMimeType !== 'image/jpeg'
-        ) {
-          errors.avatar = {
-            message:
-              'Unsuported file selected.\nOnly .PNG or .JPEG (JPG) files are allowed.',
-            value: file,
-          }
-        } else if (file.size > 1000000) {
-          errors.avatar = {
-            message: 'Chosen file needs to be less then 1MB.',
-            value: file,
-          }
-        }
-      }
-
-      if (Object.keys(errors).length > 0) {
-        return done(null, false, {
-          message: 'Conflict while creating user account.',
-          statusCode: 409,
-          errors: { ...errors },
-        })
-      }
-
       const password = await bcrypt.hash(unhashedPassword, 12)
 
       const user = new User({
@@ -100,15 +36,26 @@ passport.use(
 
       if (file) {
         const fileName = `${user.id}-${file.fieldName}${file.detectedFileExtension}`
-        const filePath = `${__dirname}/../public/images/avatars/${fileName}`
 
         try {
-          await saveFile(file, filePath)
+          if (process.env.NODE_ENV === 'development') {
+            const filePath = `${__dirname}/../public/images/avatars/${fileName}`
+            await saveFile(file, filePath)
+            user.avatarUrl = `/images/avatars/${fileName}`
+          } else {
+            // cloudinary file upload
+            const response = await uploadFile(file.stream, {
+              public_id: fileName.slice(0, -4),
+              folder: '/images/avatars',
+              format: file.detectedFileExtension.slice(1),
+            })
+
+            user.cloudinaryId = response.public_id
+            user.cloudinaryUrl = response.secure_url
+          }
         } catch (err) {
           return done(err)
         }
-
-        user.avatarUrl = `/images/avatars/${fileName}`
       }
 
       try {
@@ -140,7 +87,7 @@ passport.use(
           {
             $or: [{ userName: userNameOrEmail }, { email: userNameOrEmail }],
           },
-          'userName email password isAdmin avatarUrl'
+          'userName email password isAdmin avatarUrl cloudinaryId cloudinaryUrl'
         )
       } catch (err) {
         // TODO: change returned error with custom message

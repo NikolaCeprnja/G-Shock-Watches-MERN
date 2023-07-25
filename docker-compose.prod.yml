@@ -1,0 +1,33 @@
+name: g-shock-watches-prod
+services:
+  client:
+    image: g-shock-watches/client:prod
+    ports:
+      - 80:80
+      - 443:443
+    working_dir: /usr/src/app
+    container_name: g-shock-watches-client-prod
+    volumes:
+      - ./packages/client/Caddyfile.prod:/etc/caddy/Caddyfile
+      - caddy_data:/data
+    restart: unless-stopped
+    networks:
+      - api-network
+    depends_on:
+      - server
+  server:
+    image: g-shock-watches/server:prod
+    ports:
+      - 5000:5000
+    working_dir: /usr/src/app
+    container_name: g-shock-watches-server-prod
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+    restart: unless-stopped
+    networks:
+      - api-network
+
+volumes:
+  caddy_data:
+networks:
+  api-network:

@@ -3,7 +3,7 @@ const sgMail = require('@sendgrid/mail')
 
 sgMail.setApiKey(config.get('EMAIL.SENDGRID_API_KEY'))
 
-const sendEmail = async options => {
+const sendEmail = options => {
   const { to, subject, html } = options
   const msg = {
     to,

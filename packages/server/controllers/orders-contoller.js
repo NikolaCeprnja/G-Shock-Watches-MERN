@@ -953,7 +953,7 @@ const createOrder = async (req, res, next) => {
       updatedProducts.push(product.save())
     }
 
-    // update all orderedProducts quantity values.
+    // update all orderedProducts inStock values.
     await Promise.all(updatedProducts)
 
     const newOrder = new Order({
@@ -1054,6 +1054,52 @@ const updateOrder = async (req, res, next) => {
     .json({ message: 'Order with provided oid does not exists' })
 }
 
+// DELETE CONTROLLERS
+const deleteOrder = async (req, res, next) => {
+  const { oid } = req.params
+  let order
+
+  try {
+    order = await Order.findById(oid)
+  } catch (err) {
+    return next(
+      new ErrorHandler('Something went wrong, please try again later.', 500)
+    )
+  }
+
+  if (order) {
+    try {
+      if (req.user.isAdmin && order.creator !== req.user.id) {
+        await order.deleteOne()
+
+        return res.status(200).json({
+          message: 'Order is successfully deleted!',
+          deletedOrder: order,
+        })
+      }
+
+      await User.findByIdAndUpdate(req.user.id, {
+        $pull: { orders: oid },
+      })
+
+      return res.status(200).json({
+        message: `Order with oid ${oid} is successfully removed from your order list.`,
+      })
+    } catch (err) {
+      return next(
+        new ErrorHandler(
+          'Something went wrong while deleting the order, please try again later.',
+          500
+        )
+      )
+    }
+  }
+
+  return res
+    .status(404)
+    .json({ message: 'Order with provided oid does not exists.' })
+}
+
 module.exports = {
   getOrders,
   getTotalOrdersCount,
@@ -1063,4 +1109,5 @@ module.exports = {
   getOrdersByProductId,
   createOrder,
   updateOrder,
+  deleteOrder,
 }

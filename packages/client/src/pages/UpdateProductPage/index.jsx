@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useLayoutEffect, useEffect, useCallback, useState } from 'react'
 import PropTypes from 'prop-types'
-import { useParams } from 'react-router-dom'
+import { useParams, generatePath } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { Button, Tabs, Row, Col, Spin, message as updatingMessage } from 'antd'
 import {
@@ -51,9 +51,9 @@ const UpdatingMessage = () => {
   })
 }
 
-const UpdateProductPage = ({ history }) => {
-  const { pid } = useParams()
-  const [activeTabKey, setActiveTabKey] = useState(undefined)
+const UpdateProductPage = ({ history, match }) => {
+  const { pid, activeTab } = useParams()
+  const [activeTabKey, setActiveTabKey] = useState(activeTab)
   const [shouldFormReset, setShouldFormReset] = useState(true)
   const [defaultFileList, setDefaultFileList] = useState([])
   const [removedFileList, setRemovedFileList] = useState([])
@@ -72,6 +72,14 @@ const UpdateProductPage = ({ history }) => {
       dispatch(clearProductPreview())
     }
   }, [dispatch, pid])
+
+  useEffect(() => {
+    if (activeTab) {
+      setActiveTabKey(activeTab)
+    } else {
+      setActiveTabKey('info')
+    }
+  }, [activeTab])
 
   useEffect(() => {
     if (product && shouldFormReset) {
@@ -149,7 +157,7 @@ const UpdateProductPage = ({ history }) => {
         )
 
         setShouldFormReset(true)
-        setActiveTabKey('product-info')
+        setActiveTabKey('info')
       } catch (error) {
         const {
           status,
@@ -338,10 +346,17 @@ const UpdateProductPage = ({ history }) => {
                   </div>
                 </div>
                 <Tabs
-                  defaultActiveKey='product-info'
+                  defaultActiveKey='info'
                   activeKey={activeTabKey}
-                  onTabClick={activeKey => setActiveTabKey(activeKey)}>
-                  <TabPane key='product-info' tab='Basic Product Info'>
+                  onTabClick={activeKey => {
+                    const generatedPath = generatePath(match.path, {
+                      pid: product.id,
+                      activeTab: activeKey,
+                    })
+
+                    history.push(generatedPath)
+                  }}>
+                  <TabPane key='info' tab='Basic Product Info'>
                     <Form name='product-info' layout='vertical'>
                       <Row gutter={[16, 8]}>
                         <Col span={8}>
@@ -483,7 +498,7 @@ const UpdateProductPage = ({ history }) => {
                       </Col>
                     </Form>
                   </TabPane>
-                  <TabPane key='product-images' tab='Product Images'>
+                  <TabPane key='images' tab='Product Images'>
                     <Form name='product-images'>
                       <FastField
                         name='images'
@@ -494,7 +509,7 @@ const UpdateProductPage = ({ history }) => {
                       />
                     </Form>
                   </TabPane>
-                  <TabPane key='product-details' tab='Product Details'>
+                  <TabPane key='details' tab='Product Details'>
                     <Form name='product-details' layout='vertical'>
                       <Col span={24}>
                         <FastField
@@ -565,6 +580,7 @@ const UpdateProductPage = ({ history }) => {
 
 UpdateProductPage.propTypes = {
   history: PropTypes.instanceOf(Object).isRequired,
+  match: PropTypes.instanceOf(Object).isRequired,
 }
 
 export default UpdateProductPage

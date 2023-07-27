@@ -86,14 +86,16 @@ const UpdateUserPage = ({ history, match }) => {
 
   useEffect(() => {
     if (user && shouldFormReset) {
-      if (user.avatarUrl || user.accounts?.length > 0) {
+      if (user.avatarUrl || user.cloudinaryUrl || user.accounts?.length > 0) {
         setDefaultFileList([
           {
             uid: '0',
             status: 'done',
             path: user.avatarUrl,
             thumbUrl:
-              (user.avatarUrl && `http://localhost:5000${user.avatarUrl}`) ||
+              (user.avatarUrl &&
+                `${process.env.REACT_APP_API_BASE_URL}${user.avatarUrl}`) ||
+              user.cloudinaryUrl ||
               user.accounts[0]?.photos[0]?.value,
           },
         ])

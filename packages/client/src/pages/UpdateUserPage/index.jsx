@@ -8,7 +8,7 @@ import React, {
   Suspense,
 } from 'react'
 import PropTypes from 'prop-types'
-import { useParams } from 'react-router-dom'
+import { useParams, generatePath } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import {
   Row,
@@ -56,9 +56,9 @@ const UpdatingMessage = () => {
   })
 }
 
-const UpdateUserPage = ({ history }) => {
-  const { uid } = useParams()
-  const [activeTabKey, setActiveTabKey] = useState()
+const UpdateUserPage = ({ history, match }) => {
+  const { uid, activeTab } = useParams()
+  const [activeTabKey, setActiveTabKey] = useState(activeTab)
   const [defaultFileList, setDefaultFileList] = useState([])
   const [shouldFormReset, setShouldFormReset] = useState(true)
   const [existingUserNames, setExistingUserNames] = useState([])
@@ -75,6 +75,14 @@ const UpdateUserPage = ({ history }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    if (activeTab) {
+      setActiveTabKey(activeTab)
+    } else {
+      setActiveTabKey('info')
+    }
+  }, [activeTab])
 
   useEffect(() => {
     if (user && shouldFormReset) {
@@ -134,7 +142,7 @@ const UpdateUserPage = ({ history }) => {
         )
 
         setShouldFormReset(true)
-        setActiveTabKey('user-info')
+        setActiveTabKey('info')
       } catch (error) {
         const {
           status,
@@ -300,10 +308,17 @@ const UpdateUserPage = ({ history }) => {
                 </div>
                 <Tabs
                   style={{ flexGrow: 1 }}
-                  defaultActiveKey='user-info'
+                  defaultActiveKey='info'
                   activeKey={activeTabKey}
-                  onTabClick={activeKey => setActiveTabKey(activeKey)}>
-                  <TabPane key='user-info' tab='Basic User Info'>
+                  onTabClick={activeKey => {
+                    const generatedPath = generatePath(match.path, {
+                      uid,
+                      activeTab: activeKey,
+                    })
+
+                    history.push(generatedPath)
+                  }}>
+                  <TabPane key='info' tab='Basic User Info'>
                     <Form name='user-info' layout='vertical'>
                       <Row gutter={[16, 8]}>
                         <Col span={8}>
@@ -330,6 +345,7 @@ const UpdateUserPage = ({ history }) => {
                               name='isAdmin'
                               checked={isAdmin}
                               defaultChecked={isAdmin}
+                              disabled={user?.isAdmin}
                               onChange={e => {
                                 setFieldValue('isAdmin', e.target.checked)
                               }}
@@ -341,7 +357,7 @@ const UpdateUserPage = ({ history }) => {
                   </TabPane>
                   <TabPane
                     style={{ width: '100%', height: '100%' }}
-                    key='user-reviews'
+                    key='purchased-products'
                     tab='Purchased Products & Reviews'>
                     <Suspense
                       fallback={
@@ -362,7 +378,7 @@ const UpdateUserPage = ({ history }) => {
                       />
                     </Suspense>
                   </TabPane>
-                  <TabPane key='user-orders' tab='Orders'>
+                  <TabPane key='orders' tab='Orders'>
                     <Suspense
                       fallback={
                         <div
@@ -390,6 +406,7 @@ const UpdateUserPage = ({ history }) => {
 
 UpdateUserPage.propTypes = {
   history: PropTypes.instanceOf(Object).isRequired,
+  match: PropTypes.instanceOf(Object).isRequired,
 }
 
 export default UpdateUserPage

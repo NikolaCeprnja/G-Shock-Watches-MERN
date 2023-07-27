@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { lazy, useEffect, useState, useCallback, Suspense } from 'react'
 import PropTypes from 'prop-types'
-import { useParams } from 'react-router-dom'
+import { useParams, generatePath } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import {
   Row,
@@ -48,7 +48,7 @@ const UpdatingMessage = () => {
   })
 }
 
-const UserProfilePage = ({ history }) => {
+const UserProfilePage = ({ history, match }) => {
   const { activeTab } = useParams()
   const [activeTabKey, setActiveTabKey] = useState(activeTab)
   const [defaultFileList, setDefaultFileList] = useState([])
@@ -57,6 +57,14 @@ const UserProfilePage = ({ history }) => {
   const [existingEmails, setExistingEmails] = useState([])
   const dispatch = useDispatch()
   const { loading, updating, info: user } = useSelector(selectLoggedInUser)
+
+  useEffect(() => {
+    if (activeTab) {
+      setActiveTabKey(activeTab)
+    } else {
+      setActiveTabKey('settings')
+    }
+  }, [activeTab])
 
   useEffect(() => {
     if (user && shouldFormReset) {
@@ -120,7 +128,7 @@ const UserProfilePage = ({ history }) => {
         )
 
         setShouldFormReset(true)
-        setActiveTabKey('user-info')
+        setActiveTabKey('settings')
       } catch (error) {
         const {
           status,
@@ -288,10 +296,17 @@ const UserProfilePage = ({ history }) => {
                 </div>
                 <Tabs
                   style={{ flexGrow: 1 }}
-                  defaultActiveKey='user-info'
+                  defaultActiveKey='settings'
                   activeKey={activeTabKey}
-                  onTabClick={activeKey => setActiveTabKey(activeKey)}>
-                  <TabPane key='user-info' tab='Basic User Info'>
+                  onTabClick={activeKey => {
+                    const generatedPath = generatePath(match.path, {
+                      uid: user.id,
+                      activeTab: activeKey,
+                    })
+
+                    history.push(generatedPath)
+                  }}>
+                  <TabPane key='settings' tab='Basic User Info'>
                     <Form name='user-info' layout='vertical'>
                       <Row gutter={[16, 8]}>
                         <Col span={8}>
@@ -318,6 +333,7 @@ const UserProfilePage = ({ history }) => {
                               name='isAdmin'
                               checked={isAdmin}
                               defaultChecked={isAdmin}
+                              disabled={!user?.isAdmin}
                               onChange={e => {
                                 setFieldValue('isAdmin', e.target.checked)
                               }}
@@ -329,7 +345,7 @@ const UserProfilePage = ({ history }) => {
                   </TabPane>
                   <TabPane
                     style={{ width: '100%', height: '100%' }}
-                    key='user-reviews'
+                    key='purchased-products'
                     tab='Purchased Products & Reviews'>
                     <Suspense
                       fallback={
@@ -349,7 +365,7 @@ const UserProfilePage = ({ history }) => {
                       />
                     </Suspense>
                   </TabPane>
-                  <TabPane key='user-orders' tab='Orders'>
+                  <TabPane key='orders' tab='Orders'>
                     <Suspense
                       fallback={
                         <div
@@ -377,6 +393,7 @@ const UserProfilePage = ({ history }) => {
 
 UserProfilePage.propTypes = {
   history: PropTypes.instanceOf(Object).isRequired,
+  match: PropTypes.instanceOf(Object).isRequired,
 }
 
 export default UserProfilePage

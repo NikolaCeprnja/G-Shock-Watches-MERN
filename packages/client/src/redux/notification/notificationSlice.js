@@ -5,7 +5,7 @@ const initialState = {
   data: undefined,
 }
 
-export const notificationSlice = createSlice({
+const notificationSlice = createSlice({
   name: 'notification',
   initialState,
   reducers: {

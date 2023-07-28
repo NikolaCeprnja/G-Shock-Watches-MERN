@@ -7,7 +7,7 @@ const initialState = {
   data: undefined,
 }
 
-export const offerSlice = createSlice({
+const offerSlice = createSlice({
   name: 'offers',
   initialState,
   reducers: {},

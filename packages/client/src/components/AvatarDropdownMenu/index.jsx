@@ -17,7 +17,7 @@ import './styles.scss'
 const { Divider, Item, SubMenu } = Menu
 
 const AvatarDropdownMenu = ({
-  info: { id, userName, email, isAdmin, avatarUrl, photo },
+  info: { id, userName, email, isAdmin, avatarUrl, cloudinaryUrl, photo },
 }) => {
   const dispatch = useDispatch()
   const history = useHistory()
@@ -60,12 +60,12 @@ const AvatarDropdownMenu = ({
       overlay={
         <Menu selectable selectedKeys={[selectedKey]} onClick={handleMenuClick}>
           <Item key='userName' className='user-info' disabled>
-            {photo || avatarUrl ? (
+            {photo || avatarUrl || cloudinaryUrl ? (
               <Image
                 preview={false}
                 width={80}
                 height={80}
-                src={photo || avatarUrl}
+                src={photo || avatarUrl || cloudinaryUrl}
                 style={{ borderRadius: '50%' }}
               />
             ) : (
@@ -90,11 +90,11 @@ const AvatarDropdownMenu = ({
               setIsVisible(false)
               history.push(e.key)
             }}>
-            <Item key={`/users/${id}/profile/reviews`}>Reviews</Item>
+            <Item key={`/users/${id}/profile/settings`}>Settings</Item>
             <Item key={`/users/${id}/profile/purchased-products`}>
               Purchased products
             </Item>
-            <Item key={`/users/${id}/profile/settings`}>Settings</Item>
+            <Item key={`/users/${id}/profile/orders`}>Orders</Item>
           </SubMenu>
           {isAdmin && (
             <Item key='/admin/dashboard' icon={<AreaChartOutlined />}>
@@ -109,7 +109,7 @@ const AvatarDropdownMenu = ({
       }>
       <Avatar
         className='main-avatar'
-        src={photo || avatarUrl}
+        src={photo || avatarUrl || cloudinaryUrl}
         icon={<UserOutlined />}
       />
     </Dropdown>

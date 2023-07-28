@@ -8,17 +8,41 @@ const initialState = {
   women: { loading: false, data: undefined },
 }
 
-export const collectionSlice = createSlice({
+const collectionSlice = createSlice({
   name: 'collections',
   initialState,
-  reducers: {},
+  reducers: {
+    toggleSelectedCollections: (state, { payload }) => {
+      const { gender, value: currentlySelectedCollections } = payload
+      const selectedCollections = state[gender]
+
+      selectedCollections.data?.forEach(collection => {
+        const isCurrentlySelected = currentlySelectedCollections.includes(
+          collection.name
+        )
+
+        if (!collection.selected && isCurrentlySelected) {
+          collection.selected = true
+          return
+        }
+
+        if (collection.selected && !isCurrentlySelected) {
+          delete collection.selected
+        }
+      })
+    },
+    resetSelectedCollections: state => {
+      state.men.data?.forEach(coll => coll.selected && delete coll.selected)
+      state.women.data?.forEach(coll => coll.selected && delete coll.selected)
+    },
+  },
   extraReducers: {
     [collectionThunk.getCollections.pending]: state => {
       state.loading = true
     },
     [collectionThunk.getCollections.fulfilled]: (
       state,
-      { payload: { collections: allCollections } }
+      { payload: { collections: allCollections, urlQueryParams } }
     ) => {
       state.loading = false
 
@@ -31,6 +55,10 @@ export const collectionSlice = createSlice({
       }
 
       allCollections.forEach(collection => {
+        if (urlQueryParams.includes(collection.name)) {
+          collection.selected = true
+        }
+
         state[collection.gender].data = [
           ...new Map(
             [...state[collection.gender].data, collection].map(coll => [
@@ -77,6 +105,11 @@ export const collectionSlice = createSlice({
     },
   },
 })
+
+export const {
+  toggleSelectedCollections,
+  resetSelectedCollections,
+} = collectionSlice.actions
 
 export const selectCollections = state => state.collections
 

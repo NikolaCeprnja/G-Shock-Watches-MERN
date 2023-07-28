@@ -5,11 +5,11 @@ import collections from '@api/collection/index'
 // Thunks
 export const getCollections = createAsyncThunk(
   'collections/getCollections',
-  async (collection, { rejectWithValue }) => {
+  async (urlQueryParams = [], { rejectWithValue }) => {
     try {
       const response = await collections.getCollections()
       const { data, status } = response
-      return { ...data, status }
+      return { ...data, status, urlQueryParams }
     } catch (err) {
       const { data, status, statusText } = err.response
       return rejectWithValue({ data, status, statusText })

@@ -298,7 +298,7 @@ const ORDERS_COLUMNS = (
           title: 'Customer',
           dataIndex: 'customer',
           render: customer => {
-            const { userName, avatarUrl, accounts } = customer
+            const { userName, avatarUrl, cloudinaryUrl, accounts } = customer
             const { displayName, photos } = Object(accounts[0])
 
             return (
@@ -306,7 +306,9 @@ const ORDERS_COLUMNS = (
                 <Avatar
                   alt='avatar-img'
                   size='large'
-                  src={avatarUrl || (photos && photos[0].value)}
+                  src={
+                    avatarUrl || cloudinaryUrl || (photos && photos[0].value)
+                  }
                   icon={<UserOutlined />}
                   style={{ marginRight: '1rem' }}
                 />
@@ -364,7 +366,10 @@ const ORDER_CUSTOMER_COLUMNS = [
     title: 'Username',
     dataIndex: ['customer', 'userName'],
     width: '25%',
-    render: (userName, { customer: { avatarUrl, accounts } }) => {
+    render: (
+      userName,
+      { customer: { avatarUrl, cloudinaryUrl, accounts } }
+    ) => {
       const { displayName, photos } = Object(accounts[0])
 
       return (
@@ -372,7 +377,7 @@ const ORDER_CUSTOMER_COLUMNS = [
           <Avatar
             alt='avatar-img'
             size='large'
-            src={avatarUrl || (photos && photos[0].value)}
+            src={avatarUrl || cloudinaryUrl || (photos && photos[0].value)}
             icon={<UserOutlined />}
             style={{ marginRight: '1rem' }}
           />

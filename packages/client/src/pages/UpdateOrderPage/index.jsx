@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
-import React, { useLayoutEffect, useState } from 'react'
+import React, { useLayoutEffect, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
-import { useParams } from 'react-router-dom'
+import { useParams, generatePath } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { Spin, Button, Tabs, Table, Collapse } from 'antd'
 import {
@@ -24,13 +24,13 @@ import './styles.scss'
 const { TabPane } = Tabs
 const { Panel } = Collapse
 
-const UpdateOrderPage = ({ history }) => {
-  const { oid } = useParams()
+const UpdateOrderPage = ({ history, match }) => {
+  const { oid, activeTab } = useParams()
   const dispatch = useDispatch()
   const { loading, updating, data: order } = useSelector(
     selectOrdersByType('preview')
   )
-  const [activeTabKey, setActiveTabKey] = useState('order-info')
+  const [activeTabKey, setActiveTabKey] = useState(activeTab)
 
   useLayoutEffect(() => {
     dispatch(getOrderById(oid))
@@ -39,6 +39,14 @@ const UpdateOrderPage = ({ history }) => {
       dispatch(clearOrderPreview())
     }
   }, [dispatch, oid])
+
+  useEffect(() => {
+    if (activeTab) {
+      setActiveTabKey(activeTab)
+    } else {
+      setActiveTabKey('info')
+    }
+  }, [activeTab])
 
   return (
     <div className='UpdateOrderPageWrapper'>
@@ -61,10 +69,17 @@ const UpdateOrderPage = ({ history }) => {
             </p>
           </div>
           <Tabs
-            defaultActiveKey='order-info'
+            defaultActiveKey='info'
             activeKey={activeTabKey}
-            onTabClick={activeKey => setActiveTabKey(activeKey)}>
-            <TabPane key='order-info' tab='Order Details'>
+            onTabClick={activeKey => {
+              const generatedPath = generatePath(match.path, {
+                oid,
+                activeTab: activeKey,
+              })
+
+              history.push(generatedPath)
+            }}>
+            <TabPane key='info' tab='Order Details'>
               <div className='order-info-customer'>
                 <h2>
                   <UserOutlined /> Customer
@@ -98,7 +113,7 @@ const UpdateOrderPage = ({ history }) => {
                 />
               </div>
             </TabPane>
-            <TabPane key='order-products' tab='Products'>
+            <TabPane key='ordered-products' tab='Products'>
               <div className='order-info-products'>
                 <Table
                   rowKey='id'
@@ -130,6 +145,7 @@ const UpdateOrderPage = ({ history }) => {
 
 UpdateOrderPage.propTypes = {
   history: PropTypes.instanceOf(Object).isRequired,
+  match: PropTypes.instanceOf(Object).isRequired,
 }
 
 export default UpdateOrderPage

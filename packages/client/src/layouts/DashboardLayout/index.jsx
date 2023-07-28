@@ -30,7 +30,7 @@ const DashboardLayout = ({ siderMenu: SiderMenu, children }) => {
         collapsed={isCollapsed}
         className='dashboard-sider-wrapper'
         width={280}>
-        <SiderMenu />
+        <SiderMenu collapsed={isCollapsed} />
       </Sider>
       <Layout
         style={{

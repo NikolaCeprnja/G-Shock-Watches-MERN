@@ -47,7 +47,11 @@ const ProductsPage = () => {
         )}
       />
       <Route exact path={`${path}/create`} component={AddNewProductPage} />
-      <Route exact path={`${path}/:pid`} component={UpdateProductPage} />
+      <Route
+        exact
+        path={`${path}/:pid/:activeTab?`}
+        component={UpdateProductPage}
+      />
     </Switch>
   )
 }

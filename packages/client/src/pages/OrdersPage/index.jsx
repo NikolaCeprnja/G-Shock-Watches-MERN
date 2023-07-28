@@ -47,7 +47,11 @@ const OrdersPage = () => {
           />
         )}
       />
-      <Route exact path={`${path}/:oid`} component={UpdateOrderPage} />
+      <Route
+        exact
+        path={`${path}/:oid/:activeTab?`}
+        component={UpdateOrderPage}
+      />
     </Switch>
   )
 }

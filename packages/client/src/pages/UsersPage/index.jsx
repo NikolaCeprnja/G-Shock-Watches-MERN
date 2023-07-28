@@ -51,7 +51,11 @@ const UsersPage = () => {
         )}
       />
       <Route exact path={`${path}/create`} component={AddNewUserPage} />
-      <Route exact path={`${path}/:uid`} component={UpdateUserPage} />
+      <Route
+        exact
+        path={`${path}/:uid/:activeTab?`}
+        component={UpdateUserPage}
+      />
     </Switch>
   )
 }

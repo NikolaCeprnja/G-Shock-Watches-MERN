@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import PropTypes from 'prop-types'
 import { useSelector, useDispatch } from 'react-redux'
 import { useHistory, useLocation } from 'react-router-dom'
 import { Menu, Image } from 'antd'
@@ -22,17 +23,39 @@ import './styles.scss'
 const { SubMenu, Item, Divider } = Menu
 const UsersOutlined = props => <Icon {...props} component={UsersIcon} />
 
-const AdminSiderMenu = () => {
+const AdminSiderMenu = ({ collapsed }) => {
   const dispatch = useDispatch()
   const history = useHistory()
   const { pathname } = useLocation()
   const loggedInUser = useSelector(selectLoggedInUser)
-  const [openKeys, setOpenKeys] = useState([])
+  const [openKeys, setOpenKeys] = useState([pathname.split('/', 3).join('/')])
   const [selectedKeys, setSelectedKeys] = useState(['/admin/dashboard'])
 
   useEffect(() => {
-    setSelectedKeys([pathname])
-  }, [pathname])
+    switch (true) {
+      case pathname.charAt(pathname.length - 1) === '/': {
+        setSelectedKeys([pathname.slice(0, -1)])
+        break
+      }
+      case pathname.startsWith('/profile', 6): {
+        setSelectedKeys(['/admin/profile'])
+        break
+      }
+      default: {
+        setSelectedKeys([pathname])
+      }
+    }
+
+    if (
+      (pathname.startsWith('/users', 6) ||
+        pathname.startsWith('/e-commerce', 6)) &&
+      !collapsed
+    ) {
+      setOpenKeys([pathname.split('/', 3).join('/')])
+    } else {
+      setOpenKeys([])
+    }
+  }, [pathname, collapsed])
 
   const handleMenuClick = e => {
     if (e.keyPath.length > 1) {
@@ -62,8 +85,8 @@ const AdminSiderMenu = () => {
       theme='dark'
       className='AdminSiderMenu'
       onClick={handleMenuClick}
-      selectedKeys={selectedKeys}
       openKeys={openKeys}
+      selectedKeys={selectedKeys}
       onOpenChange={handleSubMenuOpen}>
       <Item
         key='userName'
@@ -101,10 +124,8 @@ const AdminSiderMenu = () => {
         className='admin-sider-submenu'
         icon={<ShoppingCartOutlined style={{ fontSize: '1.3rem' }} />}>
         <Item key='/admin/e-commerce/products'>Products</Item>
-        <Item key='/admin/e-commerce/products/id'>Product Details</Item>
         <Item key='/admin/e-commerce/products/create'>Add New Product</Item>
         <Item key='/admin/e-commerce/orders'>Orders</Item>
-        <Item key='/admin/e-commerce/orders/id'>Order Details</Item>
       </SubMenu>
       <SubMenu
         key='/admin/users'
@@ -112,7 +133,6 @@ const AdminSiderMenu = () => {
         className='admin-sider-submenu'
         icon={<UsersOutlined style={{ fontSize: '1.3rem' }} />}>
         <Item key='/admin/users'>Users</Item>
-        <Item key='/admin/users/id'>User Details</Item>
         <Item key='/admin/users/create'>Add New User</Item>
       </SubMenu>
       <Item
@@ -131,6 +151,10 @@ const AdminSiderMenu = () => {
       </Item>
     </Menu>
   )
+}
+
+AdminSiderMenu.propTypes = {
+  collapsed: PropTypes.bool.isRequired,
 }
 
 export default AdminSiderMenu

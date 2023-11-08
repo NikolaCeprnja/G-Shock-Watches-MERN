@@ -36,9 +36,16 @@ const collectionSlice = createSlice({
         }
       })
     },
-    resetSelectedCollections: state => {
-      state.men.data?.forEach(coll => coll.selected && delete coll.selected)
-      state.women.data?.forEach(coll => coll.selected && delete coll.selected)
+    resetSelectedCollections: (state, { payload: { gender = 'all' } }) => {
+      if (gender === 'all') {
+        return [...(state.men.data ?? []), ...(state.women.data ?? [])].forEach(
+          coll => coll.selected && delete coll.selected
+        )
+      }
+
+      return state[gender].data?.forEach(
+        coll => coll.selected && delete coll.selected
+      )
     },
   },
   extraReducers: {

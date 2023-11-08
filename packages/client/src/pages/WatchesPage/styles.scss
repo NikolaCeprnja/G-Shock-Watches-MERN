@@ -1,15 +1,16 @@
 .WatchesPage {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex: auto;
   justify-content: center;
 
   .products-preview-wrapper {
     width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    background-color: #fff;
 
     .title {
       text-align: center;
@@ -20,6 +21,12 @@
         margin-bottom: 0;
         font-size: 2rem;
         font-weight: bold;
+      }
+
+      span {
+        color: rgb(161, 158, 158);
+        font-size: 1.4rem;
+        font-weight: 500;
       }
 
       hr {
@@ -46,6 +53,20 @@
           justify-content: center;
         }
       }
+    }
+  }
+
+  .products-preview-content {
+    display: flex;
+    width: 100%;
+
+    & > aside > .ant-layout-sider-children {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
     }
   }
 }

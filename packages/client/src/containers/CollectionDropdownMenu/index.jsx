@@ -6,7 +6,10 @@ import { Dropdown, Menu, Skeleton } from 'antd'
 
 import CollectionItem from '@components/CollectionItem/index'
 
-import { selectCollectionByGender } from '@redux/collection/collectionSlice'
+import {
+  selectCollectionsByGender,
+  toggleSelectedCollections,
+} from '@redux/collection/collectionSlice'
 import { getCollectionsByGender } from '@redux/collection/collectionThunk'
 
 const CollectionDropdownMenu = ({ gender, skeletons }) => {
@@ -14,14 +17,14 @@ const CollectionDropdownMenu = ({ gender, skeletons }) => {
   const { pathname, search } = useLocation()
   const match = useRouteMatch('/watches/:type')
   const dispatch = useDispatch()
-  const { loading, data } = useSelector(selectCollectionByGender(gender))
+  const { loading, data } = useSelector(selectCollectionsByGender(gender))
   const [isVisible, setIsVisible] = useState(false)
   const [selectedKeys, setSelectedKeys] = useState([])
 
   useEffect(() => {
     const query = new URLSearchParams(search)
 
-    if (query.has('collectionName') && match.params?.type === gender) {
+    if (query.has('collectionName') && match?.params?.type === gender) {
       return setSelectedKeys(
         `/watches/${gender}?collectionName=${query
           .get('collectionName')
@@ -53,8 +56,22 @@ const CollectionDropdownMenu = ({ gender, skeletons }) => {
           selectedKeys={selectedKeys}
           onClick={e => {
             e.domEvent.stopPropagation()
+            /* prevent pushing the same path into the history stack which will cause 
+            unnecessary re-rendering and data fetching for already fetched data on each click */
+            if (decodeURI(pathname + search) !== e.key) {
+              const collName = e.key.slice(e.key.indexOf('=') + 1).toUpperCase()
+
+              dispatch(
+                toggleSelectedCollections({
+                  value: collName,
+                  gender,
+                })
+              )
+
+              history.push(e.key)
+            }
+
             setIsVisible(false)
-            history.push(e.key)
           }}>
           {loading
             ? [...Array(skeletons)].map((e, i) => (

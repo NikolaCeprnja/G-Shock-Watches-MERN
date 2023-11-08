@@ -125,10 +125,28 @@ export const {
 
 export const selectCollections = state => state.collections
 
-export const selectCollectionByGender = gender =>
+export const selectCollectionsByGender = gender =>
   createDraftSafeSelector(
     [selectCollections],
     allCollections => allCollections[gender]
+  )
+
+export const selectCurrentlySelectedCollections = () =>
+  createDraftSafeSelector([selectCollections], allCollections =>
+    []
+      .concat(allCollections?.men?.data, allCollections?.women?.data)
+      .filter(collection => collection?.selected)
+      .map(({ name, gender }) => ({
+        name,
+        gender,
+      }))
+  )
+
+export const selectCurrentlySelectedCollectionsByGender = gender =>
+  createDraftSafeSelector(
+    [selectCollectionsByGender(gender)],
+    ({ data = [] }) =>
+      data.filter(collection => collection?.selected).map(({ name }) => name)
   )
 
 export default collectionSlice.reducer

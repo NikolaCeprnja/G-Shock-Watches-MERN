@@ -15,11 +15,16 @@ const collectionSlice = createSlice({
     toggleSelectedCollections: (state, { payload }) => {
       const { gender, value: currentlySelectedCollections } = payload
       const selectedCollections = state[gender]
+      let isCurrentlySelected
 
       selectedCollections.data?.forEach(collection => {
-        const isCurrentlySelected = currentlySelectedCollections.includes(
-          collection.name
-        )
+        if (Array.isArray(currentlySelectedCollections)) {
+          isCurrentlySelected = currentlySelectedCollections.includes(
+            collection.name
+          )
+        } else if (typeof currentlySelectedCollections === 'string') {
+          isCurrentlySelected = currentlySelectedCollections === collection.name
+        }
 
         if (!collection.selected && isCurrentlySelected) {
           collection.selected = true

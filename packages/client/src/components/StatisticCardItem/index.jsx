@@ -51,7 +51,7 @@ StatisticCardItem.propTypes = {
   value: PropTypes.number,
   valueStyle: PropTypes.instanceOf(Object),
   redirectTo: PropTypes.string.isRequired,
-  icon: PropTypes.node.isRequired,
+  icon: PropTypes.elementType.isRequired,
 }
 
 export default StatisticCardItem

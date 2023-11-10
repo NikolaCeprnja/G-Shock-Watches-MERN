@@ -7,6 +7,7 @@ const OfferItem = ({ offer: { imgUrls, videoUrl, title, description } }) => {
     <>
       {imgUrls.length ? (
         <img
+          loading='lazy'
           className='offer-img'
           srcSet={`
 					${imgUrls[0]} 480w,

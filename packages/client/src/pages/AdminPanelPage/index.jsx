@@ -35,7 +35,11 @@ const AdminPanelPage = ({ history }) => {
         </div>
       }>
       <Switch>
-        <Route exact path='/admin/dashboard' component={DashboardPage} />
+        <Route
+          exact
+          path={['/admin', '/admin/dashboard']}
+          component={DashboardPage}
+        />
         <Route
           exact
           path={['/admin/e-commerce/products', '/admin/e-commerce/products/*']}

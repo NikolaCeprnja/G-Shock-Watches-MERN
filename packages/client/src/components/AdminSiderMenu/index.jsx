@@ -33,7 +33,16 @@ const AdminSiderMenu = ({ collapsed }) => {
 
   useEffect(() => {
     switch (true) {
+      case pathname === '/admin': {
+        setSelectedKeys(['/admin/dashboard'])
+        break
+      }
       case pathname.charAt(pathname.length - 1) === '/': {
+        if (pathname.slice(0, -1) === '/admin') {
+          setSelectedKeys(['/admin/dashboard'])
+          break
+        }
+
         setSelectedKeys([pathname.slice(0, -1)])
         break
       }

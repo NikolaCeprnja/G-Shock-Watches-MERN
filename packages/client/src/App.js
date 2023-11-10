@@ -93,7 +93,7 @@ const App = () => {
           />
           <ProtectedRoute
             exact
-            path='/admin/*'
+            path='/admin*'
             isPrivate
             layout={DashboardLayout}
             siderMenu={AdminSiderMenu}

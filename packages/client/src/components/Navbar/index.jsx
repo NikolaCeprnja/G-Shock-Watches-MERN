@@ -19,7 +19,7 @@ const { Item } = Menu
 
 const Navbar = () => {
   const history = useHistory()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const loggedInUser = useSelector(selectLoggedInUser)
   const [selectedKeys, setSelectedKeys] = useState([])
 
@@ -44,7 +44,12 @@ const Navbar = () => {
           } = e
 
           if (
-            !target.parentElement.classList.contains('collection-dropdown-menu')
+            !target.parentElement.classList.contains(
+              'collection-dropdown-menu'
+            ) &&
+            /* prevent pushing the same path into the history stack which will cause 
+            unnecessary re-rendering and data fetching for already fetched data on each click */
+            decodeURI(pathname + search) !== e.key
           ) {
             history.push(e.key)
           }

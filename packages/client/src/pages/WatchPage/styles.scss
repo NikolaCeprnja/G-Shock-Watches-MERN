@@ -19,6 +19,15 @@
     align-items: flex-start;
     justify-content: center;
 
+    #magnifier {
+      display: none;
+      position: absolute;
+      border: 3px solid #000;
+      cursor: none;
+      width: 200px;
+      height: 200px;
+    }
+
     .product-images-wrapper {
       display: flex;
       flex-direction: column;
@@ -27,6 +36,7 @@
       width: 30%;
 
       .product-img-active {
+        position: relative;
         height: 550px;
         display: flex;
       }

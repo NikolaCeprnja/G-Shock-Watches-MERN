@@ -5,12 +5,13 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Skeleton, Button, Rate, Badge, List, Avatar, Comment } from 'antd'
 import { ShoppingCartOutlined, UserOutlined } from '@ant-design/icons'
 
+import Magnifier from '@containers/Magnifier/index'
+
 import {
   clearProductPreview,
   selectProductsByType,
 } from '@redux/product/productSlice'
 import { getProductById } from '@redux/product/productThunk'
-
 import { addItem } from '@redux/cart/cartSlice'
 
 const ProductPreview = ({ pid }) => {
@@ -19,6 +20,7 @@ const ProductPreview = ({ pid }) => {
   const productForPreview = useSelector(selectProductsByType('preview'))
   const [imgSrc, setImgSrc] = useState('')
   const [imgIsLoading, setImgIsLoading] = useState(true)
+  const magnifierRef = useRef()
   const reviewsRef = useRef(null)
 
   useEffect(() => {
@@ -42,19 +44,41 @@ const ProductPreview = ({ pid }) => {
     <div className='product-preview'>
       <div className='product-preview-wrapper'>
         <div className='product-images-wrapper'>
-          <div className='product-img-active'>
-            {(imgIsLoading || productForPreview.loading) && (
-              <Skeleton.Image style={{ width: '368px', height: '550px' }} />
+          <Magnifier ref={magnifierRef}>
+            {({
+              fowardedRef,
+              initMagnifier,
+              handleMouseMove,
+              handleOnMouseEnter,
+              handleOnMouseLeave,
+            }) => (
+              <div
+                ref={fowardedRef}
+                className='product-img-active'
+                onTouchStart={handleOnMouseEnter}
+                onTouchMove={handleMouseMove}
+                onTouchEnd={handleOnMouseLeave}
+                onMouseEnter={handleOnMouseEnter}
+                onMouseMove={handleMouseMove}
+                onMouseLeave={handleOnMouseLeave}>
+                <div id='magnifier' />
+                {(imgIsLoading || productForPreview.loading) && (
+                  <Skeleton.Image style={{ width: '368px', height: '550px' }} />
+                )}
+                <img
+                  className={
+                    imgIsLoading || productForPreview.loading ? 'loading' : ''
+                  }
+                  onLoad={() => {
+                    setImgIsLoading(false)
+                    initMagnifier(fowardedRef.current, 2)
+                  }}
+                  src={imgSrc || productForPreview.data?.images[0]}
+                  alt={`${productForPreview.data?.name}-${productForPreview.data?.model}-img`}
+                />
+              </div>
             )}
-            <img
-              className={
-                imgIsLoading || productForPreview.loading ? 'loading' : ''
-              }
-              onLoad={() => setImgIsLoading(false)}
-              src={imgSrc || productForPreview.data?.images[0]}
-              alt={`${productForPreview.data?.name}-${productForPreview.data?.model}-img`}
-            />
-          </div>
+          </Magnifier>
           <div className='product-images'>
             {!productForPreview.loading && productForPreview.data?.images
               ? productForPreview.data.images.map(img => (

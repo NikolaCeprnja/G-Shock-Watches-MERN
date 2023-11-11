@@ -77,7 +77,7 @@ const UpdateOrderPage = ({ history, match }) => {
                 activeTab: activeKey,
               })
 
-              history.push(generatedPath)
+              history.replace(generatedPath)
             }}>
             <TabPane key='info' tab='Order Details'>
               <div className='order-info-customer'>

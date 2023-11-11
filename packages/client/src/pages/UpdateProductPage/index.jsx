@@ -354,7 +354,7 @@ const UpdateProductPage = ({ history, match }) => {
                       activeTab: activeKey,
                     })
 
-                    history.push(generatedPath)
+                    history.replace(generatedPath)
                   }}>
                   <TabPane key='info' tab='Basic Product Info'>
                     <Form name='product-info' layout='vertical'>

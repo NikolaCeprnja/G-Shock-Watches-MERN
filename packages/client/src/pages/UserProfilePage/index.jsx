@@ -306,7 +306,7 @@ const UserProfilePage = ({ history, match }) => {
                       activeTab: activeKey,
                     })
 
-                    history.push(generatedPath)
+                    history.replace(generatedPath)
                   }}>
                   <TabPane key='settings' tab='Basic User Info'>
                     <Form name='user-info' layout='vertical'>

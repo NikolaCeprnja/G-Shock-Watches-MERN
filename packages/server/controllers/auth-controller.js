@@ -59,7 +59,7 @@ const authJwt = (req, res, next) => {
     if (err) return next(err)
 
     if (!user) {
-      return next(new ErrorHandler(info.message, info.statusCode))
+      return next(new ErrorHandler(info.message, info.statusCode || 401))
     }
 
     req.user = user

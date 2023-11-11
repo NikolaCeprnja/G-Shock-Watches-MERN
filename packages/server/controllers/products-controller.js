@@ -511,7 +511,7 @@ const getProductById = async (req, res, next) => {
 
   return res
     .status(404)
-    .json({ message: 'Product with provided pid does not exists' })
+    .json({ message: 'Product with provided pid does not exists.' })
 }
 
 // POST CONTROLLERS

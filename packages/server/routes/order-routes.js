@@ -10,7 +10,7 @@ const {
   createOrder,
   updateOrder,
   deleteOrder,
-} = require('../controllers/orders-contoller')
+} = require('../controllers/orders-controller')
 const { authJwt } = require('../controllers/auth-controller')
 
 const { isAdmin } = require('../middlewares/auth-middleware')

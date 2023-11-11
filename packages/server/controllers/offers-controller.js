@@ -1,7 +1,7 @@
 const Offer = require('../models/offer-model')
 const ErrorHandler = require('../models/error-handler')
 
-// GET CONTOLLERS
+// GET CONTROLLERS
 const getOffers = async (req, res, next) => {
   let offers
 

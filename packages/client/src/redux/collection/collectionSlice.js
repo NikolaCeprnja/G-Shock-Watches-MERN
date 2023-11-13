@@ -15,11 +15,16 @@ const collectionSlice = createSlice({
     toggleSelectedCollections: (state, { payload }) => {
       const { gender, value: currentlySelectedCollections } = payload
       const selectedCollections = state[gender]
+      let isCurrentlySelected
 
       selectedCollections.data?.forEach(collection => {
-        const isCurrentlySelected = currentlySelectedCollections.includes(
-          collection.name
-        )
+        if (Array.isArray(currentlySelectedCollections)) {
+          isCurrentlySelected = currentlySelectedCollections.includes(
+            collection.name
+          )
+        } else if (typeof currentlySelectedCollections === 'string') {
+          isCurrentlySelected = currentlySelectedCollections === collection.name
+        }
 
         if (!collection.selected && isCurrentlySelected) {
           collection.selected = true
@@ -31,9 +36,16 @@ const collectionSlice = createSlice({
         }
       })
     },
-    resetSelectedCollections: state => {
-      state.men.data?.forEach(coll => coll.selected && delete coll.selected)
-      state.women.data?.forEach(coll => coll.selected && delete coll.selected)
+    resetSelectedCollections: (state, { payload: { gender = 'all' } }) => {
+      if (gender === 'all') {
+        return [...(state.men.data ?? []), ...(state.women.data ?? [])].forEach(
+          coll => coll.selected && delete coll.selected
+        )
+      }
+
+      return state[gender].data?.forEach(
+        coll => coll.selected && delete coll.selected
+      )
     },
   },
   extraReducers: {
@@ -42,7 +54,10 @@ const collectionSlice = createSlice({
     },
     [collectionThunk.getCollections.fulfilled]: (
       state,
-      { payload: { collections: allCollections, urlQueryParams } }
+      {
+        meta: { arg: urlQueryParams = [] },
+        payload: { collections: allCollections },
+      }
     ) => {
       state.loading = false
 
@@ -55,8 +70,14 @@ const collectionSlice = createSlice({
       }
 
       allCollections.forEach(collection => {
-        if (urlQueryParams.includes(collection.name)) {
-          collection.selected = true
+        if (Array.isArray(urlQueryParams) && urlQueryParams.length > 0) {
+          if (urlQueryParams.includes(collection.name)) {
+            collection.selected = true
+          }
+        } else if (typeof urlQueryParams === 'string') {
+          if (urlQueryParams === collection.name) {
+            collection.selected = true
+          }
         }
 
         state[collection.gender].data = [
@@ -76,24 +97,50 @@ const collectionSlice = createSlice({
       state,
       { meta: { arg } }
     ) => {
-      state[arg].loading = true
+      let gender
+
+      if (typeof arg === 'string') {
+        gender = arg
+      } else if (typeof arg === 'object') {
+        ;({ gender } = arg)
+      }
+
+      state[gender].loading = true
     },
     [collectionThunk.getCollectionsByGender.fulfilled]: (
       state,
-      { meta: { arg }, payload }
+      { meta: { arg }, payload: { collections: fetchedCollections } }
     ) => {
-      state[arg].loading = false
+      let gender
+      let urlQueryParams = []
 
-      if (!state[arg].data) {
-        state[arg].data = []
+      if (typeof arg === 'string') {
+        gender = arg
+      } else if (typeof arg === 'object') {
+        ;({ gender, urlQueryParams = [] } = arg)
       }
 
-      state[arg].data = [
+      state[gender].loading = false
+
+      if (!state[gender].data) {
+        state[gender].data = []
+      }
+
+      state[gender].data = [
         ...new Map(
-          [...state[arg].data, ...payload.collections].map(collection => [
-            collection.id,
-            collection,
-          ])
+          [...state[gender].data, ...fetchedCollections].map(collection => {
+            if (Array.isArray(urlQueryParams) && urlQueryParams.length > 0) {
+              if (urlQueryParams.includes(collection.name)) {
+                collection.selected = true
+              }
+            } else if (typeof urlQueryParams === 'string') {
+              if (urlQueryParams === collection.name) {
+                collection.selected = true
+              }
+            }
+
+            return [collection.id, collection]
+          })
         ).values(),
       ]
     },
@@ -101,7 +148,15 @@ const collectionSlice = createSlice({
       state,
       { meta: { arg } }
     ) => {
-      state[arg].loading = false
+      let gender
+
+      if (typeof arg === 'string') {
+        gender = arg
+      } else if (typeof arg === 'object') {
+        ;({ gender } = arg)
+      }
+
+      state[gender].loading = false
     },
   },
 })
@@ -113,10 +168,28 @@ export const {
 
 export const selectCollections = state => state.collections
 
-export const selectCollectionByGender = gender =>
+export const selectCollectionsByGender = gender =>
   createDraftSafeSelector(
     [selectCollections],
     allCollections => allCollections[gender]
+  )
+
+export const selectCurrentlySelectedCollections = () =>
+  createDraftSafeSelector([selectCollections], allCollections =>
+    []
+      .concat(allCollections?.men?.data, allCollections?.women?.data)
+      .filter(collection => collection?.selected)
+      .map(({ name, gender }) => ({
+        name,
+        gender,
+      }))
+  )
+
+export const selectCurrentlySelectedCollectionsByGender = gender =>
+  createDraftSafeSelector(
+    [selectCollectionsByGender(gender)],
+    ({ data = [] }) =>
+      data.filter(collection => collection?.selected).map(({ name }) => name)
   )
 
 export default collectionSlice.reducer

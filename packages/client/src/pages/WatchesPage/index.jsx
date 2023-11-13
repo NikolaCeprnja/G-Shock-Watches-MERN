@@ -28,10 +28,18 @@ const WatchesPage = () => {
     }
 
     Object.entries(urlQueryParams).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        if (key === 'collectionName') {
+          urlQueryParams[key] = value.map(val => val.toUpperCase())
+          return
+        }
+
+        urlQueryParams[key] = value.map(val => val.toLowerCase())
+        return
+      }
+
       if (key === 'collectionName') {
-        urlQueryParams.collectionName = value.toUpperCase()
-      } else {
-        urlQueryParams[key] = value.toLowerCase()
+        urlQueryParams[key] = value.toUpperCase()
       }
     })
 
@@ -44,9 +52,16 @@ const WatchesPage = () => {
         <div className='WatchesPage'>
           <ProductsPreview
             type='all'
+            withSider
             action={getProducts}
             params={queryParams}
-            title={`G-Shock Watches \n (Filter products to narrow your search)`}
+            title={
+              <>
+                <h2>G-Shock Watches</h2>
+                <span>(Filter products to narrow your search)</span>
+                <hr />
+              </>
+            }
           />
         </div>
       </Route>

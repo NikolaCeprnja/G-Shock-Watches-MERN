@@ -1,7 +1,7 @@
 import React, { useEffect, Suspense, lazy } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { Switch, Route } from 'react-router-dom'
-import { Spin, BackTop, notification as antdNotifications } from 'antd'
+import { Switch, Route, Link } from 'react-router-dom'
+import { Spin, BackTop, Result, notification as antdNotifications } from 'antd'
 
 import AuthLayout from '@layouts/AuthLayout/index'
 import MainLayout from '@layouts/MainLayout/index'
@@ -124,8 +124,23 @@ const App = () => {
               </MainLayout>
             )}
           />
-          {/* // TODO: add 403, 404 and 500 pages */}
-          <Route path='*' render={() => <div>Error, 404 Page!</div>} />
+          <Route
+            path='*'
+            render={() => (
+              <Result
+                style={{ margin: 'auto' }}
+                status={404}
+                title={
+                  <>
+                    <strong>404</strong>
+                    <p>Page Not Found</p>
+                  </>
+                }
+                subTitle="The page you are looking for doesn't exists."
+                extra={<Link to='/'>Back to Home</Link>}
+              />
+            )}
+          />
         </Switch>
         <BackTop />
       </Suspense>

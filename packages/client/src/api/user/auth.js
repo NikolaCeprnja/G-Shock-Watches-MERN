@@ -5,39 +5,35 @@ const axios = Axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-const authUser = async () => {
-  const response = await axios()
-
+const authUser = async cancelToken => {
+  const response = await axios({ cancelToken })
   return response
 }
 
-const signin = async data => {
-  const response = await axios.post('/signin', data)
-
+const signin = async (data, cancelToken) => {
+  const response = await axios.post('/signin', data, { cancelToken })
   return response
 }
 
-export const signup = async (data, path = '/signup') => {
-  const response = await axios.post(path, data)
-
+export const signup = async (data, cancelToken, path = '/signup') => {
+  const response = await axios.post(path, data, { cancelToken })
   return response
 }
 
-const signout = async () => {
-  const response = await axios('/signout')
-
+const signout = async cancelToken => {
+  const response = await axios('/signout', { cancelToken })
   return response
 }
 
-export const forgotPassword = async data => {
-  const response = await axios.post('/forgot-password', data)
-
+export const forgotPassword = async (data, cancelToken) => {
+  const response = await axios.post('/forgot-password', data, { cancelToken })
   return response
 }
 
-export const resetPassword = async (data, resetToken) => {
-  const response = await axios.put(`/reset-password/${resetToken}`, data)
-
+export const resetPassword = async (data, resetToken, cancelToken) => {
+  const response = await axios.put(`/reset-password/${resetToken}`, data, {
+    cancelToken,
+  })
   return response
 }
 

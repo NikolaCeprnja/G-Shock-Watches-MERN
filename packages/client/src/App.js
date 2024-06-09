@@ -1,5 +1,6 @@
 import React, { useEffect, Suspense, lazy } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Switch, Route, Link } from 'react-router-dom'
 import { Spin, BackTop, Result, notification as antdNotifications } from 'antd'
 
@@ -14,6 +15,7 @@ import ProtectedRoute from '@components/ProtectedRoute/index'
 import { authUser } from '@redux/user/userThunk'
 import { selectLoggedInUser } from '@redux/user/userSlice'
 import { selectNotifications } from '@redux/notification/notificationSlice'
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
 
 import './App.less'
 
@@ -31,18 +33,28 @@ const App = () => {
   const dispatch = useDispatch()
   const loggedInUser = useSelector(selectLoggedInUser)
   const notifications = useSelector(selectNotifications)
+  const { showBoundary } = useErrorBoundary()
 
   useEffect(() => {
+    let response
+
     const getAuthUser = async () => {
       try {
-        await dispatch(authUser())
+        response = dispatch(authUser())
+        await response?.unwrap?.()
       } catch (err) {
-        console.log(err)
+        handleAsyncThunkError(err, showBoundary, {
+          showBoundaryOnlyOnServerError: true,
+        })
       }
     }
 
     getAuthUser()
-  }, [dispatch])
+
+    return () => {
+      response?.abort?.('Request Aborted due to component unmount.')
+    }
+  }, [dispatch, showBoundary])
 
   useEffect(() => {
     if (!loggedInUser.info && loggedInUser.auth === 'unauthenticated') {

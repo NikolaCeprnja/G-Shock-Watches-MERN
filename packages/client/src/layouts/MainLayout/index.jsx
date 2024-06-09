@@ -1,9 +1,11 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Layout } from 'antd'
+import { ErrorBoundary } from 'react-error-boundary'
 
 import Navbar from '@components/Navbar/index'
 import FooterContent from '@components/FooterContent/index'
+import ErrorFallback from '@components/ErrorFallback/index'
 
 const { Content, Footer } = Layout
 
@@ -13,7 +15,9 @@ const MainLayout = ({ children }) => {
       <Navbar />
       <Content
         style={{ display: 'flex', flexDirection: 'column', marginTop: '64px' }}>
-        {children}
+        <ErrorBoundary FallbackComponent={ErrorFallback}>
+          {children}
+        </ErrorBoundary>
       </Content>
       <Footer
         style={{

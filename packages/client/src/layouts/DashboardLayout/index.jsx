@@ -7,7 +7,9 @@ import {
   MenuFoldOutlined,
   ExportOutlined,
 } from '@ant-design/icons'
+import { ErrorBoundary } from 'react-error-boundary'
 
+import ErrorFallback from '@components/ErrorFallback/index'
 import FooterContent from '@components/FooterContent/index'
 
 import './styles.scss'
@@ -66,7 +68,11 @@ const DashboardLayout = ({ siderMenu: SiderMenu, children }) => {
             Home
           </Button>
         </Header>
-        <Content style={{ marginTop: '64px' }}>{children}</Content>
+        <Content style={{ marginTop: '64px' }}>
+          <ErrorBoundary FallbackComponent={ErrorFallback}>
+            {children}
+          </ErrorBoundary>
+        </Content>
         <Footer
           style={{ color: 'rgb(168,167,167)', backgroundColor: '#1b2330' }}>
           <FooterContent />

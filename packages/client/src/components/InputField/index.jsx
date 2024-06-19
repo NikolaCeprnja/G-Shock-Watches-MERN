@@ -1,8 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { getIn } from 'formik'
-import { FormItem, Input } from 'formik-antd'
-import { InputNumber } from 'antd'
+import { FormItem, Input, InputNumber } from 'formik-antd'
 import { EyeTwoTone, EyeInvisibleTwoTone } from '@ant-design/icons'
 
 const InputField = ({ form, field, type, label, required, ...props }) => {

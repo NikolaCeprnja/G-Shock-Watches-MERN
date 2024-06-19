@@ -9,6 +9,7 @@ import { Formik, Field } from 'formik'
 import { Form, SubmitButton } from 'formik-antd'
 
 import InputField from '@components/InputField/index'
+import RouterPrompt from '@components/RouterPrompt/index'
 import { ReactComponent as GoogleIcon } from '@assets/Google_logo.svg'
 
 import { signin } from '@redux/user/userThunk'
@@ -129,65 +130,70 @@ const SigninPage = ({ location }) => {
           validationSchema={signinValidationSchema(nonExistingUsers, errMsg)}
           validateOnBlur={validateOnBlur}>
           {({ dirty, isValid }) => (
-            <Form layout='vertical' size='large'>
-              <Field
-                name='userNameOrEmail'
-                prefix={<UserOutlined className='site-form-item-icon' />}
-                placeholder='Username or Email address'
-                component={InputField}
-              />
-              <Field
-                name='password'
-                type='password'
-                prefix={<LockOutlined className='site-form-item-icon' />}
-                placeholder='Password'
-                component={InputField}
-              />
-              <Form.Item name='forgotPassword'>
-                <Link to='/auth/forgot-password' style={{ float: 'right' }}>
-                  Forgot password?
-                </Link>
-              </Form.Item>
-              <Form.Item name='signin' style={{ marginBottom: 0 }}>
-                <SubmitButton block disabled={!dirty || !isValid}>
-                  Sign in
-                </SubmitButton>
-              </Form.Item>
-              <div
-                className='signin-divider'
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                <hr />
-                <span>OR</span>
-                <hr />
-              </div>
-              <Form.Item name='signinWithGoogle'>
-                <Button
-                  id='google-signin-btn'
-                  block
-                  type='dashed'
-                  htmlType='button'
-                  icon={<GoogleIcon id='google-icon' />}
-                  onClick={() => {
-                    window.location = `http://localhost:5000/api/users/auth/google${
-                      location.state
-                        ? `?redirect_to=${location.state.from.pathname}`
-                        : ''
-                    }`
+            <>
+              <RouterPrompt when={dirty} />
+              <Form layout='vertical' size='large'>
+                <Field
+                  name='userNameOrEmail'
+                  prefix={<UserOutlined className='site-form-item-icon' />}
+                  placeholder='Username or Email address'
+                  component={InputField}
+                />
+                <Field
+                  name='password'
+                  type='password'
+                  prefix={<LockOutlined className='site-form-item-icon' />}
+                  placeholder='Password'
+                  component={InputField}
+                />
+                <Form.Item name='forgotPassword'>
+                  <Link to='/auth/forgot-password' style={{ float: 'right' }}>
+                    Forgot password?
+                  </Link>
+                </Form.Item>
+                <Form.Item name='signin' style={{ marginBottom: 0 }}>
+                  <SubmitButton block disabled={!dirty || !isValid}>
+                    Sign in
+                  </SubmitButton>
+                </Form.Item>
+                <div
+                  className='signin-divider'
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}>
-                  Sign in with Google
-                </Button>
-              </Form.Item>
-              <Form.Item name='register' noStyle>
-                <span className='signup-caption'>
-                  New to G-Shock-Watches?
-                  <br /> Go <Link to='/auth/signup'>Register now!</Link>
-                </span>
-              </Form.Item>
-            </Form>
+                  <hr />
+                  <span>OR</span>
+                  <hr />
+                </div>
+                <Form.Item name='signinWithGoogle'>
+                  <Button
+                    id='google-signin-btn'
+                    block
+                    type='dashed'
+                    htmlType='button'
+                    icon={<GoogleIcon id='google-icon' />}
+                    onClick={() => {
+                      window.location = `${
+                        process.env.REACT_APP_API_BASE_URL
+                      }/api/users/auth/google${
+                        location.state
+                          ? `?redirect_to=${location.state.from.pathname}`
+                          : ''
+                      }`
+                    }}>
+                    Sign in with Google
+                  </Button>
+                </Form.Item>
+                <Form.Item name='register' noStyle>
+                  <span className='signup-caption'>
+                    New to G-Shock-Watches?
+                    <br /> Go <Link to='/auth/signup'>Register now!</Link>
+                  </span>
+                </Form.Item>
+              </Form>
+            </>
           )}
         </Formik>
       </Card>

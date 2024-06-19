@@ -1,7 +1,8 @@
-import React, { useState, useCallback } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Card, Button, Alert } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { Formik, Field } from 'formik'
@@ -13,6 +14,8 @@ import { ReactComponent as GoogleIcon } from '@assets/Google_logo.svg'
 import { signin } from '@redux/user/userThunk'
 import { selectLoggedInUser } from '@redux/user/userSlice'
 import { create as createNotification } from '@redux/notification/notificationSlice'
+
+import ErrorHandler from '@utils/ErrorHandler'
 import { signinValidationSchema } from '@validation/user-validation'
 
 import './styles.scss'
@@ -20,17 +23,27 @@ import './styles.scss'
 const SigninPage = ({ location }) => {
   const dispatch = useDispatch()
   const loggedInUser = useSelector(selectLoggedInUser)
+  const signinRef = useRef()
+  const { showBoundary } = useErrorBoundary()
   const [validateOnBlur, setValidateOnBlur] = useState(true)
-  const [serverResponse, setServerResponse] = useState({})
+  const [serverResponse, setServerResponse] = useState()
   const [errMsg, setErrMsg] = useState('')
   const [nonExistingUsers, setNonExistingUsers] = useState([])
+
+  useEffect(() => {
+    return () => {
+      signinRef.current?.abort?.('Request Aborted due to component unmount.')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleSubmit = useCallback(
     async (values, { setFieldError }) => {
       setValidateOnBlur(true)
-      setServerResponse({})
+      setServerResponse()
       try {
-        const { message } = await dispatch(signin(values)).unwrap()
+        signinRef.current = dispatch(signin({ userData: values }))
+        const { message } = await signinRef.current?.unwrap?.()
 
         dispatch(
           createNotification({
@@ -41,22 +54,34 @@ const SigninPage = ({ location }) => {
           })
         )
       } catch (error) {
-        const {
-          status,
-          statusText,
-          data: { errors, message },
-        } = error
+        if (!error.name || error.name !== 'AbortError') {
+          const {
+            status,
+            statusText,
+            data: { errors, message } = {
+              errors: undefined,
+              message: undefined,
+            },
+          } = error
 
-        if (errors) {
-          setValidateOnBlur(false)
-          Object.keys(errors).forEach(err => {
-            setFieldError(err, errors[err].message)
-            if (err === 'userNameOrEmail') {
-              setNonExistingUsers(users => [...users, errors[err].value])
-              setErrMsg(errors[err].message)
-            }
-          })
-        } else {
+          if (status === 500) {
+            const boundaryError = new ErrorHandler(message, status, statusText)
+            showBoundary(boundaryError)
+            return
+          }
+
+          if (errors) {
+            setValidateOnBlur(false)
+            Object.keys(errors).forEach(err => {
+              setFieldError(err, errors[err].message)
+              if (err === 'userNameOrEmail') {
+                setNonExistingUsers(users => [...users, errors[err].value])
+                setErrMsg(errors[err].message)
+              }
+            })
+            return
+          }
+
           setServerResponse({
             status,
             statusText,
@@ -65,12 +90,12 @@ const SigninPage = ({ location }) => {
         }
       }
     },
-    [dispatch]
+    [dispatch, showBoundary]
   )
 
   return (
     <div className='SigninPage'>
-      {Object.keys(serverResponse).length > 0 && (
+      {serverResponse && (
         <Alert
           type={serverResponse.status >= 400 ? 'error' : 'success'}
           message={

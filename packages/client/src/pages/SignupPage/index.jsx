@@ -9,6 +9,7 @@ import { Form, SubmitButton } from 'formik-antd'
 
 import InputField from '@components/InputField/index'
 import AvatarUpload from '@components/AvatarUpload/index'
+import RouterPrompt from '@components/RouterPrompt/index'
 
 import { signup } from '@redux/user/userThunk'
 import { selectLoggedInUser } from '@redux/user/userSlice'
@@ -161,47 +162,50 @@ const SignupPage = () => {
             existingEmails
           )}>
           {({ dirty, isValid }) => (
-            <Form layout='vertical' size='large'>
-              <Field name='avatar' component={AvatarUpload} />
-              <Field
-                name='userName'
-                prefix={<UserOutlined className='site-form-item-icon' />}
-                placeholder='Username'
-                component={InputField}
-              />
-              <Field
-                name='email'
-                type='email'
-                prefix={<MailOutlined className='site-form-item-icon' />}
-                placeholder='Email address'
-                component={InputField}
-              />
-              <Field
-                name='password'
-                type='password'
-                prefix={<LockOutlined className='site-form-item-icon' />}
-                placeholder='Password'
-                component={InputField}
-              />
-              <Field
-                name='confirmPassword'
-                type='password'
-                prefix={<LockOutlined className='site-form-item-icon' />}
-                placeholder='Confirm password'
-                component={InputField}
-              />
-              <Form.Item name='signup'>
-                <SubmitButton block disabled={!dirty || !isValid}>
-                  Sign up
-                </SubmitButton>
-              </Form.Item>
-              <Form.Item name='signin' noStyle>
-                <span className='signin-caption'>
-                  Already have an account?
-                  <br /> Go <Link to='/auth/signin'>Sign In now!</Link>
-                </span>
-              </Form.Item>
-            </Form>
+            <>
+              <RouterPrompt when={dirty} />
+              <Form layout='vertical' size='large'>
+                <Field name='avatar' component={AvatarUpload} />
+                <Field
+                  name='userName'
+                  prefix={<UserOutlined className='site-form-item-icon' />}
+                  placeholder='Username'
+                  component={InputField}
+                />
+                <Field
+                  name='email'
+                  type='email'
+                  prefix={<MailOutlined className='site-form-item-icon' />}
+                  placeholder='Email address'
+                  component={InputField}
+                />
+                <Field
+                  name='password'
+                  type='password'
+                  prefix={<LockOutlined className='site-form-item-icon' />}
+                  placeholder='Password'
+                  component={InputField}
+                />
+                <Field
+                  name='confirmPassword'
+                  type='password'
+                  prefix={<LockOutlined className='site-form-item-icon' />}
+                  placeholder='Confirm password'
+                  component={InputField}
+                />
+                <Form.Item name='signup'>
+                  <SubmitButton block disabled={!dirty || !isValid}>
+                    Sign up
+                  </SubmitButton>
+                </Form.Item>
+                <Form.Item name='signin' noStyle>
+                  <span className='signin-caption'>
+                    Already have an account?
+                    <br /> Go <Link to='/auth/signin'>Sign In now!</Link>
+                  </span>
+                </Form.Item>
+              </Form>
+            </>
           )}
         </Formik>
       </Card>

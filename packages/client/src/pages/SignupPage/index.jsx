@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Card, Alert, message as infoMessage } from 'antd'
 import { UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons'
 import { Formik, Field } from 'formik'
@@ -12,6 +13,8 @@ import AvatarUpload from '@components/AvatarUpload/index'
 import { signup } from '@redux/user/userThunk'
 import { selectLoggedInUser } from '@redux/user/userSlice'
 import { create as createNotification } from '@redux/notification/notificationSlice'
+
+import ErrorHandler from '@utils/ErrorHandler'
 import { signupValidationSchema } from '@validation/user-validation'
 
 import './styles.scss'
@@ -27,19 +30,28 @@ const InfoMessage = () => {
 const SignupPage = () => {
   const dispatch = useDispatch()
   const loggedInUser = useSelector(selectLoggedInUser)
-
-  const [serverResponse, setServerResponse] = useState({})
+  const signupRef = useRef()
+  const { showBoundary } = useErrorBoundary()
+  const [serverResponse, setServerResponse] = useState()
   const [existingEmails, setExistingEmails] = useState([])
   const [existingUserNames, setExistingUserNames] = useState([])
 
+  useEffect(() => {
+    return () => {
+      signupRef.current?.abort?.('Request Aborted due to component unmount.')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleSubmit = useCallback(
     async (values, { setFieldError }) => {
-      setServerResponse({})
+      setServerResponse()
       try {
         const data = new FormData()
         Object.keys(values).forEach(key => data.append(key, values[key]))
 
-        const { message } = await dispatch(signup(data)).unwrap()
+        signupRef.current = dispatch(signup({ userData: data }))
+        const { message } = await signupRef.current?.unwrap?.()
 
         dispatch(
           createNotification({
@@ -50,23 +62,38 @@ const SignupPage = () => {
           })
         )
       } catch (error) {
-        const { errors, message } = error.data
-        const { status, statusText } = error
+        if (!error.name || error.name !== 'AbortError') {
+          const {
+            status,
+            statusText,
+            data: { errors, message } = {
+              errors: undefined,
+              message: undefined,
+            },
+          } = error
 
-        if (errors) {
-          Object.keys(errors).forEach(err => {
-            if (err === 'userName') {
-              setExistingUserNames(userNames => [
-                ...userNames,
-                errors[err].value,
-              ])
-            }
-            if (err === 'email') {
-              setExistingEmails(emails => [...emails, errors[err].value])
-            }
-            setFieldError(err, errors[err].message)
-          })
-        } else {
+          if (status === 500) {
+            const boundaryError = new ErrorHandler(message, status, statusText)
+            showBoundary(boundaryError)
+            return
+          }
+
+          if (errors) {
+            Object.keys(errors).forEach(err => {
+              if (err === 'userName') {
+                setExistingUserNames(userNames => [
+                  ...userNames,
+                  errors[err].value,
+                ])
+              }
+              if (err === 'email') {
+                setExistingEmails(emails => [...emails, errors[err].value])
+              }
+              setFieldError(err, errors[err].message)
+            })
+            return
+          }
+
           setServerResponse({
             status,
             statusText,
@@ -75,7 +102,7 @@ const SignupPage = () => {
         }
       }
     },
-    [dispatch]
+    [dispatch, showBoundary]
   )
 
   useEffect(() => {
@@ -92,7 +119,7 @@ const SignupPage = () => {
 
   return (
     <div className='SignupPage'>
-      {Object.keys(serverResponse).length > 0 && (
+      {serverResponse && (
         <Alert
           type={serverResponse.status >= 400 ? 'error' : 'success'}
           message={

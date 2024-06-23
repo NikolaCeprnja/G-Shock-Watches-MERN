@@ -8,6 +8,7 @@ import { Formik, Field } from 'formik'
 import { Form, SubmitButton } from 'formik-antd'
 
 import InputField from '@components/InputField/index'
+import RouterPrompt from '@components/RouterPrompt/index'
 
 import { resetPassword } from '@api/user/auth'
 import { resetPassValidationSchema } from '@validation/user-validation'
@@ -102,32 +103,35 @@ const ResetPasswordPage = () => {
             onSubmit={handleSubmit}
             validationSchema={resetPassValidationSchema}>
             {({ dirty, isValid }) => (
-              <Form layout='vertical' size='large'>
-                <Field
-                  name='newPassword'
-                  type='password'
-                  prefix={<LockOutlined className='site-form-item-icon' />}
-                  placeholder='New password'
-                  component={InputField}
-                />
-                <Field
-                  name='confirmNewPassword'
-                  type='password'
-                  prefix={<LockOutlined className='site-form-item-icon' />}
-                  placeholder='Confirm new password'
-                  component={InputField}
-                />
-                <Form.Item name='forgotPassword'>
-                  <SubmitButton block disabled={!dirty || !isValid}>
-                    Send request
-                  </SubmitButton>
-                </Form.Item>
-                <Form.Item name='signin' noStyle>
-                  <span className='signin-caption'>
-                    Go back to <Link to='/auth/signin'>Sign In</Link>
-                  </span>
-                </Form.Item>
-              </Form>
+              <>
+                <RouterPrompt when={dirty} />
+                <Form layout='vertical' size='large'>
+                  <Field
+                    name='newPassword'
+                    type='password'
+                    prefix={<LockOutlined className='site-form-item-icon' />}
+                    placeholder='New password'
+                    component={InputField}
+                  />
+                  <Field
+                    name='confirmNewPassword'
+                    type='password'
+                    prefix={<LockOutlined className='site-form-item-icon' />}
+                    placeholder='Confirm new password'
+                    component={InputField}
+                  />
+                  <Form.Item name='forgotPassword'>
+                    <SubmitButton block disabled={!dirty || !isValid}>
+                      Send request
+                    </SubmitButton>
+                  </Form.Item>
+                  <Form.Item name='signin' noStyle>
+                    <span className='signin-caption'>
+                      Go back to <Link to='/auth/signin'>Sign In</Link>
+                    </span>
+                  </Form.Item>
+                </Form>
+              </>
             )}
           </Formik>
         </Card>

@@ -8,6 +8,7 @@ import { Formik, Field } from 'formik'
 import { Form, SubmitButton } from 'formik-antd'
 
 import InputField from '@components/InputField/index'
+import RouterPrompt from '@components/RouterPrompt/index'
 
 import { forgotPassword } from '@api/user/auth'
 import { forgotPassValidationSchema } from '@validation/user-validation'
@@ -110,24 +111,27 @@ const ForgotPasswordPage = () => {
               errMsg
             )}>
             {({ dirty, isValid }) => (
-              <Form layout='vertical' size='large'>
-                <Field
-                  name='userNameOrEmail'
-                  prefix={<UserOutlined className='site-form-item-icon' />}
-                  placeholder='Username or Email address'
-                  component={InputField}
-                />
-                <Form.Item name='forgotPassword'>
-                  <SubmitButton block disabled={!dirty || !isValid}>
-                    Send request
-                  </SubmitButton>
-                </Form.Item>
-                <Form.Item name='signin' noStyle>
-                  <span className='signin-caption'>
-                    Go back to <Link to='/auth/signin'>Sign In</Link>
-                  </span>
-                </Form.Item>
-              </Form>
+              <>
+                <RouterPrompt when={dirty} />
+                <Form layout='vertical' size='large'>
+                  <Field
+                    name='userNameOrEmail'
+                    prefix={<UserOutlined className='site-form-item-icon' />}
+                    placeholder='Username or Email address'
+                    component={InputField}
+                  />
+                  <Form.Item name='forgotPassword'>
+                    <SubmitButton block disabled={!dirty || !isValid}>
+                      Send request
+                    </SubmitButton>
+                  </Form.Item>
+                  <Form.Item name='signin' noStyle>
+                    <span className='signin-caption'>
+                      Go back to <Link to='/auth/signin'>Sign In</Link>
+                    </span>
+                  </Form.Item>
+                </Form>
+              </>
             )}
           </Formik>
         </Card>

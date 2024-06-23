@@ -1,5 +1,7 @@
-import React, { useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
+import axios from 'axios'
 import { useParams, Link } from 'react-router-dom'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Card, Alert } from 'antd'
 import { LockOutlined } from '@ant-design/icons'
 import { Formik, Field } from 'formik'
@@ -9,18 +11,28 @@ import InputField from '@components/InputField/index'
 
 import { resetPassword } from '@api/user/auth'
 import { resetPassValidationSchema } from '@validation/user-validation'
+import ErrorHandler from '@utils/ErrorHandler'
 
 import './styles.scss'
 
 const ResetPasswordPage = () => {
   const { resetToken } = useParams()
-  const [serverResponse, setServerResponse] = useState({})
+  const source = axios.CancelToken.source()
+  const { showBoundary } = useErrorBoundary()
+  const [serverResponse, setServerResponse] = useState()
+
+  useEffect(() => {
+    return () => {
+      source.cancel('Request Aborted due to component unmount.')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleSubmit = useCallback(
     async (values, { setFieldError, resetForm }) => {
-      setServerResponse({})
+      setServerResponse()
       try {
-        const response = await resetPassword(values, resetToken)
+        const response = await resetPassword(values, resetToken, source.token)
         const {
           status,
           data: { message },
@@ -28,18 +40,29 @@ const ResetPasswordPage = () => {
 
         setServerResponse({ status, message })
         resetForm()
-      } catch ({ response }) {
-        const {
-          status,
-          statusText,
-          data: { errors, message },
-        } = response
+      } catch (error) {
+        if (!axios.isCancel(error) && error.response) {
+          const {
+            response: {
+              status,
+              statusText,
+              data: { errors, message },
+            },
+          } = error
 
-        if (errors) {
-          Object.keys(errors).forEach(err =>
-            setFieldError(err, errors[err].message)
-          )
-        } else {
+          if (status === 500) {
+            const boundaryError = new ErrorHandler(message, status, statusText)
+            showBoundary(boundaryError)
+            return
+          }
+
+          if (errors) {
+            Object.keys(errors).forEach(err =>
+              setFieldError(err, errors[err].message)
+            )
+            return
+          }
+
           setServerResponse({
             status,
             statusText,
@@ -48,13 +71,13 @@ const ResetPasswordPage = () => {
         }
       }
     },
-    [resetToken]
+    [resetToken, showBoundary, source.token]
   )
 
   return (
     <>
       <div className='ResetpasswordPage'>
-        {Object.keys(serverResponse).length > 0 && (
+        {serverResponse && (
           <Alert
             type={serverResponse.status >= 400 ? 'error' : 'success'}
             message={

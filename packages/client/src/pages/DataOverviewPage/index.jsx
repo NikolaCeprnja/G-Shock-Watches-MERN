@@ -7,7 +7,7 @@ import React, {
 } from 'react'
 import PropTypes from 'prop-types'
 import { parse, stringify } from 'qs'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useRouteMatch } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { useErrorBoundary } from 'react-error-boundary'
 import { Table, Input, Button, Empty } from 'antd'
@@ -30,7 +30,8 @@ const DataOverviewPage = ({
 }) => {
   const dispatch = useDispatch()
   const selectedInfo = useSelector(selector)
-  const { pathname, search } = useLocation()
+  const { search } = useLocation()
+  const { path } = useRouteMatch()
   const { showBoundary } = useErrorBoundary()
   const searchQueryParam = useRef('')
   const [errMsg, setErrMsg] = useState('')
@@ -127,7 +128,6 @@ const DataOverviewPage = ({
 
   return (
     <div className='DataOverviewPage'>
-      <div className='caption-background' />
       <div className='caption'>
         <h1 className='title'>{title}</h1>
         <Search
@@ -145,7 +145,7 @@ const DataOverviewPage = ({
             type='primary'
             size='large'
             icon={addNewIcon}
-            onClick={() => history.push(`${pathname}/create`)}>
+            onClick={() => history.push(`${path}/create`)}>
             Add New {dataAbout.charAt(0).toUpperCase() + dataAbout.slice(1)}
           </Button>
         )}
@@ -157,10 +157,12 @@ const DataOverviewPage = ({
           rowClassName='data-overview-row'
           columns={defaultColumns || columns}
           loading={selectedInfo.loading}
-          dataSource={selectedInfo.data}
+          dataSource={selectedInfo.loading ? undefined : selectedInfo.data}
           locale={{
             emptyText: selectedInfo.loading ? (
-              <p style={{ fontSize: '1.2rem' }}>Loading {dataAbout}s data...</p>
+              <p style={{ fontSize: '1.2rem' }}>
+                Loading {dataAbout}&apos;s data...
+              </p>
             ) : (
               <Empty
                 image='https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg'
@@ -191,7 +193,7 @@ const DataOverviewPage = ({
           }}
           onRow={({ id }) => {
             return {
-              onClick: () => history.push(`${pathname}/${id}`),
+              onClick: () => history.push(`${path}/${id}`),
             }
           }}
           onChange={({ current, pageSize }, filters, sorters) => {

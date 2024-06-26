@@ -9,7 +9,10 @@ import PropTypes from 'prop-types'
 import { parse, stringify } from 'qs'
 import { useLocation } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Table, Input, Button, Empty } from 'antd'
+
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
 
 import './styles.scss'
 
@@ -26,12 +29,13 @@ const DataOverviewPage = ({
   selector,
 }) => {
   const dispatch = useDispatch()
+  const selectedInfo = useSelector(selector)
   const { pathname, search } = useLocation()
+  const { showBoundary } = useErrorBoundary()
   const searchQueryParam = useRef('')
   const [errMsg, setErrMsg] = useState('')
   const [defaultColumns, setDefaultColumns] = useState()
   const [defaultSearchValue, setDefaultSearchValue] = useState('')
-  const selectedInfo = useSelector(selector)
 
   useLayoutEffect(() => {
     const urlSearchQueryParams = parse(search, { ignoreQueryPrefix: true })
@@ -64,23 +68,32 @@ const DataOverviewPage = ({
   }, [])
 
   useEffect(() => {
+    let response
+
     const fetchData = async () => {
       try {
         const urlSearchQueryParams = parse(search, { ignoreQueryPrefix: true })
-        await dispatch(action(urlSearchQueryParams)).unwrap()
+        response = dispatch(action(urlSearchQueryParams))
+        await response?.unwrap?.()
       } catch (err) {
-        const {
-          data: { message },
-        } = err
+        handleAsyncThunkError(err, showBoundary, {
+          showBoundaryOnlyOnServerError: true,
+        })
 
-        if (err.status !== 'ABORTED') {
+        if (!err.name || err.name !== 'AbortError') {
+          const { data: { message } = { message: undefined } } = err
+
           setErrMsg(message)
         }
       }
     }
 
     fetchData()
-  }, [action, dispatch, search])
+
+    return () => {
+      response?.abort?.('Request Aborted due to component unmount.')
+    }
+  }, [action, dispatch, search, showBoundary])
 
   const handleOnSearch = useCallback(
     (value, event) => {

@@ -1,42 +1,48 @@
 import React, { useLayoutEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { useDispatch } from 'react-redux'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Table, Empty } from 'antd'
-import axios from 'axios'
 
 import ReviewItem from '@components/ReviewItem/index'
 
-import { USER_REVIEWS_COLUMNS } from '@shared/constants'
 import { getPurchasedProductsAndReviews } from '@redux/user/userThunk'
+
+import { USER_REVIEWS_COLUMNS } from '@shared/constants'
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
 
 const PurchasedProductsPage = ({ uid, updateFor, purchasedProducts }) => {
   const dispatch = useDispatch()
   const [loading, setLoading] = useState(false)
   const [errMsg, setErrMsg] = useState('')
+  const { showBoundary } = useErrorBoundary()
 
   useLayoutEffect(() => {
-    const source = axios.CancelToken.source()
+    let response
 
     const getPurchasedProducts = async () => {
       try {
         if (uid && !purchasedProducts) {
           setLoading(true)
-          await dispatch(
+          response = dispatch(
             getPurchasedProductsAndReviews({
               uid,
-              cancelToken: source,
               updateFor,
             })
-          ).unwrap()
+          )
+
+          await response?.unwrap?.()
           setLoading(false)
         }
       } catch (err) {
-        const {
-          data: { message },
-        } = err
+        setLoading(false)
 
-        if (err.status !== 'ABORTED') {
-          setLoading(false)
+        handleAsyncThunkError(err, showBoundary, {
+          showBoundaryOnlyOnServerError: true,
+        })
+
+        if (err.name !== 'AbortError') {
+          const { data: { message } = { message: undefined } } = err
           setErrMsg(message)
         }
       }
@@ -45,9 +51,9 @@ const PurchasedProductsPage = ({ uid, updateFor, purchasedProducts }) => {
     getPurchasedProducts()
 
     return () => {
-      source.cancel('Request Aborted due to component unmount.')
+      response?.abort?.('Request Aborted due to component unmount.')
     }
-  }, [dispatch, uid, updateFor, purchasedProducts])
+  }, [dispatch, uid, updateFor, purchasedProducts, showBoundary])
 
   return (
     <Table

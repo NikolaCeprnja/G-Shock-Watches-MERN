@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { useDispatch } from 'react-redux'
@@ -20,6 +19,7 @@ import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
 import updateReviewValidationSchema from '@validation/review-validation'
 
 import InputField from '@components/InputField/index'
+import RouterPrompt from '@components/RouterPrompt/index'
 import DeleteConfirmPrompt from '@components/DeleteConfirmPrompt/index'
 
 const ReviewItem = ({ review, updateFor }) => {
@@ -173,26 +173,94 @@ const ReviewItem = ({ review, updateFor }) => {
         setFieldValue,
         values: { title, score, description, createdAt },
       }) => (
-        <Comment
-          key={review.id}
-          datetime={createdAt}
-          author={<h2>{title || 'Review Title'}</h2>}
-          content={
-            !reviewEditing ? (
-              <>
-                <Rate disabled allowHalf defaultValue={score} />
-                <br />
-                {description}
-                <div style={{ marginTop: '1rem' }}>
-                  <Button
-                    type='primary'
+        <>
+          <RouterPrompt when={dirty} />
+          <Comment
+            key={review.id}
+            datetime={createdAt}
+            author={<h2>{title || 'Review Title'}</h2>}
+            content={
+              !reviewEditing ? (
+                <>
+                  <Rate disabled allowHalf defaultValue={score} />
+                  <br />
+                  {description}
+                  <div style={{ marginTop: '1rem' }}>
+                    <Button
+                      type='primary'
+                      size='large'
+                      style={{ marginRight: '1rem' }}
+                      icon={<EditOutlined />}
+                      onClick={() => {
+                        setReviewEditing(true)
+                      }}>
+                      Edit
+                    </Button>
+                    <Button
+                      danger
+                      size='large'
+                      icon={<DeleteOutlined />}
+                      onClick={() => handleReviewDelete()}>
+                      Delete
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <Form
+                  key={`form-${review.id}`}
+                  layout='horizontal'
+                  size='large'>
+                  <Field
+                    required
+                    name='title'
+                    label='Title'
+                    component={InputField}
+                  />
+                  <FormItem required name='score' label='Score'>
+                    <Rate
+                      allowHalf
+                      allowClear
+                      value={score}
+                      defaultValue={score}
+                      onChange={value => setFieldValue('score', value)}
+                    />
+                  </FormItem>
+                  <Field
+                    required
+                    name='description'
+                    label='Description'
+                    type='textArea'
+                    showCount
+                    rows={5}
+                    maxLength={600}
+                    component={InputField}
+                  />
+                  <SubmitButton
                     size='large'
                     style={{ marginRight: '1rem' }}
-                    icon={<EditOutlined />}
+                    icon={<SaveOutlined />}
+                    disabled={!dirty || !isValid}>
+                    Save
+                  </SubmitButton>
+                  <ResetButton
+                    size='large'
+                    style={{
+                      marginRight: '1rem',
+                    }}
+                    icon={<UndoOutlined />}>
+                    Reset
+                  </ResetButton>
+                  <Button
+                    type='dashed'
+                    size='large'
+                    style={{
+                      marginRight: '1rem',
+                    }}
                     onClick={() => {
-                      setReviewEditing(true)
+                      handleReset()
+                      setReviewEditing(false)
                     }}>
-                    Edit
+                    Cancel
                   </Button>
                   <Button
                     danger
@@ -201,73 +269,11 @@ const ReviewItem = ({ review, updateFor }) => {
                     onClick={() => handleReviewDelete()}>
                     Delete
                   </Button>
-                </div>
-              </>
-            ) : (
-              <Form key={`form-${review.id}`} layout='horizontal' size='large'>
-                <Field
-                  required
-                  name='title'
-                  label='Title'
-                  component={InputField}
-                />
-                <FormItem required name='score' label='Score'>
-                  <Rate
-                    allowHalf
-                    allowClear
-                    value={score}
-                    defaultValue={score}
-                    onChange={value => setFieldValue('score', value)}
-                  />
-                </FormItem>
-                <Field
-                  required
-                  name='description'
-                  label='Description'
-                  type='textArea'
-                  showCount
-                  rows={5}
-                  maxLength={600}
-                  component={InputField}
-                />
-                <SubmitButton
-                  size='large'
-                  style={{ marginRight: '1rem' }}
-                  icon={<SaveOutlined />}
-                  disabled={!dirty || !isValid}>
-                  Save
-                </SubmitButton>
-                <ResetButton
-                  size='large'
-                  style={{
-                    marginRight: '1rem',
-                  }}
-                  icon={<UndoOutlined />}>
-                  Reset
-                </ResetButton>
-                <Button
-                  type='dashed'
-                  size='large'
-                  style={{
-                    marginRight: '1rem',
-                  }}
-                  onClick={() => {
-                    handleReset()
-                    setReviewEditing(false)
-                  }}>
-                  Cancel
-                </Button>
-                <Button
-                  danger
-                  size='large'
-                  icon={<DeleteOutlined />}
-                  onClick={() => handleReviewDelete()}>
-                  Delete
-                </Button>
-              </Form>
-            )
-          }
-        />
+                </Form>
+              )
+            }
+          />
+        </>
       )}
     </Formik>
   )

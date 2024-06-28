@@ -1,7 +1,8 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useCallback } from 'react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { useDispatch } from 'react-redux'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Formik, Field } from 'formik'
 import { Form, FormItem, SubmitButton, ResetButton } from 'formik-antd'
 import { Comment, Rate, Button } from 'antd'
@@ -15,19 +16,34 @@ import {
 import { updateReview, deleteReview } from '@redux/user/userThunk'
 import { create as createNotification } from '@redux/notification/notificationSlice'
 
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
 import updateReviewValidationSchema from '@validation/review-validation'
 
 import InputField from '@components/InputField/index'
 import DeleteConfirmPrompt from '@components/DeleteConfirmPrompt/index'
 
-const ReviewItem = ({ productId, review, updateFor }) => {
+const ReviewItem = ({ review, updateFor }) => {
   const dispatch = useDispatch()
   const [reviewEditing, setReviewEditing] = useState(false)
+  const updateReviewRef = useRef()
+  const deleteReviewRef = useRef()
+  const { showBoundary } = useErrorBoundary()
+
+  useEffect(() => {
+    return () => {
+      updateReviewRef.current?.abort?.(
+        'Request Aborted due to component unmount.'
+      )
+      deleteReviewRef.current?.abort?.(
+        'Request Aborted due to component unmount.'
+      )
+    }
+  }, [])
 
   const handleSubmit = useCallback(
     async ({ title, score, description }, { setFieldError }) => {
       try {
-        const { message } = await dispatch(
+        updateReviewRef.current = dispatch(
           updateReview({
             rid: review.id,
             updatedData: {
@@ -37,7 +53,9 @@ const ReviewItem = ({ productId, review, updateFor }) => {
             },
             updateFor,
           })
-        ).unwrap()
+        )
+
+        const { message } = await updateReviewRef.current?.unwrap?.()
 
         dispatch(
           createNotification({
@@ -49,31 +67,39 @@ const ReviewItem = ({ productId, review, updateFor }) => {
         )
         setReviewEditing(false)
       } catch (error) {
-        const {
-          status,
-          statusText,
-          data: { errors, message },
-        } = error
+        handleAsyncThunkError(error, showBoundary, {
+          showBoundaryOnlyOnServerError: true,
+        })
 
-        dispatch(
-          createNotification({
-            id: 'updateReviewError',
-            type: 'error',
-            title: `Error, ${statusText}`,
-            description:
-              message ||
-              'Something went wrong while updating a review, please try again later.',
-          })
-        )
+        if (error.name !== 'AbortError') {
+          const {
+            statusText,
+            data: { errors, message } = {
+              errors: undefined,
+              message: undefined,
+            },
+          } = error
 
-        if (errors) {
-          Object.keys(errors).forEach(err => {
-            setFieldError(err, errors[err].message)
-          })
+          dispatch(
+            createNotification({
+              id: 'updateReviewError',
+              type: 'error',
+              title: `Error, ${statusText}`,
+              description:
+                message ||
+                'Something went wrong while updating a review, please try again later.',
+            })
+          )
+
+          if (errors) {
+            Object.keys(errors).forEach(err => {
+              setFieldError(err, errors[err].message)
+            })
+          }
         }
       }
     },
-    [dispatch, review.id, updateFor]
+    [dispatch, review.id, updateFor, showBoundary]
   )
 
   const handleReviewDelete = useCallback(() => {
@@ -81,9 +107,11 @@ const ReviewItem = ({ productId, review, updateFor }) => {
       title: 'Are you sure that you want to delete this review?',
       onOk: async () => {
         try {
-          const { message } = await dispatch(
+          deleteReviewRef.current = dispatch(
             deleteReview({ rid: review.id, updateFor })
-          ).unwrap()
+          )
+
+          const { message } = await deleteReviewRef.current?.unwrap?.()
 
           dispatch(
             createNotification({
@@ -94,17 +122,27 @@ const ReviewItem = ({ productId, review, updateFor }) => {
             })
           )
         } catch (error) {
-          const { status, statusText, message } = error
-          dispatch(
-            createNotification({
-              id: 'deleteReviewError',
-              type: 'error',
-              title: statusText || 'Error!',
-              description:
-                message ||
-                'Something went wrong while deleteing a review, please try again later.',
-            })
-          )
+          handleAsyncThunkError(error, showBoundary, {
+            showBoundaryOnlyOnServerError: true,
+          })
+
+          if (error.name !== 'AbortError') {
+            const {
+              statusText,
+              data: { message } = { message: undefined },
+            } = error
+
+            dispatch(
+              createNotification({
+                id: 'deleteReviewError',
+                type: 'error',
+                title: statusText || 'Error!',
+                description:
+                  message ||
+                  'Something went wrong while deleteing a review, please try again later.',
+              })
+            )
+          }
         }
       },
     })
@@ -237,7 +275,6 @@ const ReviewItem = ({ productId, review, updateFor }) => {
 
 ReviewItem.propTypes = {
   updateFor: PropTypes.string.isRequired,
-  productId: PropTypes.string.isRequired,
   review: PropTypes.instanceOf(Object).isRequired,
 }
 

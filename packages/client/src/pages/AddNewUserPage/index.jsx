@@ -135,7 +135,6 @@ const AddNewUserPage = ({ history }) => {
           <>
             <RouterPrompt when={dirty} />
             <div className='AddNewUserPage'>
-              <div className='caption-background' />
               <div className='caption'>
                 <div className='user-preview-wrapper'>
                   <Button

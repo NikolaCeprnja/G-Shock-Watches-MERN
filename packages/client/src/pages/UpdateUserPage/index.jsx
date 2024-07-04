@@ -10,7 +10,7 @@ import React, {
 } from 'react'
 import axios from 'axios'
 import PropTypes from 'prop-types'
-import { useParams, generatePath } from 'react-router-dom'
+import { generatePath } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { useErrorBoundary } from 'react-error-boundary'
 import {
@@ -63,8 +63,7 @@ const UpdatingMessage = () => {
 }
 
 const UpdateUserPage = ({ history, match }) => {
-  const { uid, activeTab } = useParams()
-  const [activeTabKey, setActiveTabKey] = useState(activeTab)
+  const { uid, activeTab } = match.params
   const [defaultFileList, setDefaultFileList] = useState([])
   const [shouldFormReset, setShouldFormReset] = useState(true)
   const [existingUserNames, setExistingUserNames] = useState([])
@@ -112,14 +111,6 @@ const UpdateUserPage = ({ history, match }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  useEffect(() => {
-    if (activeTab) {
-      setActiveTabKey(activeTab)
-    } else {
-      setActiveTabKey('info')
-    }
-  }, [activeTab])
 
   useEffect(() => {
     if (user && shouldFormReset) {
@@ -187,7 +178,7 @@ const UpdateUserPage = ({ history, match }) => {
         )
 
         setShouldFormReset(true)
-        setActiveTabKey('info')
+        history.replace(generatePath(match.path, { uid }))
       } catch (error) {
         if (!error.name || error.name !== 'AbortError') {
           const {
@@ -241,7 +232,7 @@ const UpdateUserPage = ({ history, match }) => {
         }
       }
     },
-    [dispatch, uid, showBoundary]
+    [dispatch, uid, history, match.path, showBoundary]
   )
 
   return (
@@ -372,7 +363,7 @@ const UpdateUserPage = ({ history, match }) => {
                 <Tabs
                   style={{ flexGrow: 1 }}
                   defaultActiveKey='info'
-                  activeKey={activeTabKey}
+                  activeKey={activeTab || 'info'}
                   onTabClick={activeKey => {
                     const generatedPath = generatePath(match.path, {
                       uid,

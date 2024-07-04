@@ -7,7 +7,7 @@ import React, {
   Suspense,
 } from 'react'
 import PropTypes from 'prop-types'
-import { useParams, generatePath } from 'react-router-dom'
+import { generatePath } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { useErrorBoundary } from 'react-error-boundary'
 import {
@@ -59,8 +59,7 @@ const UpdatingMessage = () => {
 }
 
 const UserProfilePage = ({ history, match }) => {
-  const { activeTab } = useParams()
-  const [activeTabKey, setActiveTabKey] = useState(activeTab)
+  const { activeTab } = match.params
   const [defaultFileList, setDefaultFileList] = useState([])
   const [shouldFormReset, setShouldFormReset] = useState(true)
   const [existingUserNames, setExistingUserNames] = useState([])
@@ -82,14 +81,6 @@ const UserProfilePage = ({ history, match }) => {
       updatingMessage.destroy('updating')
     }
   }, [])
-
-  useEffect(() => {
-    if (activeTab) {
-      setActiveTabKey(activeTab)
-    } else {
-      setActiveTabKey('settings')
-    }
-  }, [activeTab])
 
   useEffect(() => {
     if (user && shouldFormReset) {
@@ -157,7 +148,7 @@ const UserProfilePage = ({ history, match }) => {
         )
 
         setShouldFormReset(true)
-        setActiveTabKey('settings')
+        history.replace(generatePath(match.path, { uid: user.id }))
       } catch (error) {
         if (!error.name || error.name !== 'AbortError') {
           const {
@@ -214,7 +205,7 @@ const UserProfilePage = ({ history, match }) => {
         }
       }
     },
-    [dispatch, user.id, user.isAdmin, showBoundary]
+    [dispatch, user.id, user.isAdmin, history, match.path, showBoundary]
   )
 
   return (
@@ -251,17 +242,18 @@ const UserProfilePage = ({ history, match }) => {
             <>
               <RouterPrompt when={dirty} />
               <div className='UpdateUserPage'>
-                <div className='caption-background' />
                 <div className='caption'>
                   <div className='user-preview-wrapper'>
-                    <Button
-                      type='link'
-                      style={{ padding: 0 }}
-                      className='user-back-arrow'
-                      icon={<ArrowLeftOutlined />}
-                      onClick={() => history.push('/admin/users')}>
-                      Users
-                    </Button>
+                    {user?.isAdmin && (
+                      <Button
+                        type='link'
+                        style={{ padding: 0 }}
+                        className='user-back-arrow'
+                        icon={<ArrowLeftOutlined />}
+                        onClick={() => history.push('/admin/users')}>
+                        Users
+                      </Button>
+                    )}
                     <div className='new-user-preview'>
                       <Form name='user-avatar' layout='vertical'>
                         <Field
@@ -358,8 +350,8 @@ const UserProfilePage = ({ history, match }) => {
                 </div>
                 <Tabs
                   style={{ flexGrow: 1 }}
-                  defaultActiveKey='settings'
-                  activeKey={activeTabKey}
+                  defaultActiveKey='info'
+                  activeKey={activeTab || 'info'}
                   onTabClick={activeKey => {
                     const generatedPath = generatePath(match.path, {
                       uid: user.id,
@@ -368,7 +360,7 @@ const UserProfilePage = ({ history, match }) => {
 
                     history.replace(generatedPath)
                   }}>
-                  <TabPane key='settings' tab='Basic User Info'>
+                  <TabPane key='info' tab='Basic User Info'>
                     <Form name='user-info' layout='vertical'>
                       <Row gutter={[16, 8]}>
                         <Col span={8}>

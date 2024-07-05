@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import PropTypes from 'prop-types'
 import { useLocation } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Checkbox, Spin } from 'antd'
 
 import {
@@ -11,6 +12,8 @@ import {
   selectCurrentlySelectedCollectionsByGender,
 } from '@redux/collection/collectionSlice'
 import { getCollectionsByGender } from '@redux/collection/collectionThunk'
+
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
 
 const CollectionsFilterGroup = ({
   name,
@@ -25,16 +28,31 @@ const CollectionsFilterGroup = ({
     selectCurrentlySelectedCollectionsByGender(gender)
   )
   const [generatedOptions, setGeneratedOptions] = useState([])
+  const { showBoundary } = useErrorBoundary()
 
   useEffect(() => {
-    if (!collections.data) {
-      dispatch(
-        getCollectionsByGender({
-          gender,
-          urlQueryParams: params.collectionName,
-        })
-      )
+    let response
+
+    const fetchCollectionsByGender = async () => {
+      if (!collections.data) {
+        try {
+          response = dispatch(
+            getCollectionsByGender({
+              gender,
+              urlQueryParams: params.collectionName,
+            })
+          )
+
+          await response?.unwrap?.()
+        } catch (error) {
+          handleAsyncThunkError(error, showBoundary, {
+            showBoundaryOnlyOnServerError: true,
+          })
+        }
+      }
     }
+
+    fetchCollectionsByGender()
 
     return () => {
       if (
@@ -43,6 +61,8 @@ const CollectionsFilterGroup = ({
       ) {
         dispatch(resetSelectedCollections({ gender }))
       }
+
+      response?.abort?.('Request Aborted due to component unmount.')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, gender])

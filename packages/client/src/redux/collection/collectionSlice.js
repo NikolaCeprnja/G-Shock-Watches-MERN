@@ -1,6 +1,6 @@
 import { createSlice, createDraftSafeSelector } from '@reduxjs/toolkit'
 
-import * as collectionThunk from './collectionThunk'
+import * as collectionThunk from '@redux/collection/collectionThunk'
 
 const initialState = {
   loading: false,

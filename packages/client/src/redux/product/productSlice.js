@@ -1,6 +1,6 @@
 import { createSlice, createDraftSafeSelector } from '@reduxjs/toolkit'
 
-import * as productThunk from './productThunk'
+import * as productThunk from '@redux/product/productThunk'
 
 const initialState = {
   all: {

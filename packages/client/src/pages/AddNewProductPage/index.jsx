@@ -42,6 +42,7 @@ const AddNewProductPage = ({ history }) => {
   const [activeTabKey, setActiveTabKey] = useState(undefined)
   const source = axios.CancelToken.source()
   const { showBoundary } = useErrorBoundary()
+  const [existingModels, setExistingModels] = useState([])
 
   useEffect(() => {
     let response
@@ -132,6 +133,9 @@ const AddNewProductPage = ({ history }) => {
 
           if (errors) {
             Object.keys(errors).forEach(err => {
+              if (err === 'model') {
+                setExistingModels(exModels => [...exModels, errors[err].value])
+              }
               setFieldError(err, errors[err].message)
             })
           }
@@ -161,7 +165,7 @@ const AddNewProductPage = ({ history }) => {
         specifications: undefined,
       }}
       onSubmit={handleSubmit}
-      validationSchema={productValidationSchema}>
+      validationSchema={productValidationSchema(existingModels)}>
       {({
         dirty,
         isValid,

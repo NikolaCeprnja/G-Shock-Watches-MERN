@@ -3,22 +3,23 @@
   padding: 0 2rem;
   margin-bottom: 2rem;
 
-  .caption-background {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 233px;
-    background: linear-gradient(to right, #1b2330 0%, #252f3e 100%);
-    background-size: cover;
-    pointer-events: none;
-  }
-
   .caption {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 37px 0;
+
+    &::before {
+      content: '';
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: -1;
+      height: 233px;
+      position: absolute;
+      pointer-events: none;
+      background: linear-gradient(to right, #1b2330 0%, #252f3e 100%);
+    }
   }
 
   .product-preview-wrapper {

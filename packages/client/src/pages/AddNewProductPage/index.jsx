@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import axios from 'axios'
+import { generatePath } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { useErrorBoundary } from 'react-error-boundary'
 import { Button, Tabs, Row, Col } from 'antd'
@@ -36,12 +37,12 @@ import './styles.scss'
 const { TabPane } = Tabs
 const { OptGroup, Option } = Select
 
-const AddNewProductPage = ({ history }) => {
+const AddNewProductPage = ({ history, match }) => {
   const dispatch = useDispatch()
   const collections = useSelector(selectCollections)
-  const [activeTabKey, setActiveTabKey] = useState(undefined)
   const source = axios.CancelToken.source()
   const { showBoundary } = useErrorBoundary()
+  const { activeTab } = match.params
   const [existingModels, setExistingModels] = useState([])
 
   useEffect(() => {
@@ -94,7 +95,7 @@ const AddNewProductPage = ({ history }) => {
         )
 
         resetForm()
-        setActiveTabKey('product-info')
+        history.replace(generatePath(match.path))
       } catch (error) {
         if (!axios.isCancel(error) && error.response) {
           const {
@@ -187,7 +188,6 @@ const AddNewProductPage = ({ history }) => {
         <>
           <RouterPrompt when={dirty} />
           <div className='AddNewProductPage'>
-            <div className='caption-background' />
             <div className='caption'>
               <div className='product-preview-wrapper'>
                 <Button
@@ -224,10 +224,16 @@ const AddNewProductPage = ({ history }) => {
               </SubmitButton>
             </div>
             <Tabs
-              defaultActiveKey='product-info'
-              activeKey={activeTabKey}
-              onTabClick={activeKey => setActiveTabKey(activeKey)}>
-              <TabPane key='product-info' tab='Basic Product Info'>
+              defaultActiveKey='info'
+              activeKey={activeTab || 'info'}
+              onTabClick={activeKey => {
+                const generatedPath = generatePath(match.path, {
+                  activeTab: activeKey,
+                })
+
+                history.replace(generatedPath)
+              }}>
+              <TabPane key='info' tab='Basic Product Info'>
                 <Form name='product-info' layout='vertical'>
                   <Row gutter={[16, 8]}>
                     <Col span={8}>
@@ -375,12 +381,12 @@ const AddNewProductPage = ({ history }) => {
                   </Col>
                 </Form>
               </TabPane>
-              <TabPane key='product-images' tab='Product Images'>
+              <TabPane key='images' tab='Product Images'>
                 <Form name='product-images'>
                   <FastField fast name='images' component={DragImagesUpload} />
                 </Form>
               </TabPane>
-              <TabPane key='product-details' tab='Product Details'>
+              <TabPane key='details' tab='Product Details'>
                 <Form name='product-details' layout='vertical'>
                   <Col span={24}>
                     <FastField
@@ -451,6 +457,7 @@ const AddNewProductPage = ({ history }) => {
 
 AddNewProductPage.propTypes = {
   history: PropTypes.instanceOf(Object).isRequired,
+  match: PropTypes.instanceOf(Object).isRequired,
 }
 
 export default AddNewProductPage

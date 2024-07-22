@@ -7,7 +7,7 @@ import React, {
 } from 'react'
 import axios from 'axios'
 import PropTypes from 'prop-types'
-import { useParams, generatePath } from 'react-router-dom'
+import { generatePath } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { useErrorBoundary } from 'react-error-boundary'
 import { Button, Tabs, Row, Col, Spin, message as updatingMessage } from 'antd'
@@ -62,8 +62,7 @@ const UpdatingMessage = () => {
 }
 
 const UpdateProductPage = ({ history, match }) => {
-  const { pid, activeTab } = useParams()
-  const [activeTabKey, setActiveTabKey] = useState(activeTab)
+  const { pid, activeTab } = match.params
   const [shouldFormReset, setShouldFormReset] = useState(true)
   const [defaultFileList, setDefaultFileList] = useState([])
   const [removedFileList, setRemovedFileList] = useState([])
@@ -130,14 +129,6 @@ const UpdateProductPage = ({ history, match }) => {
   }, [dispatch, pid, showBoundary])
 
   useEffect(() => {
-    if (activeTab) {
-      setActiveTabKey(activeTab)
-    } else {
-      setActiveTabKey('info')
-    }
-  }, [activeTab])
-
-  useEffect(() => {
     return () => {
       updateProductRef.current?.abort?.(
         'Request Aborted due to component unmount.'
@@ -156,16 +147,18 @@ const UpdateProductPage = ({ history, match }) => {
           name: product.previewImg.split('/').pop(),
           status: 'done',
           path: product.previewImg,
-          url: `http://localhost:5000${product.previewImg}`,
-          thumbUrl: `http://localhost:5000${product.previewImg}`,
+          url: `${process.env.REACT_APP_API_BASE_URL + product.previewImg}`,
+          thumbUrl: `${
+            process.env.REACT_APP_API_BASE_URL + product.previewImg
+          }`,
         },
         ...product.images?.map((image, idx) => ({
           uid: `${idx + 1}`,
           name: image.split('/').pop(),
           status: 'done',
           path: image,
-          url: `http://localhost:5000${image}`,
-          thumbUrl: `http://localhost:5000${image}`,
+          url: `${process.env.REACT_APP_API_BASE_URL + image}`,
+          thumbUrl: `${process.env.REACT_APP_API_BASE_URL + image}`,
         })),
       ])
 
@@ -226,7 +219,7 @@ const UpdateProductPage = ({ history, match }) => {
         )
 
         setShouldFormReset(true)
-        setActiveTabKey('info')
+        history.replace(generatePath(match.path, { pid }))
       } catch (error) {
         if (!error.name || error.name !== 'AbortError') {
           const {
@@ -277,7 +270,7 @@ const UpdateProductPage = ({ history, match }) => {
         }
       }
     },
-    [dispatch, pid, removedFileList, showBoundary]
+    [dispatch, pid, removedFileList, history, match.path, showBoundary]
   )
 
   return (
@@ -440,7 +433,7 @@ const UpdateProductPage = ({ history, match }) => {
                 </div>
                 <Tabs
                   defaultActiveKey='info'
-                  activeKey={activeTabKey}
+                  activeKey={activeTab || 'info'}
                   onTabClick={activeKey => {
                     const generatedPath = generatePath(match.path, {
                       pid,

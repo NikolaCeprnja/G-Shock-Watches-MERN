@@ -27,11 +27,12 @@ const AreaChartTooltip = ({ active, payload, label }) => {
 
 AreaChartTooltip.defaultProps = {
   label: '',
+  payload: undefined,
 }
 
 AreaChartTooltip.propTypes = {
   active: PropTypes.bool.isRequired,
-  payload: PropTypes.arrayOf(Object).isRequired,
+  payload: PropTypes.arrayOf(Object),
   label: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 }
 

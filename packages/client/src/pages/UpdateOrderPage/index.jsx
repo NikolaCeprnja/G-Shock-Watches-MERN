@@ -1,8 +1,8 @@
-/* eslint-disable no-unused-vars */
 import React, { useLayoutEffect, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { useParams, generatePath } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Spin, Button, Tabs, Table, Collapse } from 'antd'
 import {
   ArrowLeftOutlined,
@@ -19,6 +19,8 @@ import {
   ORDER_PRODUCTS_COLUMNS,
 } from '@shared/constants'
 
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
+
 import './styles.scss'
 
 const { TabPane } = Tabs
@@ -27,18 +29,34 @@ const { Panel } = Collapse
 const UpdateOrderPage = ({ history, match }) => {
   const { oid, activeTab } = useParams()
   const dispatch = useDispatch()
-  const { loading, updating, data: order } = useSelector(
-    selectOrdersByType('preview')
-  )
+  const { loading, data: order } = useSelector(selectOrdersByType('preview'))
   const [activeTabKey, setActiveTabKey] = useState(activeTab)
+  const { showBoundary } = useErrorBoundary()
 
   useLayoutEffect(() => {
-    dispatch(getOrderById(oid))
+    let response
+
+    const fetchOrderById = async () => {
+      try {
+        response = dispatch(getOrderById(oid))
+        await response?.unwrap?.()
+      } catch (err) {
+        handleAsyncThunkError(err, showBoundary, {
+          redirect: {
+            to: '/admin/e-commerce/orders',
+            text: 'Back to Orders',
+          },
+        })
+      }
+    }
+
+    fetchOrderById()
 
     return () => {
       dispatch(clearOrderPreview())
+      response?.abort?.('Request Aborted due to component unmount.')
     }
-  }, [dispatch, oid])
+  }, [dispatch, oid, showBoundary])
 
   useEffect(() => {
     if (activeTab) {

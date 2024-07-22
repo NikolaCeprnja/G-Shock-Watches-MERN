@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
-import { useParams, generatePath } from 'react-router-dom'
+import { generatePath } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { useErrorBoundary } from 'react-error-boundary'
 import { Spin, Button, Tabs, Table, Collapse } from 'antd'
@@ -27,10 +27,9 @@ const { TabPane } = Tabs
 const { Panel } = Collapse
 
 const UpdateOrderPage = ({ history, match }) => {
-  const { oid, activeTab } = useParams()
+  const { oid, activeTab } = match.params
   const dispatch = useDispatch()
   const { loading, data: order } = useSelector(selectOrdersByType('preview'))
-  const [activeTabKey, setActiveTabKey] = useState(activeTab)
   const { showBoundary } = useErrorBoundary()
 
   useLayoutEffect(() => {
@@ -58,14 +57,6 @@ const UpdateOrderPage = ({ history, match }) => {
     }
   }, [dispatch, oid, showBoundary])
 
-  useEffect(() => {
-    if (activeTab) {
-      setActiveTabKey(activeTab)
-    } else {
-      setActiveTabKey('info')
-    }
-  }, [activeTab])
-
   return (
     <div className='UpdateOrderPageWrapper'>
       {loading ? (
@@ -88,7 +79,7 @@ const UpdateOrderPage = ({ history, match }) => {
           </div>
           <Tabs
             defaultActiveKey='info'
-            activeKey={activeTabKey}
+            activeKey={activeTab || 'info'}
             onTabClick={activeKey => {
               const generatedPath = generatePath(match.path, {
                 oid,

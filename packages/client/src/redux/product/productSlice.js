@@ -101,7 +101,7 @@ const productSlice = createSlice({
       { payload: { updatedProduct } }
     ) => {
       preview.updating = false
-      preview.data = updatedProduct
+      Object.assign(preview.data, updatedProduct)
     },
     [productThunk.updateProduct.rejected]: ({ preview }) => {
       preview.updating = false

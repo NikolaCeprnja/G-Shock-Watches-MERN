@@ -1,8 +1,15 @@
-/* eslint-disable no-unused-vars */
-import React, { useLayoutEffect, useEffect, useCallback, useState } from 'react'
+import React, {
+  useLayoutEffect,
+  useEffect,
+  useCallback,
+  useState,
+  useRef,
+} from 'react'
+import axios from 'axios'
 import PropTypes from 'prop-types'
 import { useParams, generatePath } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Button, Tabs, Row, Col, Spin, message as updatingMessage } from 'antd'
 import {
   ArrowLeftOutlined,
@@ -39,6 +46,9 @@ import {
   PRODUCT_MAIN_FEATURES_OPTIONS,
 } from '@shared/constants'
 
+import ErrorHandler from '@utils/ErrorHandler'
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
+
 import './styles.scss'
 
 const { TabPane } = Tabs
@@ -57,21 +67,67 @@ const UpdateProductPage = ({ history, match }) => {
   const [shouldFormReset, setShouldFormReset] = useState(true)
   const [defaultFileList, setDefaultFileList] = useState([])
   const [removedFileList, setRemovedFileList] = useState([])
+  const [existingModels, setExistingModels] = useState([])
   const dispatch = useDispatch()
   const collections = useSelector(selectCollections)
   const { loading, updating, data: product } = useSelector(
     selectProductsByType('preview')
   )
+  const source = axios.CancelToken.source()
+  const updateProductRef = useRef()
+  const { showBoundary } = useErrorBoundary()
 
   useLayoutEffect(() => {
-    dispatch(getCollections())
-    dispatch(getProductById(pid))
+    let response
+
+    const fetchCollections = async () => {
+      try {
+        response = dispatch(getCollections())
+        await response?.unwrap?.()
+      } catch (err) {
+        handleAsyncThunkError(err, showBoundary, {
+          redirect: {
+            to: '/admin/e-commerce/products',
+            text: 'Back to Products',
+          },
+        })
+      }
+    }
+
+    fetchCollections()
+
+    return () => {
+      response?.abort?.('Request Aborted due to component unmount.')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, showBoundary])
+
+  useLayoutEffect(() => {
+    let response
+
+    const fetchProductById = async () => {
+      try {
+        response = dispatch(getProductById(pid))
+        await response?.unwrap?.()
+      } catch (err) {
+        handleAsyncThunkError(err, showBoundary, {
+          redirect: {
+            to: '/admin/e-commerce/products',
+            text: 'Back to Products',
+          },
+        })
+      }
+    }
+
+    fetchProductById()
 
     return () => {
       setDefaultFileList([])
       dispatch(clearProductPreview())
+      response?.abort?.('Request Aborted due to component unmount.')
     }
-  }, [dispatch, pid])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, pid, showBoundary])
 
   useEffect(() => {
     if (activeTab) {
@@ -80,6 +136,17 @@ const UpdateProductPage = ({ history, match }) => {
       setActiveTabKey('info')
     }
   }, [activeTab])
+
+  useEffect(() => {
+    return () => {
+      updateProductRef.current?.abort?.(
+        'Request Aborted due to component unmount.'
+      )
+      source.cancel('Request Aborted due to component unmount.')
+      updatingMessage.destroy('updating')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (product && shouldFormReset) {
@@ -121,20 +188,20 @@ const UpdateProductPage = ({ history, match }) => {
 
         Object.entries(values).forEach(([key, value]) => {
           if (Array.isArray(value)) {
-            value.forEach(val => {
+            return value.forEach(val => {
               if (key === 'images' && val.path) {
-                data.append(`${key}[]`, val.path)
-              } else {
-                data.append(`${key}[]`, val)
+                return data.append(`${key}[]`, val.path)
               }
-            })
-          } else {
-            if (key === 'previewImg' && value.path) {
-              data.append(key, value.path)
-            }
 
-            data.append(key, value)
+              return data.append(`${key}[]`, val)
+            })
           }
+
+          if (key === 'previewImg' && value.path) {
+            return data.append(key, value.path)
+          }
+
+          return data.append(key, value)
         })
 
         if (removedFileList.length > 0) {
@@ -143,9 +210,11 @@ const UpdateProductPage = ({ history, match }) => {
           )
         }
 
-        const { message } = await dispatch(
+        updateProductRef.current = dispatch(
           updateProduct({ pid, updatedData: data })
-        ).unwrap()
+        )
+
+        const { message } = await updateProductRef.current?.unwrap?.()
 
         dispatch(
           createNotification({
@@ -159,31 +228,56 @@ const UpdateProductPage = ({ history, match }) => {
         setShouldFormReset(true)
         setActiveTabKey('info')
       } catch (error) {
-        const {
-          status,
-          statusText,
-          data: { errors, message },
-        } = error
+        if (!error.name || error.name !== 'AbortError') {
+          const {
+            status,
+            statusText,
+            data: { errors, message } = {
+              errors: undefined,
+              message: undefined,
+            },
+          } = error
 
-        dispatch(
-          createNotification({
-            id: 'updateProductError',
-            type: 'error',
-            title: `Error, ${statusText}`,
-            description:
-              message ||
-              'Something went wrong while updating a product, please try again later.',
-          })
-        )
+          if (status === 500) {
+            const boundaryError = new ErrorHandler(
+              message,
+              status,
+              statusText,
+              {
+                redirect: {
+                  to: '/admin/e-commerce/products',
+                  text: 'Back to Products',
+                },
+              }
+            )
 
-        if (errors) {
-          Object.keys(errors).forEach(err => {
-            setFieldError(err, errors[err].message)
-          })
+            showBoundary(boundaryError)
+            return
+          }
+
+          dispatch(
+            createNotification({
+              id: 'updateProductError',
+              type: 'error',
+              title: `Error, ${statusText}`,
+              description:
+                message ||
+                'Something went wrong while updating a product, please try again later.',
+            })
+          )
+
+          if (errors) {
+            Object.keys(errors).forEach(err => {
+              if (err === 'model') {
+                setExistingModels(exModels => [...exModels, errors[err].value])
+              }
+              setFieldError(err, errors[err].message)
+            })
+          }
         }
       }
     },
-    [dispatch, pid, removedFileList]
+    [dispatch, pid, removedFileList, showBoundary]
   )
 
   return (
@@ -231,10 +325,9 @@ const UpdateProductPage = ({ history, match }) => {
             specifications: product?.specifications?.join('\n'),
           }}
           onSubmit={handleSubmit}
-          validationSchema={productValidationSchema}>
+          validationSchema={productValidationSchema(existingModels)}>
           {({
             dirty,
-            errors,
             isValid,
             handleSubmit: submitForm,
             setFieldValue,
@@ -315,7 +408,7 @@ const UpdateProductPage = ({ history, match }) => {
                             try {
                               const {
                                 data: { message },
-                              } = await deleteProduct(pid)
+                              } = await deleteProduct(pid, source.token)
 
                               dispatch(
                                 createNotification({
@@ -350,7 +443,7 @@ const UpdateProductPage = ({ history, match }) => {
                   activeKey={activeTabKey}
                   onTabClick={activeKey => {
                     const generatedPath = generatePath(match.path, {
-                      pid: product.id,
+                      pid,
                       activeTab: activeKey,
                     })
 
@@ -361,6 +454,7 @@ const UpdateProductPage = ({ history, match }) => {
                       <Row gutter={[16, 8]}>
                         <Col span={8}>
                           <FastField
+                            fast
                             required
                             size='large'
                             name='name'
@@ -370,6 +464,7 @@ const UpdateProductPage = ({ history, match }) => {
                         </Col>
                         <Col span={8}>
                           <FastField
+                            fast
                             required
                             size='large'
                             name='model'
@@ -379,6 +474,7 @@ const UpdateProductPage = ({ history, match }) => {
                         </Col>
                         <Col span={8}>
                           <FastField
+                            fast
                             required
                             size='large'
                             name='collectionName'
@@ -419,6 +515,7 @@ const UpdateProductPage = ({ history, match }) => {
                       <Row gutter={[16, 8]}>
                         <Col span={4}>
                           <FastField
+                            fast
                             required
                             size='large'
                             name='color'
@@ -432,6 +529,7 @@ const UpdateProductPage = ({ history, match }) => {
                         </Col>
                         <Col span={8}>
                           <FastField
+                            fast
                             required
                             size='large'
                             style={{ width: '100%' }}
@@ -449,6 +547,7 @@ const UpdateProductPage = ({ history, match }) => {
                         </Col>
                         <Col span={4}>
                           <FastField
+                            fast
                             required
                             size='large'
                             style={{ width: '100%' }}
@@ -468,6 +567,7 @@ const UpdateProductPage = ({ history, match }) => {
                         </Col>
                         <Col span={8}>
                           <FastField
+                            fast
                             required
                             size='large'
                             style={{ width: '100%' }}
@@ -487,6 +587,7 @@ const UpdateProductPage = ({ history, match }) => {
                       </Row>
                       <Col span={24}>
                         <FastField
+                          fast
                           required
                           rows={6}
                           size='large'
@@ -501,6 +602,7 @@ const UpdateProductPage = ({ history, match }) => {
                   <TabPane key='images' tab='Product Images'>
                     <Form name='product-images'>
                       <FastField
+                        fast
                         name='images'
                         component={DragImagesUpload}
                         defaultFileList={defaultFileList}
@@ -513,6 +615,7 @@ const UpdateProductPage = ({ history, match }) => {
                     <Form name='product-details' layout='vertical'>
                       <Col span={24}>
                         <FastField
+                          fast
                           required
                           showArrow
                           mode='tags'
@@ -527,6 +630,7 @@ const UpdateProductPage = ({ history, match }) => {
                       </Col>
                       <Col span={24}>
                         <FastField
+                          fast
                           required
                           showArrow
                           mode='tags'
@@ -541,6 +645,7 @@ const UpdateProductPage = ({ history, match }) => {
                       </Col>
                       <Col span={24}>
                         <FastField
+                          fast
                           required
                           showArrow
                           mode='tags'
@@ -557,6 +662,7 @@ const UpdateProductPage = ({ history, match }) => {
                       </Col>
                       <Col span={24}>
                         <FastField
+                          fast
                           required
                           rows={6}
                           size='large'

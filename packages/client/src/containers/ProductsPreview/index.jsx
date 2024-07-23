@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import PropTypes from 'prop-types'
+import { useErrorBoundary } from 'react-error-boundary'
 import { useDispatch, useSelector } from 'react-redux'
 import { useHistory, useLocation } from 'react-router-dom'
 import { Layout, Skeleton, Pagination, Empty } from 'antd'
@@ -8,6 +9,8 @@ import ProductItem from '@components/ProductItem/index'
 import FilterSiderMenu from '@components/FilterSiderMenu/index'
 
 import { selectProductsByType } from '@redux/product/productSlice'
+
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
 
 const { Sider, Content } = Layout
 
@@ -21,26 +24,38 @@ const ProductsPreview = ({
 }) => {
   const dispatch = useDispatch()
   const products = useSelector(selectProductsByType(type))
+  const { showBoundary } = useErrorBoundary()
   const history = useHistory()
   const { pathname } = useLocation()
   const productsRef = useRef(null)
   const [errorResponse, setErrorResponse] = useState('')
 
   useEffect(() => {
+    let response
+
     const getProducts = async () => {
       try {
-        await dispatch(action(params)).unwrap()
+        response = dispatch(action(params))
+        await response?.unwrap?.()
         setErrorResponse('')
       } catch (err) {
-        const {
-          data: { message },
-        } = err
-        setErrorResponse(message)
+        handleAsyncThunkError(err, showBoundary, {
+          showBoundaryOnlyOnServerError: true,
+        })
+
+        if (err.name !== 'AbortError') {
+          const { data: { message } = { message: undefined } } = err
+          setErrorResponse(message)
+        }
       }
     }
 
     getProducts()
-  }, [dispatch, action, params])
+
+    return () => {
+      response?.abort?.('Request Aborted due to component unmount.')
+    }
+  }, [dispatch, action, params, showBoundary])
 
   return (
     <Layout style={{ backgroundColor: '#fff' }}>

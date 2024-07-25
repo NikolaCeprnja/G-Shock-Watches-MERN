@@ -7,10 +7,15 @@ const nameValidation = Yup.string()
   .max(30, 'Maximum 30 characters long.')
   .required('Name is required field.')
 
-const modelValidation = Yup.string()
-  .trim()
-  .min(2, 'Must be at least 2 characters long.')
-  .required('Model is required field.')
+const modelValidation = (existingModels = [], errMsg = '') =>
+  Yup.string()
+    .trim()
+    .min(2, 'Must be at least 2 characters long.')
+    .required('Model is required field.')
+    .notOneOf(
+      existingModels,
+      errMsg || 'Product with provided model already exists.'
+    )
 
 const collectionNameValidation = Yup.string()
   .trim()
@@ -76,18 +81,19 @@ const specificationValidation = Yup.string()
   .trim()
   .required('Specifications is required field.')
 
-export const productValidationSchema = Yup.object().shape({
-  name: nameValidation,
-  model: modelValidation,
-  collectionName: collectionNameValidation,
-  color: colorValidation,
-  price: priceValidation,
-  discount: discountValidation,
-  inStock: inStockValidation,
-  desc: descriptionValidation,
-  images: imagesValidation,
-  materials: materialsValidation,
-  types: typesValidation,
-  mainFeatures: mainFeaturesValidation,
-  specifications: specificationValidation,
-})
+export const productValidationSchema = (existingModels, errMsg) =>
+  Yup.object().shape({
+    name: nameValidation,
+    model: modelValidation(existingModels, errMsg),
+    collectionName: collectionNameValidation,
+    color: colorValidation,
+    price: priceValidation,
+    discount: discountValidation,
+    inStock: inStockValidation,
+    desc: descriptionValidation,
+    images: imagesValidation,
+    materials: materialsValidation,
+    types: typesValidation,
+    mainFeatures: mainFeaturesValidation,
+    specifications: specificationValidation,
+  })

@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { useDispatch } from 'react-redux'
 import { useHistory, useLocation } from 'react-router-dom'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Dropdown, Menu, Avatar, Image } from 'antd'
 import {
   UserOutlined,
@@ -10,7 +11,12 @@ import {
 } from '@ant-design/icons'
 
 import { signout } from '@redux/user/userThunk'
-import { removeAll as removeAllNotifications } from '@redux/notification/notificationSlice'
+import {
+  create as createNotification,
+  removeAll as removeAllNotifications,
+} from '@redux/notification/notificationSlice'
+
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
 
 import './styles.scss'
 
@@ -24,6 +30,14 @@ const AvatarDropdownMenu = ({
   const { pathname } = useLocation()
   const [isVisible, setIsVisible] = useState(false)
   const [selectedKey, setSelectedKey] = useState('')
+  const { showBoundary } = useErrorBoundary()
+  const signoutRef = useRef()
+
+  useEffect(() => {
+    return () => {
+      signoutRef.current?.abort?.('Request Aborted due to component unmount.')
+    }
+  }, [])
 
   useEffect(() => {
     if (pathname.charAt(pathname.length - 1) === '/') {
@@ -33,7 +47,7 @@ const AvatarDropdownMenu = ({
     return setSelectedKey(pathname)
   }, [pathname])
 
-  const handleMenuClick = e => {
+  const handleMenuClick = async e => {
     setIsVisible(false)
 
     if (e.key !== 'signout') {
@@ -41,8 +55,39 @@ const AvatarDropdownMenu = ({
       return
     }
 
+    try {
+      signoutRef.current = dispatch(signout())
+      const { message } = await signoutRef.current?.unwrap?.()
+      dispatch(
+        createNotification({
+          id: 'signoutSuccess',
+          type: 'success',
+          title: 'Success!',
+          description: message,
+        })
+      )
+    } catch (error) {
+      handleAsyncThunkError(error, showBoundary, {
+        showBoundaryOnlyOnServerError: true,
+      })
+
+      if (error.name !== 'AbortError') {
+        const { statusText, data: { message } = { message: undefined } } = error
+
+        dispatch(
+          createNotification({
+            id: 'signoutError',
+            type: 'error',
+            title: `Error, ${statusText}`,
+            description:
+              message ||
+              'Something went wrong while signing out, please try again later.',
+          })
+        )
+      }
+    }
+
     history.push('/')
-    dispatch(signout())
     dispatch(removeAllNotifications())
   }
 

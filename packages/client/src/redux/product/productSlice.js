@@ -1,6 +1,6 @@
 import { createSlice, createDraftSafeSelector } from '@reduxjs/toolkit'
 
-import * as productThunk from './productThunk'
+import * as productThunk from '@redux/product/productThunk'
 
 const initialState = {
   all: {
@@ -101,7 +101,7 @@ const productSlice = createSlice({
       { payload: { updatedProduct } }
     ) => {
       preview.updating = false
-      preview.data = updatedProduct
+      Object.assign(preview.data, updatedProduct)
     },
     [productThunk.updateProduct.rejected]: ({ preview }) => {
       preview.updating = false

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import PropTypes from 'prop-types'
 import { Link, useHistory } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Skeleton, Button, Rate, Badge, List, Avatar, Comment } from 'antd'
 import { ShoppingCartOutlined, UserOutlined } from '@ant-design/icons'
 
@@ -14,21 +15,27 @@ import {
 import { getProductById } from '@redux/product/productThunk'
 import { addItem } from '@redux/cart/cartSlice'
 
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
+
 const ProductPreview = ({ pid }) => {
   const history = useHistory()
   const dispatch = useDispatch()
   const productForPreview = useSelector(selectProductsByType('preview'))
+  const { showBoundary } = useErrorBoundary()
   const [imgSrc, setImgSrc] = useState('')
   const [imgIsLoading, setImgIsLoading] = useState(true)
   const magnifierRef = useRef()
   const reviewsRef = useRef(null)
 
   useEffect(() => {
-    const fetchProductById = async () => {
-      const response = await dispatch(getProductById(pid))
+    let response
 
-      if (response.error) {
-        history.push('/404')
+    const fetchProductById = async () => {
+      try {
+        response = dispatch(getProductById(pid))
+        await response?.unwrap?.()
+      } catch (err) {
+        handleAsyncThunkError(err, showBoundary)
       }
     }
 
@@ -37,8 +44,9 @@ const ProductPreview = ({ pid }) => {
     return () => {
       setImgSrc('')
       dispatch(clearProductPreview())
+      response?.abort?.('Request Aborted due to component unmount.')
     }
-  }, [history, dispatch, pid])
+  }, [history, dispatch, pid, showBoundary])
 
   return (
     <div className='product-preview'>

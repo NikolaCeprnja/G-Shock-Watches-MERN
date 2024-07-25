@@ -1,8 +1,15 @@
-/* eslint-disable no-unused-vars */
-import React, { lazy, useEffect, useState, useCallback, Suspense } from 'react'
+import React, {
+  lazy,
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  Suspense,
+} from 'react'
 import PropTypes from 'prop-types'
-import { useParams, generatePath } from 'react-router-dom'
+import { generatePath } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
+import { useErrorBoundary } from 'react-error-boundary'
 import {
   Row,
   Col,
@@ -32,6 +39,9 @@ import { create as createNotification } from '@redux/notification/notificationSl
 
 import { updateUserValidationSchema } from '@validation/user-validation'
 
+import ErrorHandler from '@utils/ErrorHandler'
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
+
 import '../UpdateUserPage/styles.scss'
 
 const PurchasedProductsPage = lazy(() =>
@@ -49,22 +59,28 @@ const UpdatingMessage = () => {
 }
 
 const UserProfilePage = ({ history, match }) => {
-  const { activeTab } = useParams()
-  const [activeTabKey, setActiveTabKey] = useState(activeTab)
+  const { activeTab } = match.params
   const [defaultFileList, setDefaultFileList] = useState([])
   const [shouldFormReset, setShouldFormReset] = useState(true)
   const [existingUserNames, setExistingUserNames] = useState([])
   const [existingEmails, setExistingEmails] = useState([])
+  const updateUserRef = useRef()
+  const deleteUserRef = useRef()
   const dispatch = useDispatch()
   const { loading, updating, info: user } = useSelector(selectLoggedInUser)
+  const { showBoundary } = useErrorBoundary()
 
   useEffect(() => {
-    if (activeTab) {
-      setActiveTabKey(activeTab)
-    } else {
-      setActiveTabKey('settings')
+    return () => {
+      updateUserRef.current?.abort?.(
+        'Request Aborted due to component unmount.'
+      )
+      deleteUserRef.current?.abort?.(
+        'Request Aborted due to component unmount.'
+      )
+      updatingMessage.destroy('updating')
     }
-  }, [activeTab])
+  }, [])
 
   useEffect(() => {
     if (user && shouldFormReset) {
@@ -76,7 +92,7 @@ const UserProfilePage = ({ history, match }) => {
             path: user.avatarUrl,
             thumbUrl:
               (user.avatarUrl &&
-                `${process.env.REACT_APP_API_BASE_URL}${user.avatarUrl}`) ||
+                `${process.env.REACT_APP_API_BASE_URL + user.avatarUrl}`) ||
               user.cloudinaryUrl ||
               user.photo,
           },
@@ -112,13 +128,15 @@ const UserProfilePage = ({ history, match }) => {
           }
         })
 
-        const { status, statusText, message } = await dispatch(
+        updateUserRef.current = dispatch(
           updateUser({
             uid: user.id,
             updatedData: data,
             updateFor: 'loggedInUser',
           })
-        ).unwrap()
+        )
+
+        await updateUserRef.current?.unwrap?.()
 
         dispatch(
           createNotification({
@@ -130,44 +148,64 @@ const UserProfilePage = ({ history, match }) => {
         )
 
         setShouldFormReset(true)
-        setActiveTabKey('settings')
+        history.replace(generatePath(match.path, { uid: user.id }))
       } catch (error) {
-        const {
-          status,
-          statusText,
-          data: { errors, message },
-        } = error
+        if (!error.name || error.name !== 'AbortError') {
+          const {
+            status,
+            statusText,
+            data: { errors, message } = {
+              errors: undefined,
+              message: undefined,
+            },
+          } = error
 
-        dispatch(
-          createNotification({
-            id: 'updateUserError',
-            type: 'error',
-            title: `Error, ${statusText}`,
-            description:
-              message ||
-              'Something went wrong while updating a user account, please try again later.',
-          })
-        )
+          if (status === 500) {
+            const boundaryError = new ErrorHandler(
+              message,
+              status,
+              statusText,
+              {
+                redirect: {
+                  to: user?.isAdmin ? '/admin/users' : '/',
+                  text: `Back to ${user?.isAdmin ? 'Users' : 'Home'}`,
+                },
+              }
+            )
 
-        if (errors) {
-          Object.keys(errors).forEach(err => {
-            if (err === 'userName') {
-              setExistingUserNames(userNames => [
-                ...userNames,
-                errors[err].value,
-              ])
-            }
+            showBoundary(boundaryError)
+            return
+          }
 
-            if (err === 'email') {
-              setExistingEmails(emails => [...emails, errors[err].value])
-            }
+          dispatch(
+            createNotification({
+              id: 'updateUserError',
+              type: 'error',
+              title: `Error, ${statusText}`,
+              description:
+                message ||
+                'Something went wrong while updating a user account, please try again later.',
+            })
+          )
 
-            setFieldError(err, errors[err].message)
-          })
+          if (errors) {
+            Object.keys(errors).forEach(err => {
+              if (err === 'userName') {
+                setExistingUserNames(userNames => [
+                  ...userNames,
+                  errors[err].value,
+                ])
+              }
+              if (err === 'email') {
+                setExistingEmails(emails => [...emails, errors[err].value])
+              }
+              setFieldError(err, errors[err].message)
+            })
+          }
         }
       }
     },
-    [dispatch, user.id]
+    [dispatch, user.id, user.isAdmin, history, match.path, showBoundary]
   )
 
   return (
@@ -204,17 +242,18 @@ const UserProfilePage = ({ history, match }) => {
             <>
               <RouterPrompt when={dirty} />
               <div className='UpdateUserPage'>
-                <div className='caption-background' />
                 <div className='caption'>
                   <div className='user-preview-wrapper'>
-                    <Button
-                      type='link'
-                      style={{ padding: 0 }}
-                      className='user-back-arrow'
-                      icon={<ArrowLeftOutlined />}
-                      onClick={() => history.push('/admin/users')}>
-                      Users
-                    </Button>
+                    {user?.isAdmin && (
+                      <Button
+                        type='link'
+                        style={{ padding: 0 }}
+                        className='user-back-arrow'
+                        icon={<ArrowLeftOutlined />}
+                        onClick={() => history.push('/admin/users')}>
+                        Users
+                      </Button>
+                    )}
                     <div className='new-user-preview'>
                       <Form name='user-avatar' layout='vertical'>
                         <Field
@@ -264,9 +303,13 @@ const UserProfilePage = ({ history, match }) => {
                             'Are you sure that you want to delete your account?',
                           onOk: async () => {
                             try {
-                              const { message } = await dispatch(
+                              deleteUserRef.current = dispatch(
                                 deleteUser(user.id)
-                              ).unwrap()
+                              )
+
+                              const {
+                                message,
+                              } = await deleteUserRef.current?.unwrap?.()
 
                               dispatch(
                                 createNotification({
@@ -278,7 +321,16 @@ const UserProfilePage = ({ history, match }) => {
                               )
 
                               history.push('/')
-                            } catch (error) {
+                            } catch (err) {
+                              handleAsyncThunkError(err, showBoundary, {
+                                redirect: {
+                                  to: user?.isAdmin ? '/admin/users' : '/',
+                                  text: `Back to ${
+                                    user?.isAdmin ? 'Users' : 'Home'
+                                  }`,
+                                },
+                              })
+
                               dispatch(
                                 createNotification({
                                   id: 'deleteUserError',
@@ -298,8 +350,8 @@ const UserProfilePage = ({ history, match }) => {
                 </div>
                 <Tabs
                   style={{ flexGrow: 1 }}
-                  defaultActiveKey='settings'
-                  activeKey={activeTabKey}
+                  defaultActiveKey='info'
+                  activeKey={activeTab || 'info'}
                   onTabClick={activeKey => {
                     const generatedPath = generatePath(match.path, {
                       uid: user.id,
@@ -308,7 +360,7 @@ const UserProfilePage = ({ history, match }) => {
 
                     history.replace(generatedPath)
                   }}>
-                  <TabPane key='settings' tab='Basic User Info'>
+                  <TabPane key='info' tab='Basic User Info'>
                     <Form name='user-info' layout='vertical'>
                       <Row gutter={[16, 8]}>
                         <Col span={8}>

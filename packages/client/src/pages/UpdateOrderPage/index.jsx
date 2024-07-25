@@ -1,8 +1,8 @@
-/* eslint-disable no-unused-vars */
 import React, { useLayoutEffect, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
-import { useParams, generatePath } from 'react-router-dom'
+import { generatePath } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Spin, Button, Tabs, Table, Collapse } from 'antd'
 import {
   ArrowLeftOutlined,
@@ -19,34 +19,43 @@ import {
   ORDER_PRODUCTS_COLUMNS,
 } from '@shared/constants'
 
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
+
 import './styles.scss'
 
 const { TabPane } = Tabs
 const { Panel } = Collapse
 
 const UpdateOrderPage = ({ history, match }) => {
-  const { oid, activeTab } = useParams()
+  const { oid, activeTab } = match.params
   const dispatch = useDispatch()
-  const { loading, updating, data: order } = useSelector(
-    selectOrdersByType('preview')
-  )
-  const [activeTabKey, setActiveTabKey] = useState(activeTab)
+  const { loading, data: order } = useSelector(selectOrdersByType('preview'))
+  const { showBoundary } = useErrorBoundary()
 
   useLayoutEffect(() => {
-    dispatch(getOrderById(oid))
+    let response
+
+    const fetchOrderById = async () => {
+      try {
+        response = dispatch(getOrderById(oid))
+        await response?.unwrap?.()
+      } catch (err) {
+        handleAsyncThunkError(err, showBoundary, {
+          redirect: {
+            to: '/admin/e-commerce/orders',
+            text: 'Back to Orders',
+          },
+        })
+      }
+    }
+
+    fetchOrderById()
 
     return () => {
       dispatch(clearOrderPreview())
+      response?.abort?.('Request Aborted due to component unmount.')
     }
-  }, [dispatch, oid])
-
-  useEffect(() => {
-    if (activeTab) {
-      setActiveTabKey(activeTab)
-    } else {
-      setActiveTabKey('info')
-    }
-  }, [activeTab])
+  }, [dispatch, oid, showBoundary])
 
   return (
     <div className='UpdateOrderPageWrapper'>
@@ -70,7 +79,7 @@ const UpdateOrderPage = ({ history, match }) => {
           </div>
           <Tabs
             defaultActiveKey='info'
-            activeKey={activeTabKey}
+            activeKey={activeTab || 'info'}
             onTabClick={activeKey => {
               const generatedPath = generatePath(match.path, {
                 oid,

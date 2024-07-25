@@ -3,7 +3,9 @@ import ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'
 import { PersistGate } from 'redux-persist/integration/react'
 import { BrowserRouter as Router } from 'react-router-dom'
+import { ErrorBoundary } from 'react-error-boundary'
 
+import ErrorFallback from '@components/ErrorFallback/index'
 import ScrollToTop from '@components/ScrollToTop/index'
 
 import { store, persistor } from '@redux/store'
@@ -19,7 +21,9 @@ ReactDOM.render(
       <PersistGate loading={null} persistor={persistor}>
         <Router getUserConfirmation={() => {}}>
           <ScrollToTop />
-          <App />
+          <ErrorBoundary FallbackComponent={ErrorFallback}>
+            <App />
+          </ErrorBoundary>
         </Router>
       </PersistGate>
     </Provider>

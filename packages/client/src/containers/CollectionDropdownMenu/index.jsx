@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import PropTypes from 'prop-types'
-import { useHistory, useLocation, useRouteMatch } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { Dropdown, Menu, Skeleton } from 'antd'
+import { useHistory, useLocation, useRouteMatch } from 'react-router-dom'
+import { useErrorBoundary } from 'react-error-boundary'
+import { Dropdown, Menu, Skeleton, Empty } from 'antd'
 
 import CollectionItem from '@components/CollectionItem/index'
 
@@ -12,14 +13,25 @@ import {
 } from '@redux/collection/collectionSlice'
 import { getCollectionsByGender } from '@redux/collection/collectionThunk'
 
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
+
 const CollectionDropdownMenu = ({ gender, skeletons }) => {
   const history = useHistory()
   const { pathname, search } = useLocation()
   const match = useRouteMatch('/watches/:type')
   const dispatch = useDispatch()
   const { loading, data } = useSelector(selectCollectionsByGender(gender))
+  const collRef = useRef()
+  const { showBoundary } = useErrorBoundary()
   const [isVisible, setIsVisible] = useState(false)
   const [selectedKeys, setSelectedKeys] = useState([])
+  const [errMsg, setErrMsg] = useState()
+
+  useEffect(() => {
+    return () => {
+      collRef.current?.abort?.('Request Aborted due to component unmount.')
+    }
+  }, [])
 
   useEffect(() => {
     const query = new URLSearchParams(search)
@@ -35,13 +47,28 @@ const CollectionDropdownMenu = ({ gender, skeletons }) => {
     return setSelectedKeys()
   }, [pathname, search, match, gender])
 
-  const handleVisibleChange = visible => {
-    setIsVisible(visible)
+  const handleVisibleChange = useCallback(
+    async visible => {
+      setIsVisible(visible)
 
-    if (visible && !data && !loading) {
-      dispatch(getCollectionsByGender(gender))
-    }
-  }
+      if (visible && !data && !loading) {
+        try {
+          collRef.current = dispatch(getCollectionsByGender(gender))
+          await collRef.current?.unwrap?.()
+        } catch (err) {
+          handleAsyncThunkError(err, showBoundary, {
+            showBoundaryOnlyOnServerError: true,
+          })
+
+          if (err.name !== 'AbortError') {
+            const { data: { message } = { message: undefined } } = err
+            setErrMsg(message)
+          }
+        }
+      }
+    },
+    [dispatch, gender, data, loading, showBoundary]
+  )
 
   return (
     <Dropdown
@@ -105,7 +132,10 @@ const CollectionDropdownMenu = ({ gender, skeletons }) => {
                 />
               ))}
           {!loading && !data?.length && (
-            <div>There is no collections for {gender}</div>
+            <Empty
+              style={{ color: '#fff', padding: '2rem 0' }}
+              description={errMsg || `There is no collections for ${gender}`}
+            />
           )}
         </Menu>
       }>

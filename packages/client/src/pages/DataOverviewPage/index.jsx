@@ -7,9 +7,12 @@ import React, {
 } from 'react'
 import PropTypes from 'prop-types'
 import { parse, stringify } from 'qs'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useRouteMatch } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Table, Input, Button, Empty } from 'antd'
+
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
 
 import './styles.scss'
 
@@ -26,12 +29,14 @@ const DataOverviewPage = ({
   selector,
 }) => {
   const dispatch = useDispatch()
-  const { pathname, search } = useLocation()
+  const selectedInfo = useSelector(selector)
+  const { search } = useLocation()
+  const { path } = useRouteMatch()
+  const { showBoundary } = useErrorBoundary()
   const searchQueryParam = useRef('')
   const [errMsg, setErrMsg] = useState('')
   const [defaultColumns, setDefaultColumns] = useState()
   const [defaultSearchValue, setDefaultSearchValue] = useState('')
-  const selectedInfo = useSelector(selector)
 
   useLayoutEffect(() => {
     const urlSearchQueryParams = parse(search, { ignoreQueryPrefix: true })
@@ -64,23 +69,32 @@ const DataOverviewPage = ({
   }, [])
 
   useEffect(() => {
+    let response
+
     const fetchData = async () => {
       try {
         const urlSearchQueryParams = parse(search, { ignoreQueryPrefix: true })
-        await dispatch(action(urlSearchQueryParams)).unwrap()
+        response = dispatch(action(urlSearchQueryParams))
+        await response?.unwrap?.()
       } catch (err) {
-        const {
-          data: { message },
-        } = err
+        handleAsyncThunkError(err, showBoundary, {
+          showBoundaryOnlyOnServerError: true,
+        })
 
-        if (err.status !== 'ABORTED') {
+        if (!err.name || err.name !== 'AbortError') {
+          const { data: { message } = { message: undefined } } = err
+
           setErrMsg(message)
         }
       }
     }
 
     fetchData()
-  }, [action, dispatch, search])
+
+    return () => {
+      response?.abort?.('Request Aborted due to component unmount.')
+    }
+  }, [action, dispatch, search, showBoundary])
 
   const handleOnSearch = useCallback(
     (value, event) => {
@@ -114,7 +128,6 @@ const DataOverviewPage = ({
 
   return (
     <div className='DataOverviewPage'>
-      <div className='caption-background' />
       <div className='caption'>
         <h1 className='title'>{title}</h1>
         <Search
@@ -132,7 +145,7 @@ const DataOverviewPage = ({
             type='primary'
             size='large'
             icon={addNewIcon}
-            onClick={() => history.push(`${pathname}/create`)}>
+            onClick={() => history.push(`${path}/create`)}>
             Add New {dataAbout.charAt(0).toUpperCase() + dataAbout.slice(1)}
           </Button>
         )}
@@ -144,10 +157,12 @@ const DataOverviewPage = ({
           rowClassName='data-overview-row'
           columns={defaultColumns || columns}
           loading={selectedInfo.loading}
-          dataSource={selectedInfo.data}
+          dataSource={selectedInfo.loading ? undefined : selectedInfo.data}
           locale={{
             emptyText: selectedInfo.loading ? (
-              <p style={{ fontSize: '1.2rem' }}>Loading {dataAbout}s data...</p>
+              <p style={{ fontSize: '1.2rem' }}>
+                Loading {dataAbout}&apos;s data...
+              </p>
             ) : (
               <Empty
                 image='https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg'
@@ -178,7 +193,7 @@ const DataOverviewPage = ({
           }}
           onRow={({ id }) => {
             return {
-              onClick: () => history.push(`${pathname}/${id}`),
+              onClick: () => history.push(`${path}/${id}`),
             }
           }}
           onChange={({ current, pageSize }, filters, sorters) => {

@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import PropTypes from 'prop-types'
 import { useSelector, useDispatch } from 'react-redux'
 import { useHistory, useLocation } from 'react-router-dom'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Menu, Image } from 'antd'
 import {
   DashboardOutlined,
@@ -16,7 +17,12 @@ import { ReactComponent as UsersIcon } from '@assets/Users.svg'
 
 import { signout } from '@redux/user/userThunk'
 import { selectLoggedInUser } from '@redux/user/userSlice'
-import { removeAll as removeAllNotifications } from '@redux/notification/notificationSlice'
+import {
+  create as createNotification,
+  removeAll as removeAllNotifications,
+} from '@redux/notification/notificationSlice'
+
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
 
 import './styles.scss'
 
@@ -30,6 +36,14 @@ const AdminSiderMenu = ({ collapsed }) => {
   const loggedInUser = useSelector(selectLoggedInUser)
   const [openKeys, setOpenKeys] = useState([pathname.split('/', 3).join('/')])
   const [selectedKeys, setSelectedKeys] = useState(['/admin/dashboard'])
+  const { showBoundary } = useErrorBoundary()
+  const signoutRef = useRef()
+
+  useEffect(() => {
+    return () => {
+      signoutRef.current?.abort?.('Request Aborted due to component unmount.')
+    }
+  }, [])
 
   useEffect(() => {
     switch (true) {
@@ -66,7 +80,7 @@ const AdminSiderMenu = ({ collapsed }) => {
     }
   }, [pathname, collapsed])
 
-  const handleMenuClick = e => {
+  const handleMenuClick = async e => {
     if (e.keyPath.length > 1) {
       setOpenKeys([e.keyPath[e.keyPath.length - 1]])
     } else {
@@ -78,9 +92,40 @@ const AdminSiderMenu = ({ collapsed }) => {
       return
     }
 
-    history.push('/')
-    dispatch(signout())
-    dispatch(removeAllNotifications())
+    try {
+      signoutRef.current = dispatch(signout())
+      const { message } = await signoutRef.current?.unwrap?.()
+      dispatch(
+        createNotification({
+          id: 'signoutSuccess',
+          type: 'success',
+          title: 'Success!',
+          description: message,
+        })
+      )
+
+      history.push('/')
+      dispatch(removeAllNotifications())
+    } catch (error) {
+      handleAsyncThunkError(error, showBoundary, {
+        showBoundaryOnlyOnServerError: true,
+      })
+
+      if (error.name !== 'AbortError') {
+        const { statusText, data: { message } = { message: undefined } } = error
+
+        dispatch(
+          createNotification({
+            id: 'signoutError',
+            type: 'error',
+            title: `Error, ${statusText}`,
+            description:
+              message ||
+              'Something went wrong while signing out, please try again later.',
+          })
+        )
+      }
+    }
   }
 
   const handleSubMenuOpen = keys => {

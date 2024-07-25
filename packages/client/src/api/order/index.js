@@ -5,33 +5,38 @@ const axios = Axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-const getOrders = async urlQueryParams => {
-  const response = await axios({ params: urlQueryParams })
+const getOrders = async (params, cancelToken) => {
+  const response = await axios({ params, cancelToken })
   return response
 }
 
-export const getTotalOrdersCount = async () => {
-  const response = await axios('/count')
+export const getTotalOrdersCount = async cancelToken => {
+  const response = await axios('/count', { cancelToken })
   return response
 }
 
-export const getTotalOrdersSales = async urlQueryParams => {
-  const response = await axios('/total-sales', { params: urlQueryParams })
+export const getTotalOrdersSales = async (cancelToken, params) => {
+  const response = await axios('/total-sales', {
+    params,
+    cancelToken,
+  })
   return response
 }
 
-const getOrderById = async oid => {
-  const response = await axios(`/${oid}`)
+const getOrderById = async (oid, cancelToken) => {
+  const response = await axios(`/${oid}`, { cancelToken })
   return response
 }
 
-export const getOrdersByUserId = async uid => {
-  const response = await axios(`/users/${uid}`)
+export const getOrdersByUserId = async (uid, cancelToken) => {
+  const response = await axios(`/users/${uid}`, {
+    cancelToken,
+  })
   return response
 }
 
-export const createNewOrder = async data => {
-  const response = await axios.post('/create', data)
+export const createNewOrder = async (data, cancelToken) => {
+  const response = await axios.post('/create', data, { cancelToken })
   return response
 }
 

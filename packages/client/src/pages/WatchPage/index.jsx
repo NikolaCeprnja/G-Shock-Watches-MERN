@@ -16,9 +16,11 @@ const WatchPage = () => {
         <Breadcrumb.Item>
           <Link to='/watches'>WATCHES</Link>
         </Breadcrumb.Item>
-        <Breadcrumb.Item>
-          <Link to={`/watches/${gender}`}>{`${gender.toUpperCase()}'S`}</Link>
-        </Breadcrumb.Item>
+        {gender && gender !== 'all' && (
+          <Breadcrumb.Item>
+            <Link to={`/watches/${gender}`}>{gender.toUpperCase()}</Link>
+          </Breadcrumb.Item>
+        )}
         <Breadcrumb.Item>
           <Link to={`/watches/${gender}?collectionName=${name}`}>
             {name.toUpperCase()}

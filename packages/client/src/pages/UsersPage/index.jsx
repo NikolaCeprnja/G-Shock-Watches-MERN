@@ -1,5 +1,6 @@
 import React, { lazy } from 'react'
-import { Switch, Route, useRouteMatch } from 'react-router-dom'
+import { Switch, Route, useRouteMatch, Link } from 'react-router-dom'
+import { Result } from 'antd'
 import { UsergroupAddOutlined } from '@ant-design/icons'
 import Icon from '@ant-design/icons/lib/components/Icon'
 
@@ -55,6 +56,23 @@ const UsersPage = () => {
         exact
         path={`${path}/:uid/:activeTab?`}
         component={UpdateUserPage}
+      />
+      <Route
+        path='*'
+        render={() => (
+          <Result
+            style={{ margin: 'auto' }}
+            status={404}
+            title={
+              <>
+                <strong>404</strong>
+                <p>Page Not Found</p>
+              </>
+            }
+            subTitle="The page you are looking for doesn't exists."
+            extra={<Link to='/admin/users'>Back to Users</Link>}
+          />
+        )}
       />
     </Switch>
   )

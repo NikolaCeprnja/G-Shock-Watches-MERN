@@ -1,4 +1,7 @@
 module.exports = {
+  CLIENT: {
+    BASE_URL: process.env.CLIENT_BASE_URL_DEV,
+  },
   SERVER: {
     HOST: process.env.HOST_DEV,
   },

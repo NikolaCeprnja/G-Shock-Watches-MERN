@@ -608,7 +608,7 @@ const updateProduct = async (req, res, next) => {
       'images[]': newUploadedImages,
     },
     body: {
-      previewImg: [existingPreviewImg] = '',
+      previewImg: existingPreviewImg = '',
       images: existingImages = [],
       collectionName,
       specifications,
@@ -674,6 +674,7 @@ const updateProduct = async (req, res, next) => {
           console.log({ error })
         }
       })
+
       updatedImagesPaths = updatedImagesPaths.filter(
         imgPath => !removedFileList.includes(imgPath)
       )

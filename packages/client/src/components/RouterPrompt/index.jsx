@@ -1,54 +1,88 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, {
+  useLayoutEffect,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+} from 'react'
 import PropTypes from 'prop-types'
-import { useHistory } from 'react-router-dom'
+import { useHistory, useRouteMatch, matchPath } from 'react-router-dom'
 
 import { Modal } from 'antd'
 
-const RouterPrompt = ({ when, onOk, onCancel, title, okText, cancelText }) => {
+const handleBeforeUnload = e => {
+  e.preventDefault()
+  e.returnValue = true
+}
+
+const RouterPrompt = ({ when, title, okText, cancelText }) => {
   const history = useHistory()
-
+  const { path, url } = useRouteMatch()
+  const baseUrlRef = useRef(url)
+  const unblockHistoryRef = useRef()
+  const [nextPath, setNextPath] = useState()
   const [showPrompt, setShowPrompt] = useState(false)
-  const [currentPath, setCurrentPath] = useState('')
 
-  useEffect(() => {
-    if (when) {
-      history.block(prompt => {
-        setCurrentPath(prompt.pathname)
-        setShowPrompt(true)
-        return 'true'
-      })
-    } else {
-      history.block(() => {})
+  useLayoutEffect(() => {
+    const currPath = matchPath(baseUrlRef.current, { path, exact: true })
+
+    if (currPath?.params?.activeTab) {
+      baseUrlRef.current = currPath.url.replace(
+        `/${currPath.params.activeTab}`,
+        ''
+      )
     }
 
     return () => {
-      history.block(() => {})
+      unblockHistoryRef.current?.()
+      window.removeEventListener('beforeunload', handleBeforeUnload)
     }
-  }, [history, when])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  const handleOK = useCallback(async () => {
-    if (onOk) {
-      const canRoute = await Promise.resolve(onOk())
+  useEffect(() => {
+    if (when) {
+      /* Prevent loss of unsaved data by showing the browser-generated confirmation dialog
+       when the user tries to refresh the page or close the current tab/navigate elsewhere */
+      window.addEventListener('beforeunload', handleBeforeUnload)
 
-      if (canRoute) {
-        history.block(() => {})
-        history.push(currentPath)
-      }
+      unblockHistoryRef.current = history.block(prompt => {
+        const { pathname, search, state } = prompt
+
+        const isSameRoutePath = matchPath(pathname, {
+          path,
+          exact: true,
+        })
+
+        const hasSameBaseUrl = pathname.startsWith(baseUrlRef.current)
+
+        if ((isSameRoutePath === null && !hasSameBaseUrl) || !hasSameBaseUrl) {
+          setNextPath({ pathname, search, state })
+          setShowPrompt(true)
+          return false
+        }
+
+        return undefined
+      })
+
+      return
     }
-  }, [currentPath, history, onOk])
 
-  const handleCancel = useCallback(async () => {
-    if (onCancel) {
-      const canRoute = await Promise.resolve(onCancel())
-
-      if (canRoute) {
-        history.block(() => {})
-        history.push(currentPath)
-      }
+    if (unblockHistoryRef.current) {
+      unblockHistoryRef.current()
+      window.removeEventListener('beforeunload', handleBeforeUnload)
     }
+  }, [history, when, path])
 
+  const handleOK = useCallback(() => {
+    unblockHistoryRef.current?.()
+    baseUrlRef.current = nextPath.pathname
+    history.push(nextPath)
+  }, [nextPath, history])
+
+  const handleCancel = useCallback(() => {
     setShowPrompt(false)
-  }, [currentPath, history, onCancel])
+  }, [])
 
   return showPrompt ? (
     <Modal
@@ -67,16 +101,12 @@ const RouterPrompt = ({ when, onOk, onCancel, title, okText, cancelText }) => {
 
 RouterPrompt.defaultProps = {
   title: 'Leave this page?',
-  onOk: () => true,
-  onCancel: () => false,
   okText: 'Confirm',
   cancelText: 'Cancel',
 }
 
 RouterPrompt.propTypes = {
   when: PropTypes.bool.isRequired,
-  onOk: PropTypes.func,
-  onCancel: PropTypes.func,
   title: PropTypes.string,
   okText: PropTypes.string,
   cancelText: PropTypes.string,

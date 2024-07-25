@@ -2,6 +2,9 @@
 if (process.env.NODE_ENV !== 'production') require('dotenv').config()
 
 module.exports = {
+  CLIENT: {
+    BASE_URL: 'http://localhost:3000',
+  },
   SERVER: {
     PORT: 5000,
     HOST: 'localhost',

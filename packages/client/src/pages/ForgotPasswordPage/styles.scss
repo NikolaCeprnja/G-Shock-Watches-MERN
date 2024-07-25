@@ -7,13 +7,16 @@
 
   & div.ant-card.ant-card-bordered {
     width: 400px;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 15px;
+    overflow: hidden;
+    border-radius: 1rem;
+    border-color: #1b2330;
 
     div.ant-card-head {
       text-align: center;
+      background-color: #1b2330;
 
       & div.ant-card-head-title {
+        color: #fff;
         padding: 1.5rem 0;
         font-size: 1.7rem;
       }

@@ -72,19 +72,32 @@ function getCursorPos(e) {
 }
 
 const handleMouseMove = e => {
-  moveMagnifier(e)
+  const {
+    currentTarget: { firstChild, lastChild },
+  } = e
+
+  if (
+    firstChild.style.display !== 'none' &&
+    !lastChild.classList.contains('loading')
+  ) {
+    moveMagnifier(e)
+  }
 }
 
 const handleOnMouseEnter = e => {
   const { currentTarget: parent } = e
 
-  parent.firstChild.style.display = 'block'
+  if (!parent.lastChild.classList.contains('loading')) {
+    parent.firstChild.style.display = 'block'
+  }
 }
 
 const handleOnMouseLeave = e => {
   const { currentTarget: parent } = e
 
-  parent.firstChild.style.display = 'none'
+  if (!parent.lastChild.classList.contains('loading')) {
+    parent.firstChild.style.display = 'none'
+  }
 }
 
 const Magnifier = forwardRef(({ children }, fowardedRef) => {

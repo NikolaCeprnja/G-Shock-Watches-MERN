@@ -5,9 +5,8 @@ const axios = Axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-const getOffers = async () => {
-  const response = await axios()
-
+const getOffers = async cancelToken => {
+  const response = await axios({ cancelToken })
   return response
 }
 

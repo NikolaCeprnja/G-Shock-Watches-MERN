@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import { useErrorBoundary } from 'react-error-boundary'
 import { useDispatch, useSelector } from 'react-redux'
 import { Carousel } from 'antd'
 
@@ -7,15 +8,33 @@ import OfferItem from '@components/OfferItem/index'
 import { selectOffers } from '@redux/offer/offerSlice'
 import { getOffers } from '@redux/offer/offerThunk'
 
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
+
 const OffersCarousel = () => {
   const dispatch = useDispatch()
   const offers = useSelector(selectOffers)
+  const { showBoundary } = useErrorBoundary()
 
   useEffect(() => {
-    const getCurrentOffers = () => dispatch(getOffers())
+    let response
+
+    const getCurrentOffers = async () => {
+      try {
+        response = dispatch(getOffers())
+        await response?.unwrap?.()
+      } catch (err) {
+        handleAsyncThunkError(err, showBoundary, {
+          showBoundaryOnlyOnServerError: true,
+        })
+      }
+    }
 
     getCurrentOffers()
-  }, [dispatch])
+
+    return () => {
+      response?.abort?.('Request Aborted due to component unmount.')
+    }
+  }, [dispatch, showBoundary])
 
   return (
     <Carousel

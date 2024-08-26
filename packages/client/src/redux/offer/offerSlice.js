@@ -1,13 +1,13 @@
 import { createSlice } from '@reduxjs/toolkit'
 
-import * as offerThunk from './offerThunk'
+import * as offerThunk from '@redux/offer/offerThunk'
 
 const initialState = {
   loading: false,
   data: undefined,
 }
 
-export const offerSlice = createSlice({
+const offerSlice = createSlice({
   name: 'offers',
   initialState,
   reducers: {},

@@ -157,7 +157,7 @@ const CheckoutPage = () => {
     })
 
     if (activeStepIdx === -1) {
-      return history.push('/checkout/summary')
+      return history.replace('/checkout/summary')
     }
 
     const activeStep = stepState[activeStepIdx]
@@ -178,7 +178,7 @@ const CheckoutPage = () => {
 
     if (activeStepIdx === -1) {
       setCurrent(1)
-      return history.push('/checkout/summary')
+      return history.replace('/checkout/summary')
     }
 
     const activeStep = stepState[activeStepIdx]

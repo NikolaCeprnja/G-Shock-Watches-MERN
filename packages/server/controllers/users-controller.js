@@ -253,7 +253,7 @@ const getUserById = async (req, res, next) => {
 
   return res
     .status(404)
-    .json({ message: 'User with provided uid does not exists.' })
+    .json({ message: "User with provided uid doesn't exists." })
 }
 
 const getPurchasedProductsAndReviews = async (req, res, next) => {

@@ -1,5 +1,6 @@
 import React, { lazy } from 'react'
-import { Switch, Route, useRouteMatch } from 'react-router-dom'
+import { Switch, Route, useRouteMatch, Link } from 'react-router-dom'
+import { Result } from 'antd'
 import { AppstoreOutlined, AppstoreAddOutlined } from '@ant-design/icons'
 
 import { PRODUCT_COLUMNS } from '@shared/constants'
@@ -46,8 +47,33 @@ const ProductsPage = () => {
           />
         )}
       />
-      <Route exact path={`${path}/create`} component={AddNewProductPage} />
-      <Route exact path={`${path}/:pid`} component={UpdateProductPage} />
+      <Route
+        exact
+        path={`${path}/create/:activeTab?`}
+        component={AddNewProductPage}
+      />
+      <Route
+        exact
+        path={`${path}/:pid/:activeTab?`}
+        component={UpdateProductPage}
+      />
+      <Route
+        path='*'
+        render={() => (
+          <Result
+            style={{ margin: 'auto' }}
+            status={404}
+            title={
+              <>
+                <strong>404</strong>
+                <p>Page Not Found</p>
+              </>
+            }
+            subTitle="The page you are looking for doesn't exists."
+            extra={<Link to={path}>Back to Products</Link>}
+          />
+        )}
+      />
     </Switch>
   )
 }

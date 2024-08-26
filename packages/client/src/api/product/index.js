@@ -5,55 +5,51 @@ const axios = Axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-const getProducts = async urlQueryParams => {
-  const response = await axios({ params: urlQueryParams })
-
+const getProducts = async (params, cancelToken) => {
+  const response = await axios({ params, cancelToken })
   return response
 }
 
-export const getTotalProductsCount = async () => {
-  const response = await axios('/count')
+export const getTotalProductsCount = async cancelToken => {
+  const response = await axios('/count', { cancelToken })
   return response
 }
 
-const getProductById = async pid => {
-  const response = await axios(`/${pid}`)
-
+const getProductById = async (pid, cancelToken) => {
+  const response = await axios(`/${pid}`, { cancelToken })
   return response
 }
 
-const getLatestProducts = async () => {
-  const response = await axios('/latest')
-
+const getLatestProducts = async cancelToken => {
+  const response = await axios('/latest', { cancelToken })
   return response
 }
 
-const getTopRatedProducts = async () => {
-  const response = await axios('/top-rated')
-
+const getTopRatedProducts = async cancelToken => {
+  const response = await axios('/top-rated', { cancelToken })
   return response
 }
 
-const getProductReviews = async pid => {
-  const response = await axios(`/products/${pid}`, { baseURL: '/api/reviews' })
+const getProductReviews = async (pid, cancelToken) => {
+  const response = await axios(`/products/${pid}`, {
+    baseURL: '/api/reviews',
+    cancelToken,
+  })
   return response
 }
 
-export const createNewProduct = async data => {
-  const response = await axios.post('/create', data)
-
+export const createNewProduct = async (data, cancelToken) => {
+  const response = await axios.post('/create', data, { cancelToken })
   return response
 }
 
-const updateProduct = async (pid, data) => {
-  const response = await axios.put(`/${pid}`, data)
-
+const updateProduct = async (pid, data, cancelToken) => {
+  const response = await axios.put(`/${pid}`, data, { cancelToken })
   return response
 }
 
-export const deleteProduct = async pid => {
-  const response = await axios.delete(`/${pid}`)
-
+export const deleteProduct = async (pid, cancelToken) => {
+  const response = await axios.delete(`/${pid}`, { cancelToken })
   return response
 }
 

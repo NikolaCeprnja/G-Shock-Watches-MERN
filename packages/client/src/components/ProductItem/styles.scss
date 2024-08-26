@@ -57,12 +57,43 @@
       transform: scale(1.1);
       transition: all 0.2s ease-in;
     }
+
+    &:hover .img-wrapper.out-of-stock::before {
+      rotate: 8deg;
+    }
   }
 
   .img-wrapper {
+    position: relative;
     width: 200px;
     height: 200px;
     transition: all 0.2s ease-in;
+
+    &.out-of-stock {
+      & .product-img {
+        filter: blur(0.8px);
+      }
+
+      &::before {
+        content: 'Out Of Stock!';
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        translate: -50% -50%;
+        transition: rotate 0.2s ease-in;
+        width: 90%;
+        height: 50%;
+        z-index: 2;
+        background-color: rgba(10, 10, 10, 0.6);
+        color: rgb(252, 61, 61);
+        font-size: 1.2rem;
+        font-weight: bold;
+        border: 2px solid rgb(252, 61, 61);
+      }
+    }
 
     .product-img {
       width: 100%;

@@ -1,8 +1,8 @@
 import React, { useLayoutEffect, lazy, Suspense } from 'react'
-import { Switch, Route } from 'react-router-dom'
+import { Switch, Route, Link } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import PropTypes from 'prop-types'
-import { Spin } from 'antd'
+import { Spin, Result } from 'antd'
 
 import { selectLoggedInUser } from '@redux/user/userSlice'
 
@@ -17,7 +17,7 @@ const AdminPanelPage = ({ history }) => {
 
   useLayoutEffect(() => {
     if (!loggedInUser.info?.isAdmin)
-      history.push(`/users/${loggedInUser.info.id}/profile`)
+      history.replace(`/users/${loggedInUser.info.id}/profile`)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -35,7 +35,11 @@ const AdminPanelPage = ({ history }) => {
         </div>
       }>
       <Switch>
-        <Route exact path='/admin/dashboard' component={DashboardPage} />
+        <Route
+          exact
+          path={['/admin', '/admin/dashboard']}
+          component={DashboardPage}
+        />
         <Route
           exact
           path={['/admin/e-commerce/products', '/admin/e-commerce/products/*']}
@@ -55,6 +59,23 @@ const AdminPanelPage = ({ history }) => {
           exact
           path='/admin/profile/:activeTab?'
           component={UserProfilePage}
+        />
+        <Route
+          path='*'
+          render={() => (
+            <Result
+              style={{ margin: 'auto' }}
+              status={404}
+              title={
+                <>
+                  <strong>404</strong>
+                  <p>Page Not Found</p>
+                </>
+              }
+              subTitle="The page you are looking for doesn't exists."
+              extra={<Link to='/admin/dashboard'>Back to Dashboard</Link>}
+            />
+          )}
         />
       </Switch>
     </Suspense>

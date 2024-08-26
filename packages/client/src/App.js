@@ -1,7 +1,8 @@
 import React, { useEffect, Suspense, lazy } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { Switch, Route } from 'react-router-dom'
-import { Spin, BackTop, notification as antdNotifications } from 'antd'
+import { useErrorBoundary } from 'react-error-boundary'
+import { Switch, Route, Link } from 'react-router-dom'
+import { Spin, BackTop, Result, notification as antdNotifications } from 'antd'
 
 import AuthLayout from '@layouts/AuthLayout/index'
 import MainLayout from '@layouts/MainLayout/index'
@@ -14,6 +15,7 @@ import ProtectedRoute from '@components/ProtectedRoute/index'
 import { authUser } from '@redux/user/userThunk'
 import { selectLoggedInUser } from '@redux/user/userSlice'
 import { selectNotifications } from '@redux/notification/notificationSlice'
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
 
 import './App.less'
 
@@ -31,18 +33,28 @@ const App = () => {
   const dispatch = useDispatch()
   const loggedInUser = useSelector(selectLoggedInUser)
   const notifications = useSelector(selectNotifications)
+  const { showBoundary } = useErrorBoundary()
 
   useEffect(() => {
+    let response
+
     const getAuthUser = async () => {
       try {
-        await dispatch(authUser())
+        response = dispatch(authUser())
+        await response?.unwrap?.()
       } catch (err) {
-        console.log(err)
+        handleAsyncThunkError(err, showBoundary, {
+          showBoundaryOnlyOnServerError: true,
+        })
       }
     }
 
     getAuthUser()
-  }, [dispatch])
+
+    return () => {
+      response?.abort?.('Request Aborted due to component unmount.')
+    }
+  }, [dispatch, showBoundary])
 
   useEffect(() => {
     if (!loggedInUser.info && loggedInUser.auth === 'unauthenticated') {
@@ -93,7 +105,7 @@ const App = () => {
           />
           <ProtectedRoute
             exact
-            path='/admin/*'
+            path='/admin*'
             isPrivate
             layout={DashboardLayout}
             siderMenu={AdminSiderMenu}
@@ -124,8 +136,23 @@ const App = () => {
               </MainLayout>
             )}
           />
-          {/* // TODO: add 403, 404 and 500 pages */}
-          <Route path='*' render={() => <div>Error, 404 Page!</div>} />
+          <Route
+            path='*'
+            render={() => (
+              <Result
+                style={{ margin: 'auto' }}
+                status={404}
+                title={
+                  <>
+                    <strong>404</strong>
+                    <p>Page Not Found</p>
+                  </>
+                }
+                subTitle="The page you are looking for doesn't exists."
+                extra={<Link to='/'>Back to Home</Link>}
+              />
+            )}
+          />
         </Switch>
         <BackTop />
       </Suspense>

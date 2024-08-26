@@ -22,8 +22,8 @@ const CollectionItem = ({ name, imgUrl, ...otherProps }) => {
           className={`collection-img${imgIsLoading ? ' loading' : ''}`}
           src={imgUrl}
           alt={`${name}-watch`}
-          width='200'
-          height='200'
+          width={200}
+          height={200}
         />
         <h4 className='collection-name'>{name}</h4>
       </div>

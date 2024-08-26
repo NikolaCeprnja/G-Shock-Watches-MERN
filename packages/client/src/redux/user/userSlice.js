@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { createSlice, createDraftSafeSelector } from '@reduxjs/toolkit'
 
-import * as userThunk from './userThunk'
+import * as userThunk from '@redux/user/userThunk'
 
 const initialState = {
   loggedInUser: {
@@ -24,7 +24,7 @@ const initialState = {
   },
 }
 
-export const userSlice = createSlice({
+const userSlice = createSlice({
   name: 'users',
   initialState,
   reducers: {

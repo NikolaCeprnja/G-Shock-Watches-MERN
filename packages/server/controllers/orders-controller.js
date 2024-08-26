@@ -5,7 +5,7 @@ const User = require('../models/user-model')
 const Product = require('../models/product-model')
 const ErrorHandler = require('../models/error-handler')
 
-// GET CONTOLLERS
+// GET CONTROLLERS
 const getOrders = async (req, res, next) => {
   let orders
   const showPerPage = Number(req.query.pageSize) || 8

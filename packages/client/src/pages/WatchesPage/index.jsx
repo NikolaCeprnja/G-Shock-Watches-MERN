@@ -1,6 +1,7 @@
 import React, { useMemo, useState, lazy } from 'react'
 import { parse } from 'qs'
-import { useParams, useLocation, Switch, Route } from 'react-router-dom'
+import { useParams, useLocation, Switch, Route, Link } from 'react-router-dom'
+import { Result } from 'antd'
 
 import ProductsPreview from '@containers/ProductsPreview/index'
 
@@ -28,10 +29,18 @@ const WatchesPage = () => {
     }
 
     Object.entries(urlQueryParams).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        if (key === 'collectionName') {
+          urlQueryParams[key] = value.map(val => val.toUpperCase())
+          return
+        }
+
+        urlQueryParams[key] = value.map(val => val.toLowerCase())
+        return
+      }
+
       if (key === 'collectionName') {
-        urlQueryParams.collectionName = value.toUpperCase()
-      } else {
-        urlQueryParams[key] = value.toLowerCase()
+        urlQueryParams[key] = value.toUpperCase()
       }
     })
 
@@ -44,13 +53,37 @@ const WatchesPage = () => {
         <div className='WatchesPage'>
           <ProductsPreview
             type='all'
+            withSider
             action={getProducts}
             params={queryParams}
-            title={`G-Shock Watches \n (Filter products to narrow your search)`}
+            title={
+              <>
+                <h2>G-Shock Watches</h2>
+                <span>(Filter products to narrow your search)</span>
+                <hr />
+              </>
+            }
           />
         </div>
       </Route>
-      <Route exact path='/watches/:gender?/:name/:pid' component={WatchPage} />
+      <Route exact path='/watches/:gender/:name/:pid' component={WatchPage} />
+      <Route
+        path='*'
+        render={() => (
+          <Result
+            style={{ margin: 'auto' }}
+            status={404}
+            title={
+              <>
+                <strong>404</strong>
+                <p>Page Not Found</p>
+              </>
+            }
+            subTitle="The page you are looking for doesn't exists."
+            extra={<Link to='/'>Back to Home</Link>}
+          />
+        )}
+      />
     </Switch>
   )
 }

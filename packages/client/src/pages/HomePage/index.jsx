@@ -15,13 +15,23 @@ const HomePage = () => {
     <div className='HomePage'>
       <OffersCarousel />
       <ProductsPreview
-        title='New watches'
+        title={
+          <>
+            <h2>New watches</h2>
+            <hr />
+          </>
+        }
         action={getLatestProducts}
         type='latest'
         skeletons={4}
       />
       <ProductsPreview
-        title='Top rated products'
+        title={
+          <>
+            <h2 style={{ marginTop: 0 }}>Top rated products</h2>
+            <hr />
+          </>
+        }
         action={getTopRatedProducts}
         type='topRated'
       />

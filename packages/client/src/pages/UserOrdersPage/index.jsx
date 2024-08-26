@@ -1,36 +1,40 @@
 import React, { useEffect, useState } from 'react'
-import axios from 'axios'
 import PropTypes from 'prop-types'
 import { useDispatch } from 'react-redux'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Table, Empty } from 'antd'
 
 import { getUserOrders } from '@redux/user/userThunk'
+
 import { ORDERS_COLUMNS } from '@shared/constants'
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
 
 const UserOrdersPage = ({ uid, updateFor }) => {
   const dispatch = useDispatch()
   const [orders, setOrders] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [errMsg, setErrMsg] = useState('')
+  const { showBoundary } = useErrorBoundary()
 
   useEffect(() => {
-    const source = axios.CancelToken.source()
+    let response
 
     const getOrdersByUserId = async () => {
       try {
         setIsLoading(true)
-        const { orders: userOrders } = await dispatch(
-          getUserOrders({ uid, cancelToken: source, updateFor })
-        ).unwrap()
+        response = dispatch(getUserOrders({ uid, updateFor }))
+        const { orders: userOrders } = await response?.unwrap?.()
         setOrders(userOrders)
         setIsLoading(false)
       } catch (err) {
-        const {
-          data: { message },
-        } = err
+        setIsLoading(false)
 
-        if (err.status !== 'ABORTED') {
-          setIsLoading(false)
+        handleAsyncThunkError(err, showBoundary, {
+          showBoundaryOnlyOnServerError: true,
+        })
+
+        if (err.name !== 'AbortError') {
+          const { data: { message } = { message: undefined } } = err
           setErrMsg(message)
         }
       }
@@ -39,9 +43,9 @@ const UserOrdersPage = ({ uid, updateFor }) => {
     getOrdersByUserId()
 
     return () => {
-      source.cancel('Request Aborted due to component unmount.')
+      response?.abort?.('Request Aborted due to component unmount.')
     }
-  }, [dispatch, uid, updateFor])
+  }, [dispatch, uid, updateFor, showBoundary])
 
   return (
     <div className='UserOurdersPage'>

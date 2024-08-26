@@ -511,7 +511,7 @@ const getProductById = async (req, res, next) => {
 
   return res
     .status(404)
-    .json({ message: 'Product with provided pid does not exists' })
+    .json({ message: 'Product with provided pid does not exists.' })
 }
 
 // POST CONTROLLERS
@@ -608,7 +608,7 @@ const updateProduct = async (req, res, next) => {
       'images[]': newUploadedImages,
     },
     body: {
-      previewImg: [existingPreviewImg] = '',
+      previewImg: existingPreviewImg = '',
       images: existingImages = [],
       collectionName,
       specifications,
@@ -674,6 +674,7 @@ const updateProduct = async (req, res, next) => {
           console.log({ error })
         }
       })
+
       updatedImagesPaths = updatedImagesPaths.filter(
         imgPath => !removedFileList.includes(imgPath)
       )

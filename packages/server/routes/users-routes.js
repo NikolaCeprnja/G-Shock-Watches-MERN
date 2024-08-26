@@ -1,6 +1,7 @@
 const router = require('express').Router()
 const passport = require('passport')
 const multer = require('multer')
+const config = require('config')
 
 const upload = multer()
 
@@ -35,7 +36,7 @@ router.get('/', authJwt, isAdmin, getUsers)
 /** @method GET @access PRIVATE @desc Get total user documents count */
 router.get('/count', authJwt, isAdmin, getTotalUsersCount)
 
-/** @method GET @access PUBLIC @desc Get an currently authenticated user. */
+/** @method GET @access PUBLIC @desc Get the currently authenticated user. */
 router.get('/auth', authJwt, (req, res) => {
   if (req.isAuthenticated()) {
     return res.status(200).json({ loggedInUser: req.user })
@@ -92,14 +93,16 @@ router.get('/auth/google/callback', auth('google'), (req, res) => {
     const { state } = req.query
     const { redirectTo } = JSON.parse(Buffer.from(state, 'base64').toString())
     if (typeof redirectTo === 'string' && redirectTo.startsWith('/')) {
-      res.redirect(`http://localhost:3000${redirectTo}`)
+      res.redirect(`${config.get('CLIENT.BASE_URL') + redirectTo}`)
     }
   } catch {
     if (req.user.isAdmin) {
-      return res.redirect('http://localhost:3000/admin/dashboard')
+      return res.redirect(`${config.get('CLIENT.BASE_URL')}/admin/dashboard`)
     }
 
-    return res.redirect(`http://localhost:3000/users/${req.user.id}/profile`)
+    return res.redirect(
+      `${config.get('CLIENT.BASE_URL')}/users/${req.user.id}/profile`
+    )
   }
 })
 

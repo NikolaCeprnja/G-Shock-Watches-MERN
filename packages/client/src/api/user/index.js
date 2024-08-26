@@ -5,18 +5,18 @@ const axios = Axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-const getUsers = async urlQueryParams => {
-  const response = await axios({ params: urlQueryParams })
+const getUsers = async (params, cancelToken) => {
+  const response = await axios({ params, cancelToken })
   return response
 }
 
-export const getTotalUsersCount = async () => {
-  const response = await axios('/count')
+export const getTotalUsersCount = async cancelToken => {
+  const response = await axios('/count', { cancelToken })
   return response
 }
 
-const getUserById = async uid => {
-  const response = await axios(`/${uid}`)
+const getUserById = async (uid, cancelToken) => {
+  const response = await axios(`/${uid}`, { cancelToken })
   return response
 }
 
@@ -25,30 +25,37 @@ const getPurchasedProductsAndReviews = async (uid, cancelToken) => {
   return response
 }
 
-const updateUser = async (uid, data) => {
-  const response = await axios.put(`/${uid}`, data)
+const updateUser = async (uid, data, cancelToken) => {
+  const response = await axios.put(`/${uid}`, data, { cancelToken })
   return response
 }
 
-export const deleteUser = async uid => {
-  const response = await axios.delete(`/${uid}`)
+export const deleteUser = async (uid, cancelToken) => {
+  const response = await axios.delete(`/${uid}`, { cancelToken })
   return response
 }
 
-const createReview = async (pid, data) => {
+const createReview = async (pid, data, cancelToken) => {
   const response = await axios.post(`/products/${pid}`, data, {
     baseURL: '/api/reviews',
+    cancelToken,
   })
   return response
 }
 
-const updateReview = async (rid, data) => {
-  const response = await axios.put(`/${rid}`, data, { baseURL: '/api/reviews' })
+const updateReview = async (rid, data, cancelToken) => {
+  const response = await axios.put(`/${rid}`, data, {
+    baseURL: '/api/reviews',
+    cancelToken,
+  })
   return response
 }
 
-const deleteReview = async rid => {
-  const response = await axios.delete(`/${rid}`, { baseURL: '/api/reviews' })
+const deleteReview = async (rid, cancelToken) => {
+  const response = await axios.delete(`/${rid}`, {
+    baseURL: '/api/reviews',
+    cancelToken,
+  })
   return response
 }
 

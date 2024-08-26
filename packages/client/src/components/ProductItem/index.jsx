@@ -9,15 +9,16 @@ import { selectCartItemCount, addItem } from '@redux/cart/cartSlice'
 
 import './styles.scss'
 
+const collectionColor = Object.freeze({
+  men: 'geekblue',
+  women: 'purple',
+  all: 'gold',
+})
+
 const ProductItem = ({ product }) => {
   const dispatch = useDispatch()
   const cartItemCount = useSelector(selectCartItemCount(product.id))
   const [imgIsLoading, setImgIsLoading] = useState(true)
-  const collectionColor = Object.freeze({
-    men: 'geekblue',
-    women: 'purple',
-    all: 'gold',
-  })
 
   return (
     <div className='product-item' title={`${product.name}-${product.model}`}>
@@ -31,7 +32,8 @@ const ProductItem = ({ product }) => {
         to={`/watches/${
           product.gender
         }/${product.collectionName.toLowerCase()}/${product.id}`}>
-        <div className='img-wrapper'>
+        <div
+          className={`img-wrapper${!product.inStock ? ' out-of-stock' : ''}`}>
           {imgIsLoading && (
             <Skeleton.Image style={{ width: '200px', height: '200px' }} />
           )}

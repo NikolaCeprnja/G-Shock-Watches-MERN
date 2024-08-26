@@ -1,7 +1,9 @@
-/* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useCallback } from 'react'
 import PropTypes from 'prop-types'
+import axios from 'axios'
+import { generatePath } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Button, Tabs, Row, Col } from 'antd'
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons'
 import { Formik, FastField } from 'formik'
@@ -27,19 +29,42 @@ import {
   PRODUCT_MAIN_FEATURES_OPTIONS,
 } from '@shared/constants'
 
+import ErrorHandler from '@utils/ErrorHandler'
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
+
 import './styles.scss'
 
 const { TabPane } = Tabs
 const { OptGroup, Option } = Select
 
-const AddNewProductPage = ({ history }) => {
+const AddNewProductPage = ({ history, match }) => {
   const dispatch = useDispatch()
   const collections = useSelector(selectCollections)
-  const [activeTabKey, setActiveTabKey] = useState(undefined)
+  const source = axios.CancelToken.source()
+  const { showBoundary } = useErrorBoundary()
+  const { activeTab } = match.params
+  const [existingModels, setExistingModels] = useState([])
 
   useEffect(() => {
-    dispatch(getCollections())
-  }, [dispatch])
+    let response
+
+    const fetchCollections = async () => {
+      try {
+        response = dispatch(getCollections())
+        await response?.unwrap?.()
+      } catch (err) {
+        handleAsyncThunkError(err, showBoundary)
+      }
+    }
+
+    fetchCollections()
+
+    return () => {
+      response?.abort?.('Request Aborted due to component unmount.')
+      source.cancel('Request Aborted due to component unmount.')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, showBoundary])
 
   const handleSubmit = useCallback(
     async (values, { setFieldError, resetForm }) => {
@@ -58,7 +83,7 @@ const AddNewProductPage = ({ history }) => {
 
         const {
           data: { message },
-        } = await createNewProduct(data)
+        } = await createNewProduct(data, source.token)
 
         dispatch(
           createNotification({
@@ -70,33 +95,56 @@ const AddNewProductPage = ({ history }) => {
         )
 
         resetForm()
-        setActiveTabKey('product-info')
-      } catch ({ response }) {
-        const {
-          status,
-          statusText,
-          data: { errors, message },
-        } = response
+        history.replace(generatePath(match.path))
+      } catch (error) {
+        if (!axios.isCancel(error) && error.response) {
+          const {
+            status,
+            statusText,
+            data: { errors, message },
+          } = error.response
 
-        dispatch(
-          createNotification({
-            id: 'newProductCreatedError',
-            type: 'error',
-            title: `Error, ${statusText}`,
-            description:
-              message ||
-              'Something went wrong while creating a new product, please try again later.',
-          })
-        )
+          if (status === 500) {
+            const boundaryError = new ErrorHandler(
+              message,
+              status,
+              statusText,
+              {
+                redirect: {
+                  to: '/admin/e-commerce/products',
+                  text: 'Back to Products',
+                },
+              }
+            )
 
-        if (errors) {
-          Object.keys(errors).forEach(err => {
-            setFieldError(err, errors[err].message)
-          })
+            showBoundary(boundaryError)
+            return
+          }
+
+          dispatch(
+            createNotification({
+              id: 'newProductCreatedError',
+              type: 'error',
+              title: `Error, ${statusText}`,
+              description:
+                message ||
+                'Something went wrong while creating a new product, please try again later.',
+            })
+          )
+
+          if (errors) {
+            Object.keys(errors).forEach(err => {
+              if (err === 'model') {
+                setExistingModels(exModels => [...exModels, errors[err].value])
+              }
+              setFieldError(err, errors[err].message)
+            })
+          }
         }
       }
     },
-    [dispatch]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dispatch, showBoundary, source.token]
   )
 
   return (
@@ -118,10 +166,9 @@ const AddNewProductPage = ({ history }) => {
         specifications: undefined,
       }}
       onSubmit={handleSubmit}
-      validationSchema={productValidationSchema}>
+      validationSchema={productValidationSchema(existingModels)}>
       {({
         dirty,
-        errors,
         isValid,
         handleSubmit: submitForm,
         setFieldValue,
@@ -141,7 +188,6 @@ const AddNewProductPage = ({ history }) => {
         <>
           <RouterPrompt when={dirty} />
           <div className='AddNewProductPage'>
-            <div className='caption-background' />
             <div className='caption'>
               <div className='product-preview-wrapper'>
                 <Button
@@ -178,14 +224,21 @@ const AddNewProductPage = ({ history }) => {
               </SubmitButton>
             </div>
             <Tabs
-              defaultActiveKey='product-info'
-              activeKey={activeTabKey}
-              onTabClick={activeKey => setActiveTabKey(activeKey)}>
-              <TabPane key='product-info' tab='Basic Product Info'>
+              defaultActiveKey='info'
+              activeKey={activeTab || 'info'}
+              onTabClick={activeKey => {
+                const generatedPath = generatePath(match.path, {
+                  activeTab: activeKey,
+                })
+
+                history.replace(generatedPath)
+              }}>
+              <TabPane key='info' tab='Basic Product Info'>
                 <Form name='product-info' layout='vertical'>
                   <Row gutter={[16, 8]}>
                     <Col span={8}>
                       <FastField
+                        fast
                         required
                         size='large'
                         name='name'
@@ -195,6 +248,7 @@ const AddNewProductPage = ({ history }) => {
                     </Col>
                     <Col span={8}>
                       <FastField
+                        fast
                         required
                         size='large'
                         name='model'
@@ -204,6 +258,7 @@ const AddNewProductPage = ({ history }) => {
                     </Col>
                     <Col span={8}>
                       <FastField
+                        fast
                         required
                         size='large'
                         name='collectionName'
@@ -244,6 +299,7 @@ const AddNewProductPage = ({ history }) => {
                   <Row gutter={[16, 8]}>
                     <Col span={4}>
                       <FastField
+                        fast
                         required
                         size='large'
                         name='color'
@@ -257,6 +313,7 @@ const AddNewProductPage = ({ history }) => {
                     </Col>
                     <Col span={8}>
                       <FastField
+                        fast
                         required
                         size='large'
                         style={{ width: '100%' }}
@@ -274,6 +331,7 @@ const AddNewProductPage = ({ history }) => {
                     </Col>
                     <Col span={4}>
                       <FastField
+                        fast
                         required
                         size='large'
                         style={{ width: '100%' }}
@@ -291,6 +349,7 @@ const AddNewProductPage = ({ history }) => {
                     </Col>
                     <Col span={8}>
                       <FastField
+                        fast
                         required
                         size='large'
                         style={{ width: '100%' }}
@@ -310,6 +369,7 @@ const AddNewProductPage = ({ history }) => {
                   </Row>
                   <Col span={24}>
                     <FastField
+                      fast
                       required
                       rows={6}
                       size='large'
@@ -321,15 +381,16 @@ const AddNewProductPage = ({ history }) => {
                   </Col>
                 </Form>
               </TabPane>
-              <TabPane key='product-images' tab='Product Images'>
+              <TabPane key='images' tab='Product Images'>
                 <Form name='product-images'>
-                  <FastField name='images' component={DragImagesUpload} />
+                  <FastField fast name='images' component={DragImagesUpload} />
                 </Form>
               </TabPane>
-              <TabPane key='product-details' tab='Product Details'>
+              <TabPane key='details' tab='Product Details'>
                 <Form name='product-details' layout='vertical'>
                   <Col span={24}>
                     <FastField
+                      fast
                       required
                       showArrow
                       mode='tags'
@@ -344,6 +405,7 @@ const AddNewProductPage = ({ history }) => {
                   </Col>
                   <Col span={24}>
                     <FastField
+                      fast
                       required
                       showArrow
                       mode='tags'
@@ -358,6 +420,7 @@ const AddNewProductPage = ({ history }) => {
                   </Col>
                   <Col span={24}>
                     <FastField
+                      fast
                       required
                       showArrow
                       mode='tags'
@@ -372,6 +435,7 @@ const AddNewProductPage = ({ history }) => {
                   </Col>
                   <Col span={24}>
                     <FastField
+                      fast
                       required
                       rows={6}
                       size='large'
@@ -393,6 +457,7 @@ const AddNewProductPage = ({ history }) => {
 
 AddNewProductPage.propTypes = {
   history: PropTypes.instanceOf(Object).isRequired,
+  match: PropTypes.instanceOf(Object).isRequired,
 }
 
 export default AddNewProductPage

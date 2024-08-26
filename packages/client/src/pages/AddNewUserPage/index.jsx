@@ -1,6 +1,8 @@
-import React, { useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
+import axios from 'axios'
 import PropTypes from 'prop-types'
 import { useDispatch } from 'react-redux'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Formik, Field } from 'formik'
 import { Form, FormItem, SubmitButton } from 'formik-antd'
 import { Row, Col, Button, Checkbox, Tabs } from 'antd'
@@ -14,14 +16,25 @@ import { signup as createNewUser } from '@api/user/auth'
 import { signupValidationSchema } from '@validation/user-validation'
 import { create as createNotification } from '@redux/notification/notificationSlice'
 
+import ErrorHandler from '@utils/ErrorHandler'
+
 import './styles.scss'
 
 const { TabPane } = Tabs
 
 const AddNewUserPage = ({ history }) => {
   const dispatch = useDispatch()
+  const source = axios.CancelToken.source()
+  const { showBoundary } = useErrorBoundary()
   const [existingUserNames, setExistingUserNames] = useState([])
   const [existingEmails, setExistingEmails] = useState([])
+
+  useEffect(() => {
+    return () => {
+      source.cancel('Request Aborted due to component unmount.')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleSubmit = useCallback(
     async (values, { resetForm, setFieldError }) => {
@@ -34,7 +47,7 @@ const AddNewUserPage = ({ history }) => {
       try {
         const {
           data: { message },
-        } = await createNewUser(data, '/createNewUser')
+        } = await createNewUser(data, source.token, '/createNewUser')
 
         dispatch(
           createNotification({
@@ -48,9 +61,22 @@ const AddNewUserPage = ({ history }) => {
         resetForm()
       } catch (error) {
         const {
+          status,
           statusText,
           data: { errors, message },
         } = error.response
+
+        if (status === 500) {
+          const boundaryError = new ErrorHandler(message, status, statusText, {
+            redirect: {
+              to: '/admin/users',
+              text: 'Back to Users',
+            },
+          })
+
+          showBoundary(boundaryError)
+          return
+        }
 
         dispatch(
           createNotification({
@@ -79,7 +105,7 @@ const AddNewUserPage = ({ history }) => {
         }
       }
     },
-    [dispatch]
+    [dispatch, showBoundary, source.token]
   )
 
   return (
@@ -109,7 +135,6 @@ const AddNewUserPage = ({ history }) => {
           <>
             <RouterPrompt when={dirty} />
             <div className='AddNewUserPage'>
-              <div className='caption-background' />
               <div className='caption'>
                 <div className='user-preview-wrapper'>
                   <Button

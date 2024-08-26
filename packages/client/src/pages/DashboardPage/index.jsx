@@ -1,6 +1,4 @@
-/* eslint-disable no-unused-vars */
 import React from 'react'
-import PropTypes from 'prop-types'
 import { Row, Col } from 'antd'
 import { AppstoreOutlined, ShoppingCartOutlined } from '@ant-design/icons'
 import Icon from '@ant-design/icons/lib/components/Icon'
@@ -20,7 +18,7 @@ import './styles.scss'
 
 const UsersOutlined = props => <Icon {...props} component={UsersIcon} />
 
-const DashboardPage = ({ history }) => {
+const DashboardPage = () => {
   return (
     <div className='DashboardPage'>
       <Row gutter={8}>
@@ -85,7 +83,7 @@ const DashboardPage = ({ history }) => {
             request={getTotalOrdersSales}
             periodFor='last-six-months'
             wrapperClassName='area-chart-card'>
-            {({ data: { totalSales } = {}, loading }) => (
+            {({ data: { totalSales } = {} }) => (
               <AreaChart data={totalSales?.[0]?.data} dataKey='total.amount' />
             )}
           </StatisticCard>
@@ -93,10 +91,6 @@ const DashboardPage = ({ history }) => {
       </Row>
     </div>
   )
-}
-
-DashboardPage.propTypes = {
-  history: PropTypes.instanceOf(Object).isRequired,
 }
 
 export default DashboardPage

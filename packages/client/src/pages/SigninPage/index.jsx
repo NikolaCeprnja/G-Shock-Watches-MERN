@@ -1,18 +1,22 @@
-import React, { useState, useCallback } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Card, Button, Alert } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { Formik, Field } from 'formik'
 import { Form, SubmitButton } from 'formik-antd'
 
 import InputField from '@components/InputField/index'
+import RouterPrompt from '@components/RouterPrompt/index'
 import { ReactComponent as GoogleIcon } from '@assets/Google_logo.svg'
 
 import { signin } from '@redux/user/userThunk'
 import { selectLoggedInUser } from '@redux/user/userSlice'
 import { create as createNotification } from '@redux/notification/notificationSlice'
+
+import ErrorHandler from '@utils/ErrorHandler'
 import { signinValidationSchema } from '@validation/user-validation'
 
 import './styles.scss'
@@ -20,17 +24,27 @@ import './styles.scss'
 const SigninPage = ({ location }) => {
   const dispatch = useDispatch()
   const loggedInUser = useSelector(selectLoggedInUser)
+  const signinRef = useRef()
+  const { showBoundary } = useErrorBoundary()
   const [validateOnBlur, setValidateOnBlur] = useState(true)
-  const [serverResponse, setServerResponse] = useState({})
+  const [serverResponse, setServerResponse] = useState()
   const [errMsg, setErrMsg] = useState('')
   const [nonExistingUsers, setNonExistingUsers] = useState([])
+
+  useEffect(() => {
+    return () => {
+      signinRef.current?.abort?.('Request Aborted due to component unmount.')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleSubmit = useCallback(
     async (values, { setFieldError }) => {
       setValidateOnBlur(true)
-      setServerResponse({})
+      setServerResponse()
       try {
-        const { message } = await dispatch(signin(values)).unwrap()
+        signinRef.current = dispatch(signin({ userData: values }))
+        const { message } = await signinRef.current?.unwrap?.()
 
         dispatch(
           createNotification({
@@ -41,22 +55,34 @@ const SigninPage = ({ location }) => {
           })
         )
       } catch (error) {
-        const {
-          status,
-          statusText,
-          data: { errors, message },
-        } = error
+        if (!error.name || error.name !== 'AbortError') {
+          const {
+            status,
+            statusText,
+            data: { errors, message } = {
+              errors: undefined,
+              message: undefined,
+            },
+          } = error
 
-        if (errors) {
-          setValidateOnBlur(false)
-          Object.keys(errors).forEach(err => {
-            setFieldError(err, errors[err].message)
-            if (err === 'userNameOrEmail') {
-              setNonExistingUsers(users => [...users, errors[err].value])
-              setErrMsg(errors[err].message)
-            }
-          })
-        } else {
+          if (status === 500) {
+            const boundaryError = new ErrorHandler(message, status, statusText)
+            showBoundary(boundaryError)
+            return
+          }
+
+          if (errors) {
+            setValidateOnBlur(false)
+            Object.keys(errors).forEach(err => {
+              setFieldError(err, errors[err].message)
+              if (err === 'userNameOrEmail') {
+                setNonExistingUsers(users => [...users, errors[err].value])
+                setErrMsg(errors[err].message)
+              }
+            })
+            return
+          }
+
           setServerResponse({
             status,
             statusText,
@@ -65,12 +91,12 @@ const SigninPage = ({ location }) => {
         }
       }
     },
-    [dispatch]
+    [dispatch, showBoundary]
   )
 
   return (
     <div className='SigninPage'>
-      {Object.keys(serverResponse).length > 0 && (
+      {serverResponse && (
         <Alert
           type={serverResponse.status >= 400 ? 'error' : 'success'}
           message={
@@ -104,65 +130,70 @@ const SigninPage = ({ location }) => {
           validationSchema={signinValidationSchema(nonExistingUsers, errMsg)}
           validateOnBlur={validateOnBlur}>
           {({ dirty, isValid }) => (
-            <Form layout='vertical' size='large'>
-              <Field
-                name='userNameOrEmail'
-                prefix={<UserOutlined className='site-form-item-icon' />}
-                placeholder='Username or Email address'
-                component={InputField}
-              />
-              <Field
-                name='password'
-                type='password'
-                prefix={<LockOutlined className='site-form-item-icon' />}
-                placeholder='Password'
-                component={InputField}
-              />
-              <Form.Item name='forgotPassword'>
-                <Link to='/auth/forgot-password' style={{ float: 'right' }}>
-                  Forgot password?
-                </Link>
-              </Form.Item>
-              <Form.Item name='signin' style={{ marginBottom: 0 }}>
-                <SubmitButton block disabled={!dirty || !isValid}>
-                  Sign in
-                </SubmitButton>
-              </Form.Item>
-              <div
-                className='signin-divider'
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                <hr />
-                <span>OR</span>
-                <hr />
-              </div>
-              <Form.Item name='signinWithGoogle'>
-                <Button
-                  id='google-signin-btn'
-                  block
-                  type='dashed'
-                  htmlType='button'
-                  icon={<GoogleIcon id='google-icon' />}
-                  onClick={() => {
-                    window.location = `http://localhost:5000/api/users/auth/google${
-                      location.state
-                        ? `?redirect_to=${location.state.from.pathname}`
-                        : ''
-                    }`
+            <>
+              <RouterPrompt when={dirty} />
+              <Form layout='vertical' size='large'>
+                <Field
+                  name='userNameOrEmail'
+                  prefix={<UserOutlined className='site-form-item-icon' />}
+                  placeholder='Username or Email address'
+                  component={InputField}
+                />
+                <Field
+                  name='password'
+                  type='password'
+                  prefix={<LockOutlined className='site-form-item-icon' />}
+                  placeholder='Password'
+                  component={InputField}
+                />
+                <Form.Item name='forgotPassword'>
+                  <Link to='/auth/forgot-password' style={{ float: 'right' }}>
+                    Forgot password?
+                  </Link>
+                </Form.Item>
+                <Form.Item name='signin' style={{ marginBottom: 0 }}>
+                  <SubmitButton block disabled={!dirty || !isValid}>
+                    Sign in
+                  </SubmitButton>
+                </Form.Item>
+                <div
+                  className='signin-divider'
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}>
-                  Sign in with Google
-                </Button>
-              </Form.Item>
-              <Form.Item name='register' noStyle>
-                <span className='signup-caption'>
-                  New to G-Shock-Watches?
-                  <br /> Go <Link to='/auth/signup'>Register now!</Link>
-                </span>
-              </Form.Item>
-            </Form>
+                  <hr />
+                  <span>OR</span>
+                  <hr />
+                </div>
+                <Form.Item name='signinWithGoogle'>
+                  <Button
+                    id='google-signin-btn'
+                    block
+                    type='dashed'
+                    htmlType='button'
+                    icon={<GoogleIcon id='google-icon' />}
+                    onClick={() => {
+                      window.location = `${
+                        process.env.REACT_APP_API_BASE_URL
+                      }/api/users/auth/google${
+                        location.state
+                          ? `?redirect_to=${location.state.from.pathname}`
+                          : ''
+                      }`
+                    }}>
+                    Sign in with Google
+                  </Button>
+                </Form.Item>
+                <Form.Item name='register' noStyle>
+                  <span className='signup-caption'>
+                    New to G-Shock-Watches?
+                    <br /> Go <Link to='/auth/signup'>Register now!</Link>
+                  </span>
+                </Form.Item>
+              </Form>
+            </>
           )}
         </Formik>
       </Card>

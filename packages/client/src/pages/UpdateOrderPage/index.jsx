@@ -1,8 +1,8 @@
-/* eslint-disable no-unused-vars */
-import React, { useLayoutEffect, useState } from 'react'
+import React, { useLayoutEffect, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
-import { useParams } from 'react-router-dom'
+import { generatePath } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
+import { useErrorBoundary } from 'react-error-boundary'
 import { Spin, Button, Tabs, Table, Collapse } from 'antd'
 import {
   ArrowLeftOutlined,
@@ -19,26 +19,43 @@ import {
   ORDER_PRODUCTS_COLUMNS,
 } from '@shared/constants'
 
+import { handleAsyncThunkError } from '@utils/asyncThunkErrorHandler'
+
 import './styles.scss'
 
 const { TabPane } = Tabs
 const { Panel } = Collapse
 
-const UpdateOrderPage = ({ history }) => {
-  const { oid } = useParams()
+const UpdateOrderPage = ({ history, match }) => {
+  const { oid, activeTab } = match.params
   const dispatch = useDispatch()
-  const { loading, updating, data: order } = useSelector(
-    selectOrdersByType('preview')
-  )
-  const [activeTabKey, setActiveTabKey] = useState('order-info')
+  const { loading, data: order } = useSelector(selectOrdersByType('preview'))
+  const { showBoundary } = useErrorBoundary()
 
   useLayoutEffect(() => {
-    dispatch(getOrderById(oid))
+    let response
+
+    const fetchOrderById = async () => {
+      try {
+        response = dispatch(getOrderById(oid))
+        await response?.unwrap?.()
+      } catch (err) {
+        handleAsyncThunkError(err, showBoundary, {
+          redirect: {
+            to: '/admin/e-commerce/orders',
+            text: 'Back to Orders',
+          },
+        })
+      }
+    }
+
+    fetchOrderById()
 
     return () => {
       dispatch(clearOrderPreview())
+      response?.abort?.('Request Aborted due to component unmount.')
     }
-  }, [dispatch, oid])
+  }, [dispatch, oid, showBoundary])
 
   return (
     <div className='UpdateOrderPageWrapper'>
@@ -61,10 +78,17 @@ const UpdateOrderPage = ({ history }) => {
             </p>
           </div>
           <Tabs
-            defaultActiveKey='order-info'
-            activeKey={activeTabKey}
-            onTabClick={activeKey => setActiveTabKey(activeKey)}>
-            <TabPane key='order-info' tab='Order Details'>
+            defaultActiveKey='info'
+            activeKey={activeTab || 'info'}
+            onTabClick={activeKey => {
+              const generatedPath = generatePath(match.path, {
+                oid,
+                activeTab: activeKey,
+              })
+
+              history.replace(generatedPath)
+            }}>
+            <TabPane key='info' tab='Order Details'>
               <div className='order-info-customer'>
                 <h2>
                   <UserOutlined /> Customer
@@ -98,7 +122,7 @@ const UpdateOrderPage = ({ history }) => {
                 />
               </div>
             </TabPane>
-            <TabPane key='order-products' tab='Products'>
+            <TabPane key='ordered-products' tab='Products'>
               <div className='order-info-products'>
                 <Table
                   rowKey='id'
@@ -130,6 +154,7 @@ const UpdateOrderPage = ({ history }) => {
 
 UpdateOrderPage.propTypes = {
   history: PropTypes.instanceOf(Object).isRequired,
+  match: PropTypes.instanceOf(Object).isRequired,
 }
 
 export default UpdateOrderPage

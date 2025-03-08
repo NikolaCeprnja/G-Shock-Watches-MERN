@@ -45,7 +45,7 @@ export const handleAsyncThunkError = (
     })
 
     if (options.showBoundaryOnlyOnServerError) {
-      if (status === 500) {
+      if (status >= 500) {
         showBoundary(boundaryError)
       }
       return

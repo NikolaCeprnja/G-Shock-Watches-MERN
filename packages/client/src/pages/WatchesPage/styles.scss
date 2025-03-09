@@ -53,6 +53,13 @@
           justify-content: center;
         }
       }
+
+      ul.ant-pagination {
+        display: flex;
+        flex: 100%;
+        justify-content: center;
+        margin: 1.4rem 0 2rem;
+      }
     }
   }
 

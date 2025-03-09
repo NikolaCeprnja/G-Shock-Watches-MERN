@@ -116,6 +116,33 @@ const ProductsPreview = ({
                   : products.data?.map(product => (
                       <ProductItem key={product.id} product={product} />
                     ))}
+                {products.data && !products.loading && (
+                  <Pagination
+                    hideOnSinglePage
+                    pageSize={8}
+                    showTotal={(total, range) =>
+                      `${range[0]} - ${range[1]} of ${total}`
+                    }
+                    current={products.curPage}
+                    total={products.totalData}
+                    onChange={pageNum => {
+                      if (pageNum === 1) {
+                        history.push({ pathname })
+                      } else {
+                        history.push({
+                          pathname,
+                          search: `?page=${pageNum}`,
+                        })
+                      }
+
+                      productsRef.current.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'end',
+                        inline: 'nearest',
+                      })
+                    }}
+                  />
+                )}
                 {errorResponse && (
                   <Empty
                     image='https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg'
@@ -131,34 +158,6 @@ const ProductsPreview = ({
                   />
                 )}
               </div>
-              {products.data && !products.loading && (
-                <Pagination
-                  hideOnSinglePage
-                  pageSize={8}
-                  showTotal={(total, range) =>
-                    `${range[0]} - ${range[1]} of ${total}`
-                  }
-                  current={products.curPage}
-                  total={products.totalData}
-                  onChange={pageNum => {
-                    if (pageNum === 1) {
-                      history.push({ pathname })
-                    } else {
-                      history.push({
-                        pathname,
-                        search: `?page=${pageNum}`,
-                      })
-                    }
-
-                    productsRef.current.scrollIntoView({
-                      behavior: 'smooth',
-                      block: 'end',
-                      inline: 'nearest',
-                    })
-                  }}
-                  style={{ margin: '1rem 0 2rem 0' }}
-                />
-              )}
             </Content>
           </Layout>
         </div>
